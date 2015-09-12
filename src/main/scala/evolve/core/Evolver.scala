@@ -32,7 +32,7 @@ package evolve.core
 
 object Evolver {
 
-  case class EvolverStratagy( children: Int, factor: Double )
+  case class EvolverStrategy( children: Int, factor: Double )
 
   /**
    * Given a program, test cases and a scoring function will attempt to evolve a passed program
@@ -45,12 +45,12 @@ object Evolver {
    * @tparam A the data type we work against
    * @return A new program that is not worse than the parent
    */
-  def apply[A, B]( program: Program, testCases: TestCases[A, B], optimise: Boolean )( implicit stratagy: EvolverStratagy, score: (Option[A], Option[B]) => Long, functions: Seq[Function[A]] ): Option[Program] = {
+  def apply[A, B]( program: Program, testCases: TestCases[A, B], optimise: Boolean )( implicit strategy: EvolverStrategy, score: (Option[A], Option[B]) => Long, functions: Seq[Function[A]] ): Option[Program] = {
     val inputCount = testCases.cases.head.inputs.length
     require( testCases.cases.forall( _.inputs.length == inputCount ) )
 
     // create mutant children
-    val pop = program +: Seq.fill(stratagy.children)( Generator.repair( Mutator( program, stratagy.factor ) ) )
+    val pop = program +: Seq.fill(strategy.children)( Generator.repair( Mutator( program, strategy.factor ) ) )
 
     // score the children
     val results = for {

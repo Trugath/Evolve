@@ -30,7 +30,7 @@
 
 package evolve.util
 
-import evolve.core.Evolver.EvolverStratagy
+import evolve.core.Evolver.EvolverStrategy
 import evolve.core.{Function, TestCases, Evolver, Program}
 import evolve.functions.StringIntFunctions._
 
@@ -42,10 +42,10 @@ import scala.annotation.tailrec
 object EvolveUtil {
 
   /**
-   * Startup the evolution using a wide search stratagy ( large population, heavy mutation )
+   * Startup the evolution using a wide search strategy ( large population, heavy mutation )
    */
   def startup[A, B](program: Program, testCases: TestCases[A, B])( implicit scoreFunc: (Option[A], Option[B]) => Long, functions: Seq[Function[A]] ): Program = {
-    implicit val heavy = EvolverStratagy(256, 0.35)
+    implicit val heavy = EvolverStrategy(256, 0.35)
 
     @tailrec def evolve(program: Program, iteration: Int): Program = {
       if (iteration <= 0) {
@@ -64,7 +64,7 @@ object EvolveUtil {
   /**
    * Evolve (successfully) a set number of generations
    */
-  def counted[A, B](program: Program, generations: Int, optimise: Boolean, testCases: TestCases[A, B])( implicit stratagy: EvolverStratagy, score: (Option[A], Option[B]) => Long, functions: Seq[Function[A]] ): Program = {
+  def counted[A, B](program: Program, generations: Int, optimise: Boolean, testCases: TestCases[A, B])( implicit strategy: EvolverStrategy, score: (Option[A], Option[B]) => Long, functions: Seq[Function[A]] ): Program = {
     /**
      * Run the evolution for a fixed number of generations
      */
@@ -85,7 +85,7 @@ object EvolveUtil {
   /**
    * Evolve until a set fitness or a generation limit has been reached
    */
-  def fitness[A, B](program: Program, fitness: Long, limit: Long, testCases: TestCases[A, B])( implicit stratagy: EvolverStratagy, score: (Option[A], Option[B]) => Long, functions: Seq[Function[A]] ): Program = {
+  def fitness[A, B](program: Program, fitness: Long, limit: Long, testCases: TestCases[A, B])( implicit strategy: EvolverStrategy, score: (Option[A], Option[B]) => Long, functions: Seq[Function[A]] ): Program = {
 
     @tailrec def evolve(program: Program, generation: Long): Program = {
       if(generation >= limit)

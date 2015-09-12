@@ -33,7 +33,7 @@ package evolve.example
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Paths}
 
-import evolve.core.Evolver.EvolverStratagy
+import evolve.core.Evolver.EvolverStrategy
 import evolve.core._
 import evolve.util.EvolveUtil
 
@@ -45,7 +45,7 @@ object ThreeBitAdder {
 
     import evolve.functions.BooleanFunctions._
 
-    implicit val evolveStatagy = EvolverStratagy(16, 0.01)
+    implicit val evolveStatagy = EvolverStrategy(16, 0.01)
 
     val testCases = TestCases(List(
       TestCase(List(false, false, false), List(false, false)),

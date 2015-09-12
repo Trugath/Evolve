@@ -33,7 +33,7 @@ package evolve.example
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Paths, Files}
 
-import evolve.core.Evolver.EvolverStratagy
+import evolve.core.Evolver.EvolverStrategy
 import evolve.core._
 import evolve.util.EvolveUtil
 
@@ -44,7 +44,7 @@ object HelloWorld {
 
     import evolve.functions.StringIntFunctions._
 
-    implicit val evolveStatagy = EvolverStratagy(12, 0.01)
+    implicit val evolveStatagy = EvolverStrategy(12, 0.01)
 
     val testCases = TestCases(List(
       TestCase(List(("abcdefghijklmnopqrstuvwxyz", 26), ("123456789", 9)), List(("Abcdefghijklmnopqrstuvwxyz 123456789!",27))),

@@ -33,7 +33,7 @@ package evolve.example
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Paths, Files}
 
-import evolve.core.Evolver.EvolverStratagy
+import evolve.core.Evolver.EvolverStrategy
 import evolve.core._
 import evolve.util.EvolveUtil
 
@@ -45,7 +45,7 @@ object DivideByEight {
 
     import evolve.functions.IntegerFunctions._
 
-    implicit val evolveStatagy = EvolverStratagy(16, 0.01)
+    implicit val evolveStatagy = EvolverStrategy(16, 0.01)
 
     val testCases = TestCases(
       (0 until 2147483647 by 65535000)

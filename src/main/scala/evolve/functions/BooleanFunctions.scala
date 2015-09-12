@@ -63,7 +63,7 @@ object BooleanFunctions {
 
   object Const extends Function[Boolean]  {
     override def arguments: Int = 0
-    override def cost: Int = 2
+    override def cost: Int = 1
     override def getLabel(inst: Instruction): String = {
       val value = inst.const(instructionSize, 1) == -1
       s"Const ($value)"
@@ -75,7 +75,7 @@ object BooleanFunctions {
 
   object And extends Function[Boolean]  {
     override def arguments: Int = 2
-    override def cost: Int = 3
+    override def cost: Int = 2
     override def getLabel(inst: Instruction): String = "&"
     override def apply(inst: Instruction, memory: Memory[Boolean]): Memory[Boolean] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
@@ -86,7 +86,7 @@ object BooleanFunctions {
 
   object Or extends Function[Boolean]  {
     override def arguments: Int = 2
-    override def cost: Int = 3
+    override def cost: Int = 2
     override def getLabel(inst: Instruction): String = "|"
     override def apply(inst: Instruction, memory: Memory[Boolean]): Memory[Boolean] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
