@@ -66,11 +66,13 @@ object DotGraph {
 
       buffer.append("digraph graphname {\r\n")
       buffer.append("rankdir=\"LR\";\r\n")
+      buffer.append("subgraph cluster_0 {")
       (0 until program.inputCount).foreach( i => {
         val index = i
         val node = names(i)
         buffer.append(s" $node [label=" + "\"" + s"Input $index" + "\"" + "];\r\n")
       })
+      buffer.append("}")
       program
         .data
         .zipWithIndex
@@ -83,11 +85,18 @@ object DotGraph {
           buffer.append(s" $node [label=" + "\"" + label + "\"" + "];\r\n")
         }
       }
+      buffer.append("subgraph cluster_1 {")
       (0 until program.outputCount).foreach( i => {
         val index = i
         val node = names(program.inputCount + program.data.length + index)
         val source = names(program.inputCount + program.data.length - program.outputCount + index)
         buffer.append(s" $node [label=" + "\"" + s"Output $index" + "\"" + "];\r\n")
+      })
+      buffer.append("}")
+      (0 until program.outputCount).foreach( i => {
+        val index = i
+        val node = names(program.inputCount + program.data.length + index)
+        val source = names(program.inputCount + program.data.length - program.outputCount + index)
         buffer.append(s"$source -> $node;\r\n")
       })
       program
