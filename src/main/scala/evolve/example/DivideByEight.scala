@@ -74,8 +74,8 @@ object DivideByEight {
     }
 
     val solution = EvolveUtil.counted(function(Generator(Nop.instructionSize, 8, 1, 1), 0, 0), 5000, optimise = false, testCases)
+    Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8) )
     val optimised = EvolveUtil.counted(solution.shrink, 5000, optimise = false, testCases)
-
-    Files.write(Paths.get("outfile.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8) )
+    Files.write(Paths.get("optimised.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8) )
   }
 }

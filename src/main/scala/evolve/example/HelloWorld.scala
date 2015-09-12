@@ -103,11 +103,11 @@ object HelloWorld {
     println(s"Start program selected. length: ${initial.data.length}")
     speedMarkTime = System.nanoTime
     val solution = EvolveUtil.counted(function(initial, 0), 10000, optimise = true, testCases)
+    Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8) )
+
     val optimised = EvolveUtil.counted(solution.shrink, 10000, optimise = true, testCases)
-
     println( optimised(List(("hello", 0), ("world", 0))).result(optimised.outputCount) )
-
-    Files.write(Paths.get("outfile.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8) )
+    Files.write(Paths.get("optimised.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8) )
   }
 
 
