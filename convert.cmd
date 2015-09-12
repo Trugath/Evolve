@@ -1,0 +1,1 @@
+dot -Tpng outfile.dot -o outfile.png
