@@ -48,7 +48,7 @@ object BooleanFunctions {
       case (None, None) => 0
     }
     assert(result >= 0)
-    result * 10
+    result * 100
   }
 
   object Nop extends Function[Boolean]  {
