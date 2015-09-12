@@ -80,10 +80,9 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
   /**
    * Returns a boolean representation showing which instructions are in use in this program
    * @param functions functions to map into the op codes
-   * @tparam A The data type this program manipulates
    * @return the boolean map of used instructions
    */
-  def used[A](implicit functions: Seq[Function[A]]): Seq[Boolean] = {
+  def used(implicit functions: Seq[Function[_]]): Seq[Boolean] = {
 
     val used: Array[Boolean] = Array.fill(inputCount + data.length)(false)
 
@@ -109,10 +108,9 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
   /**
    * Uses the usage data to calculate the total execution cost for this program
    * @param functions functions to map to the opcodes
-   * @tparam A the data type we work against
    * @return the total execution cost
    */
-  def cost[A]( implicit functions: Seq[Function[A]] ): Long = {
+  def cost( implicit functions: Seq[Function[_]] ): Long = {
 
     val u = used
 
@@ -126,10 +124,9 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
   /**
    * Uses the usage data to shrink and remap the instructions to a minimal set
    * @param functions list of functions to map the opcodes to
-   * @tparam A the data type we work against
    * @return the shrunk program
    */
-  def shrink[A]( implicit functions: Seq[Function[A]] ): Program = {
+  def shrink( implicit functions: Seq[Function[_]] ): Program = {
     val u = used
 
     val indexSeq = (0 until inputCount)
@@ -179,7 +176,6 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
    * It does this by adding instructions before the existing program
    * @param size the desired minimum length of the program
    * @param functions Functions which map to the instruction opcodes
-   * @tparam A The data type the program works with
    * @return The new program
    */
   def grow[A]( size: Int )( implicit functions: Seq[Function[A]] ): Program = {
