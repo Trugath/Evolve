@@ -45,7 +45,7 @@ object Evolver {
    * @tparam A the data type we work against
    * @return A new program that is not worse than the parent
    */
-  def apply[A]( program: Program, testCases: TestCases[A], optimise: Boolean )( implicit stratagy: EvolverStratagy, score: (Option[A], Option[A]) => Long, functions: Seq[Function[A]] ): Option[Program] = {
+  def apply[A, B]( program: Program, testCases: TestCases[A, B], optimise: Boolean )( implicit stratagy: EvolverStratagy, score: (Option[A], Option[B]) => Long, functions: Seq[Function[A]] ): Option[Program] = {
     val inputCount = testCases.cases.head.inputs.length
     require( testCases.cases.forall( _.inputs.length == inputCount ) )
 

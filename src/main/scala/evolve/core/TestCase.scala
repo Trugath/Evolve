@@ -35,7 +35,7 @@ package evolve.core
  * @param cases the test cases to use
  * @tparam A the datatype used
  */
-case class TestCases[A](cases: List[TestCase[A]]) {
+case class TestCases[A, B](cases: List[TestCase[A, B]]) {
 
   /**
    * Given a programs result list this will score it against the testcases
@@ -43,7 +43,7 @@ case class TestCases[A](cases: List[TestCase[A]]) {
    * @param scoreFunc scoring function
    * @return
    */
-  def score( result: List[List[A]] )( implicit scoreFunc: (Option[A], Option[A]) => Long ): Long = {
+  def score( result: List[List[A]] )( implicit scoreFunc: (Option[A], Option[B]) => Long ): Long = {
     assert(result.length == cases.length)
     val total = cases
       .zip(result)
@@ -60,7 +60,7 @@ case class TestCases[A](cases: List[TestCase[A]]) {
  * @param outputs expected outputs
  * @tparam A the data type used
  */
-case class TestCase[A](inputs: List[A], outputs: List[A]) {
+case class TestCase[A, B](inputs: List[A], outputs: List[B]) {
 
   /**
    * Given a result from a program, score the rest
@@ -68,7 +68,7 @@ case class TestCase[A](inputs: List[A], outputs: List[A]) {
    * @param scoreFunc the scoring function to use
    * @return the final score
    */
-  def score( results: List[A] )( implicit scoreFunc: (Option[A], Option[A]) => Long ): Long = {
+  def score( results: List[A] )( implicit scoreFunc: (Option[A], Option[B]) => Long ): Long = {
     val maxLength = math.max( results.length, outputs.length )
     val resultCompare =
       results
