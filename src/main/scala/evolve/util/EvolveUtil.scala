@@ -45,20 +45,18 @@ object EvolveUtil {
    * Startup the evolution using a wide search strategy ( large population, heavy mutation )
    */
   def startup[A, B](program: Program, testCases: TestCases[A, B])( implicit scoreFunc: (Option[A], Option[B]) => Long, functions: Seq[Function[A]] ): Program = {
-    implicit val heavy = EvolverStrategy(256, 0.35)
-
-    @tailrec def evolve(program: Program, iteration: Int): Program = {
+    @tailrec def evolve(program: Program, iteration: Int, strat: EvolverStrategy): Program = {
       if (iteration <= 0) {
         program
       } else {
-        Evolver(program, testCases, optimise = false) match {
-          case Some(evolved) => evolve(evolved, iteration - 1)
-          case None          => evolve(program, iteration)
+        Evolver(program, testCases, optimise = false)(strat, scoreFunc, functions) match {
+          case Some(evolved) => evolve(evolved, iteration - 1, strat)
+          case None          => evolve(program, iteration, strat.copy( factor = strat.factor * 0.9 ))
         }
       }
     }
 
-    evolve(program, 16)
+    evolve(program, 100, EvolverStrategy(256, 1.0))
   }
 
   /**
