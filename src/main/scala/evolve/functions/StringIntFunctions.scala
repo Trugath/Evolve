@@ -31,7 +31,6 @@
 package evolve.functions
 
 import evolve.core.{Function, Instruction, Memory}
-import evolve.functions.IntegerFunctions.Const._
 
 object StringIntFunctions {
 
@@ -52,6 +51,9 @@ object StringIntFunctions {
     Nop,
 
     ConstChar, ConstInt,
+
+    // choice
+    Min, Max,
 
     // string to int
     Length, Distance, Compare,
@@ -117,6 +119,40 @@ object StringIntFunctions {
     }
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       memory.append( ("", inst.const(instructionSize, 32 - instructionSize)) )
+    }
+  }
+
+  object Min extends Function[(String, Int)] {
+    override def arguments: Int = 2
+
+    override def cost: Int = 10
+
+    override def getLabel(inst: Instruction): String = "Min"
+
+    override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
+      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      if(a._2 <= b._2)
+        memory.append(a)
+      else
+        memory.append(b)
+    }
+  }
+
+  object Max extends Function[(String, Int)] {
+    override def arguments: Int = 2
+
+    override def cost: Int = 10
+
+    override def getLabel(inst: Instruction): String = "Max"
+
+    override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
+      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      if(a._2 >= b._2)
+        memory.append(a)
+      else
+        memory.append(b)
     }
   }
 
