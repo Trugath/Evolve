@@ -178,7 +178,7 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
    * @param functions Functions which map to the instruction opcodes
    * @return The new program
    */
-  def grow[A]( size: Int )( implicit functions: Seq[Function[A]] ): Program = {
+  def grow( size: Int )( implicit functions: Seq[Function[_]] ): Program = {
     if( data.length >= size ) {
       this
     } else {
