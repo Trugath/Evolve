@@ -53,7 +53,7 @@ object StringIntFunctions {
     ConstChar, ConstInt,
 
     // choice
-    Min, Max, Token, TakeString, TakeInt, OrElse,
+    Min, Max, Token, CharAt, TakeString, TakeInt, OrElse,
 
     // string to int
     Length, Hash, Distance, Compare, Contains,
@@ -172,6 +172,24 @@ object StringIntFunctions {
         memory.append(a.copy( _1 = "" ))
       else
         memory.append(a.copy( _1 = tokens(token) ))
+    }
+  }
+
+  object CharAt extends Function[(String, Int)] {
+
+    override def arguments: Int = 1
+
+    override def cost: Int = 10
+
+    override def getLabel(inst: Instruction): String = "CharAt"
+
+    override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
+      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val char = math.max(-1, math.min(a._1.length - 1, a._2))
+      if(char == -1)
+        memory.append(a.copy( _1 = "" ))
+      else
+        memory.append(a.copy( _1 = a._1.charAt(char).toString ))
     }
   }
 
