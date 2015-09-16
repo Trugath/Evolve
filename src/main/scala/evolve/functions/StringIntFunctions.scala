@@ -68,7 +68,7 @@ object StringIntFunctions {
     Reverse,
 
     // int
-    Add, Subtract, Multiply, Divide, Modulus, Increment, Decrement
+    Add, Subtract, Multiply, Divide, Modulus, Increment, Decrement, Average
   )
 
   implicit def scoreFunc: (Option[(String, Int)], Option[(String, Int)]) => Long = (a, b) => {
@@ -490,4 +490,14 @@ object StringIntFunctions {
     }
   }
 
+  object Average extends Function[(String, Int)]  {
+    override def arguments: Int = 2
+    override def cost: Int = 10
+    override def getLabel(inst: Instruction): String = "Average"
+    override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
+      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      memory.append( a.copy( _2 = ((a._2.toLong + b._2.toLong) / 2).toInt  ) )
+    }
+  }
 }
