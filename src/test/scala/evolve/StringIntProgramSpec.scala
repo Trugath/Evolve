@@ -61,9 +61,27 @@ class StringIntProgramSpec extends FlatSpec with PropertyChecks with GeneratorDr
     }
   }
 
+  def failSafe( f: => String ): String = {
+    try {
+      f
+    } catch {
+      case e: NoSuchElementException        => ""
+      case e: UnsupportedOperationException => ""
+    }
+  }
+
   "the basic functions" should "execute" in {
     val instructionSize = Nop.instructionSize
     val nop = Program( instructionSize, Seq( ins( functions.indexOf(Nop), 0, 1 ) ), 1, 1 )
+    val takeString = Program( instructionSize, Seq( ins( functions.indexOf(TakeString), 0, 1 ) ), 2, 1 )
+    val takeInt = Program( instructionSize, Seq( ins( functions.indexOf(TakeInt), 0, 1 ) ), 2, 1 )
+    val length = Program( instructionSize, Seq( ins( functions.indexOf(Length), 0, 1 ) ), 1, 1 )
+    val hash = Program( instructionSize, Seq( ins( functions.indexOf(Hash), 0, 1 ) ), 1, 1 )
+
+    val cat = Program( instructionSize, Seq( ins( functions.indexOf(Concatenate), 0, 1 ) ), 2, 1 )
+    val head = Program( instructionSize, Seq( ins( functions.indexOf(Head), 0, 1 ) ), 1, 1 )
+    val tail = Program( instructionSize, Seq( ins( functions.indexOf(Tail), 0, 1 ) ), 1, 1 )
+
     val add = Program( instructionSize, Seq( ins( functions.indexOf(Add), 0, 1 ) ), 2, 1 )
     val sub = Program( instructionSize, Seq( ins( functions.indexOf(Subtract), 0, 1 ) ), 2, 1 )
     val mul = Program( instructionSize, Seq( ins( functions.indexOf(Multiply), 0, 1 ) ), 2, 1 )
@@ -71,9 +89,19 @@ class StringIntProgramSpec extends FlatSpec with PropertyChecks with GeneratorDr
     val mod = Program( instructionSize, Seq( ins( functions.indexOf(Modulus), 0, 1 ) ), 2, 1 )
     val inc = Program( instructionSize, Seq( ins( functions.indexOf(Increment), 0, 0 ) ), 2, 1 )
     val dec = Program( instructionSize, Seq( ins( functions.indexOf(Decrement), 0, 0 ) ), 2, 1 )
+    val avg = Program( instructionSize, Seq( ins( functions.indexOf(Average), 0, 0 ) ), 2, 1 )
 
     forAll { (a: (String, Int), b: (String, Int) ) =>
       assert( nop(List(a)).result(1).head === a )
+      assert( takeString(List(a, b)).result(1).head === a.copy( _1 = b._1 ) )
+      assert( takeInt(List(a, b)).result(1).head === a.copy( _2 = b._2 ) )
+      assert( length(List(a)).result(1).head === a.copy( _2 = a._1.length ) )
+      assert( hash(List(a)).result(1).head === a.copy( _2 = a._1.hashCode ) )
+
+      assert( cat(List(a, b)).result(1).head === a.copy( _1 = a._1 + b._1 ) )
+      assert( head(List(a)).result(1).head._1 === failSafe( a._1.head.toString ) )
+      assert( tail(List(a)).result(1).head._1 === failSafe( a._1.tail.toString ) )
+
       assert( add(List(a, b)).result(1).head._2 === a._2 + b._2 )
       assert( sub(List(a, b)).result(1).head._2 === a._2 - b._2 )
       assert( mul(List(a, b)).result(1).head._2 === a._2 * b._2 )
@@ -81,6 +109,7 @@ class StringIntProgramSpec extends FlatSpec with PropertyChecks with GeneratorDr
       assert( mod(List(a, b)).result(1).head._2 === failSafe(a._2 % b._2) )
       assert( inc(List(a, b)).result(1).head._2 === a._2 + 1 )
       assert( dec(List(a, b)).result(1).head._2 === a._2 - 1 )
+      assert( avg(List(a, b)).result(1).head._2 === ((a._2.toLong + a._2.toLong) / 2).toInt )
     }
   }
 
