@@ -83,4 +83,18 @@ class StringIntProgramSpec extends FlatSpec with PropertyChecks with GeneratorDr
       assert( dec(List(a, b)).result(1).head._2 === a._2 - 1 )
     }
   }
+
+  "the extended functions" should "execute" in {
+
+    import evolve.functions.StringIntFunctions._
+
+    val instructionSize = Token.instructionSize
+    val token = Program( instructionSize, Seq( ins( functions.indexOf(Token), 0, 1 ) ), 1, 1 )
+
+    assert( token(List(("a b c d e", 0))).result(1).head === ("a", 0) )
+    assert( token(List(("a b c d e", 1))).result(1).head === ("b", 1) )
+    assert( token(List(("a b c d e", 2))).result(1).head === ("c", 2) )
+    assert( token(List(("a b c d e", 3))).result(1).head === ("d", 3) )
+    assert( token(List(("a b c d e", 4))).result(1).head === ("e", 4) )
+  }
 }
