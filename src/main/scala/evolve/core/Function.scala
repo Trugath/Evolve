@@ -36,7 +36,7 @@ package evolve.core
 trait Function[A] {
 
   // bits used by the opcode
-  def instructionSize: Int = 5
+  def instructionSize: Int = 6
 
   // number of arguments
   def arguments: Int = 2
