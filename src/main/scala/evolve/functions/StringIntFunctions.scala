@@ -56,7 +56,7 @@ object StringIntFunctions {
     Min, Max, Token, TakeString, TakeInt,
 
     // string to int
-    Length, Distance, Compare, Contains,
+    Length, Distance, Compare, Contains, Hash,
 
     // int to string
     Start, End,
@@ -255,6 +255,19 @@ object StringIntFunctions {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
       memory.append((a._1, if(a._1.contains(b._1)) 1 else 0 ))
+    }
+  }
+
+  object Hash extends Function[(String, Int)] {
+    override def arguments: Int = 1
+
+    override def cost: Int = 10
+
+    override def getLabel(inst: Instruction): String = "Hash"
+
+    override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
+      val a = memory(inst.pointer(instructionSize, argumentSize))
+      memory.append(a.copy( _2 = a._1.hashCode ))
     }
   }
 
