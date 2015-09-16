@@ -37,6 +37,8 @@ import scala.concurrent.forkjoin.ThreadLocalRandom
  * A program is a list of instructions to execute
  */
 case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: Int, outputCount: Int ) {
+  require( outputCount > 0, "A program must have an output" )
+  require( data.size + inputCount >= outputCount, "A program must be able to produce a result" )
 
   /**
    * Execute this program
@@ -89,7 +91,6 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
 
     for( i <- 0 until outputCount ) {
       used( used.length - 1 - i ) = true
-      assert( used(data.zipWithIndex.reverse(i)._2 + inputCount) )
     }
 
     for {
