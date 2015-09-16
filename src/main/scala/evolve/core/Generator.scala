@@ -45,14 +45,26 @@ object Generator {
    * @param inputCount number of inputs
    * @param outputCount number of outputs
    * @param functions list of functions to map to opcodes
-   * @tparam A the data type the program will manipulate
    * @return the freshly baked program
    */
-  def apply[A](instructionSize: Int, size: Int, inputCount: Int, outputCount: Int)(implicit functions: Seq[Function[A]]): Program = {
+  def apply(instructionSize: Int, size: Int, inputCount: Int, outputCount: Int)( implicit functions: Seq[Function[_]] ): Program = {
+
+    import scala.language.existentials
+
     val data = (0 until size).map { index =>
-      val inst = ThreadLocalRandom.current().nextInt(functions.length)
-      val func = functions(inst)
+      val (inst, func) = if( index + inputCount > 0 ) {
+        val inst = ThreadLocalRandom.current().nextInt(functions.length)
+        val func = functions(inst)
+        (inst, func)
+      } else {
+        val startFunctions = functions.filter( _.arguments == 0 )
+        val func = startFunctions(ThreadLocalRandom.current().nextInt(startFunctions.length))
+        val inst = functions.indexOf(func)
+        (inst, func)
+      }
+
       def randomWire: Int = {
+        require( inputCount + index > 0 )
         ThreadLocalRandom.current().nextInt( inputCount + index )
       }
 
@@ -87,10 +99,11 @@ object Generator {
    * When given a program will adjust the opcode and arguments in each instruction to make it able to execute without crashing
    * @param program the program to repair
    * @param functions list of functions to map to opcodes
-   * @tparam A the data type the program will work against
    * @return the newly repaired program
    */
-  def repair[A](program: Program)(implicit functions: Seq[Function[A]]): Program = {
+  def repair(program: Program)( implicit functions: Seq[Function[_]] ): Program = {
+
+    import scala.language.existentials
 
     val instructionSize = program.instructionSize
     val inputCount = program.inputCount
@@ -100,8 +113,18 @@ object Generator {
       .zipWithIndex
       .map { case (inst, originalIndex) =>
       val index = originalIndex + inputCount
-      val operator = inst.instruction(instructionSize) % functions.length
-      val func = functions(operator)
+      val (operator, func) = if( originalIndex + inputCount > 0 ) {
+        val operator = inst.instruction(instructionSize) % functions.length
+        val func = functions(operator)
+        (operator, func)
+      } else {
+        val startFunctions = functions.filter( _.arguments == 0 )
+        val func = startFunctions( inst.instruction(instructionSize) % startFunctions.length )
+        val operator = functions.indexOf(func)
+        assert( functions(operator) == func )
+        assert( func.arguments == 0 )
+        (operator, func)
+      }
 
       (func.arguments: @switch) match {
         case 0 => inst.instruction(operator, instructionSize)

@@ -30,6 +30,9 @@
 
 package evolve.core
 
+import scala.concurrent.forkjoin.ThreadLocalRandom
+import scala.util.Random
+
 /**
  * a set of testcases used in evolving/testing a program
  * @param cases the test cases to use
@@ -51,6 +54,18 @@ case class TestCases[A, B](cases: List[TestCase[A, B]]) {
       .sum
     assert( total >= 0 )
     total
+  }
+
+  def take(count: Int): TestCases[A, B] = {
+    TestCases(cases.take(count))
+  }
+
+  def drop(count: Int): TestCases[A, B] = {
+    TestCases(cases.drop(count))
+  }
+
+  def shuffle: TestCases[A, B] = {
+    TestCases( Random.shuffle(cases) )
   }
 }
 

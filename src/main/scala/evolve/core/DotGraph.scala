@@ -42,10 +42,9 @@ object DotGraph {
    * Converts a program into a String which is the dot (https://en.wikipedia.org/wiki/DOT_(graph_description_language)) file representation of the execution graph
    * @param program the program to convert
    * @param functions the functions to use
-   * @tparam A the data type we maniupulate
    * @return the dot file contents
    */
-  def apply[A](program: Program)(implicit functions: Seq[Function[A]]): String = {
+  def apply(program: Program)(implicit functions: Seq[Function[_]]): String = {
 
     val letters = Random.alphanumeric
 
