@@ -89,8 +89,8 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
 
     val used: Array[Boolean] = Array.fill(inputCount + data.length)(false)
 
-    for( i <- 0 until outputCount ) {
-      used( used.length - 1 - i ) = true
+    for( i <- used.length - outputCount until used.length ) {
+      used( i ) = true
     }
 
     for {
@@ -131,8 +131,9 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
   def shrink( implicit functions: Seq[Function[_]] ): Program = {
     val u = used
 
-    val indexSeq = (0 until inputCount)
-      .map( a => (a, a)) ++
+    val indexSeq =
+      (0 until inputCount)
+        .map( a => (a, a) ) ++
       (inputCount until data.length + inputCount)
         .filter( a => u( a ) )
         .zipWithIndex
@@ -143,8 +144,7 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
     val shrunkData = data
       .zipWithIndex
       .filter( a => u( a._2 + inputCount ) )
-      .map( _._1 )
-      .map { inst => {
+      .map { case (inst, _) => {
       val operator = inst.instruction(instructionSize)
       val func = functions(operator)
       (func.arguments: @switch) match {
@@ -170,6 +170,7 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
         case _ => throw new IllegalArgumentException
       }
     }}
+    assert( shrunkData.length == u.drop(inputCount).count( a => a ) )
     copy( data = shrunkData )
   }
 
@@ -185,8 +186,10 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
       this
     } else {
       val growth = size - data.length
-      val indexSeq = (0 until inputCount) ++ (inputCount + growth until data.length + inputCount + growth)
-      val grown = Seq.fill(growth)(Instruction(ThreadLocalRandom.current().nextInt())) ++ data.map { inst => {
+      val indexSeq = (0 until inputCount) ++ ((inputCount + growth) until (data.length + inputCount + growth))
+      assert(indexSeq.length == inputCount + data.length)
+
+      val remapped = data.map { inst => {
         val operator = inst.instruction(instructionSize)
         val func = functions(operator)
         (func.arguments: @switch) match {
@@ -194,27 +197,31 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
           case 1 =>
             val a = inst.pointer(instructionSize, func.argumentSize)
             inst
-              .pointer( indexSeq( a ), instructionSize, func.argumentSize )
+              .pointer(indexSeq(a), instructionSize, func.argumentSize)
           case 2 =>
             val a = inst.pointer(instructionSize, func.argumentSize)
             val b = inst.pointer(instructionSize + func.argumentSize, func.argumentSize)
             inst
-              .pointer( indexSeq(a), instructionSize, func.argumentSize )
-              .pointer( indexSeq(b), instructionSize + func.argumentSize, func.argumentSize )
+              .pointer(indexSeq(a), instructionSize, func.argumentSize)
+              .pointer(indexSeq(b), instructionSize + func.argumentSize, func.argumentSize)
           case 3 =>
             val a = inst.pointer(instructionSize, func.argumentSize)
             val b = inst.pointer(instructionSize + func.argumentSize, func.argumentSize)
             val c = inst.pointer(instructionSize + func.argumentSize + func.argumentSize, func.argumentSize)
             inst
-              .pointer( indexSeq(a), instructionSize, func.argumentSize )
-              .pointer( indexSeq(b), instructionSize + func.argumentSize, func.argumentSize )
-              .pointer( indexSeq(c), instructionSize + func.argumentSize + func.argumentSize, func.argumentSize )
+              .pointer(indexSeq(a), instructionSize, func.argumentSize)
+              .pointer(indexSeq(b), instructionSize + func.argumentSize, func.argumentSize)
+              .pointer(indexSeq(c), instructionSize + func.argumentSize + func.argumentSize, func.argumentSize)
           case _ => throw new IllegalArgumentException
         }
       }}
 
-      assert(grown.length >= size)
-      Generator.repair( copy(data = grown) )
+      val grown = Seq.fill(growth)(Instruction(ThreadLocalRandom.current().nextInt())) ++ remapped
+
+      assert(grown.length == size)
+      val result = copy(data = grown)
+      assert(used.count( a => a ) == result.used.count( a => a ))
+      Generator.repair( result )
     }
   }
 }
