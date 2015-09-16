@@ -88,10 +88,7 @@ object HelloWorld {
       }
 
       val evolved = EvolveUtil.counted(program, 100, optimise = false, testCases)
-      val scores = for {
-        testCase <- testCases.cases
-      } yield testCase.score(evolved(testCase.inputs).result(testCase.outputs.length))
-      bestScore = scores.sum
+      bestScore = testCases.score(evolved)
       if (bestScore == 0) {
         evolved
       } else {

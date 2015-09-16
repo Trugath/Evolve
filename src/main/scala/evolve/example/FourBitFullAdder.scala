@@ -63,10 +63,8 @@ object FourBitFullAdder {
     @tailrec def function(program: Program, generation: Long, improvements: Long): Program = {
       Evolver(program, testCases, optimise = false) match {
         case Some(evolved) =>
-          val scores = for {
-            testCase <- testCases.cases
-          } yield testCase.score(evolved(testCase.inputs).result(testCase.outputs.length))
-          if (scores.sum == 0) {
+          val score = testCases.score(evolved)
+          if (score == 0) {
             println( s"Solution found after $generation generations with $improvements mutations." )
             evolved
           } else {

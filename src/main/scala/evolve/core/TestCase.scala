@@ -41,10 +41,21 @@ import scala.util.Random
 case class TestCases[A, B](cases: List[TestCase[A, B]]) {
 
   /**
+   * Given a program score it against the test cases
+   * @param program The program to score
+   * @param scoreFunc scoring function
+   * @param functions The functions to map to the programs operators
+   * @return the summed score
+   */
+  def score( program: Program )( implicit scoreFunc: (Option[A], Option[B]) => Long, functions: Seq[Function[A]] ): Long = {
+    score( cases.map( testCase => program(testCase.inputs).result( program.outputCount ) ) )
+  }
+
+  /**
    * Given a programs result list this will score it against the testcases
    * @param result list of results for each test case
    * @param scoreFunc scoring function
-   * @return
+   * @return the summed score
    */
   def score( result: List[List[A]] )( implicit scoreFunc: (Option[A], Option[B]) => Long ): Long = {
     assert(result.length == cases.length)

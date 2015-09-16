@@ -59,10 +59,8 @@ object DivideByEight {
 
       Evolver(program, testCases, optimise = false) match {
         case Some(evolved) =>
-          val scores = for {
-            testCase <- testCases.cases
-          } yield testCase.score(evolved(testCase.inputs).result(testCase.outputs.length))
-          if (scores.sum == 0) {
+          val score = testCases.score(evolved)
+          if (score == 0) {
             evolved
           } else {
             function(evolved, generation + 1, improvements + 1)
