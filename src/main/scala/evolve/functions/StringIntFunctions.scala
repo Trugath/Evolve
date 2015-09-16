@@ -339,7 +339,7 @@ object StringIntFunctions {
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
-      memory.append((a._1 + b._1, 0))
+      memory.append((a._1 + b._1, a._2))
     }
   }
 
@@ -352,11 +352,7 @@ object StringIntFunctions {
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
-      try {
-        memory.append(a.copy( _1 = a._1.head.toString ))
-      } catch {
-        case _: NoSuchElementException => memory.append(a.copy(_1 = ""))
-      }
+      memory.append(a.copy( _1 = a._1.headOption.getOrElse("").toString ))
     }
   }
 
