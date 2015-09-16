@@ -78,7 +78,7 @@ case class Instruction( value: Int ) extends AnyVal {
 
   // sets a const value
   def const(const: Int, start: Int, length: Int): Instruction = {
-    require(start >= 0 && start <= 32)
+    require(start >= 0 && start < 32)
     require(length >= 0 && length <= 32)
     require(start + length <= 32)
     if(length == 0) {
@@ -97,7 +97,7 @@ case class Instruction( value: Int ) extends AnyVal {
 
   // extracts a pointer value
   def pointer(start: Int, length: Int): Int = {
-    require(start >= 0 && start <= 32)
+    require(start >= 0 && start < 32)
     require(length >= 0 && length <= 32)
     require(start + length <= 32)
     if(length == 0) {
@@ -113,7 +113,7 @@ case class Instruction( value: Int ) extends AnyVal {
 
   // set a pointer value
   def pointer(pointer: Int, start: Int, length: Int): Instruction = {
-    require(start >= 0 && start <= 32)
+    require(start >= 0 && start < 32)
     require(length >= 0 && length <= 32)
     require(start + length <= 32)
     if(length == 0) {
