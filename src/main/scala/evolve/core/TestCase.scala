@@ -53,7 +53,9 @@ case class TestCases[A, B](cases: List[TestCase[A, B]]) {
       .map { case (testCase, output) => testCase.score(output) }
       .sum
     assert( total >= 0 )
-    total
+    if(total < 0) {
+      Long.MaxValue
+    } else total
   }
 
   def take(count: Int): TestCases[A, B] = {
@@ -98,6 +100,9 @@ case class TestCase[A, B](inputs: List[A], outputs: List[B]) {
     val totals = resultCompare
       .map( a => scoreFunc( a._1, a._2 ) )
     assert( totals.sum >= 0 )
-    totals.sum
+   val total = totals.sum
+    if(total < 0) {
+      Long.MaxValue
+    } else total
   }
 }
