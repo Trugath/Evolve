@@ -50,10 +50,11 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
   def apply[A]( inputs: List[A] )( implicit functions: Seq[Function[A]] ): Memory[A] = {
     require( inputs.length == inputCount )
     @tailrec def execute(instructions: List[Instruction], used: List[Boolean], memory: Memory[A]): Memory[A] = instructions match {
-      case head :: tail => execute( tail, used.tail, functions( head.instruction( instructionSize ) )( head, memory ) )
-      case Nil          => memory
+      case head :: tail if  used.head   => execute( tail, used.tail, functions( head.instruction( instructionSize ) )( head, memory ) )
+      case head :: tail                 => execute( tail, used.tail, memory.append( memory.apply(0) ) )
+      case Nil                          => memory
     }
-    execute(data.toList, used.toList, Memory(inputs))
+    execute(data.toList, used.drop(inputCount).toList, Memory(inputs))
   }
 
   /**
