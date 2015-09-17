@@ -47,6 +47,8 @@ class Memory[A]( private val memory: ArrayBuffer[A], private val length: Int ) {
   }
 
   def result(count: Int): List[A] = memory.drop(length - count).toList
+
+  override def toString: String = memory.toString()
 }
 
 object Memory {

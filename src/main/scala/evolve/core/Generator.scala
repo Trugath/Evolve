@@ -30,6 +30,8 @@
 
 package evolve.core
 
+import evolve.util.MersenneTwister
+
 import scala.annotation.switch
 import scala.concurrent.forkjoin.ThreadLocalRandom
 
@@ -47,28 +49,27 @@ object Generator {
    * @param functions list of functions to map to opcodes
    * @return the freshly baked program
    */
-  def apply(instructionSize: Int, size: Int, inputCount: Int, outputCount: Int, seed: Int = 0)( implicit functions: Seq[Function[_]] ): Program = {
+  def apply(instructionSize: Int, size: Int, inputCount: Int, outputCount: Int, seed: Int = ThreadLocalRandom.current().nextInt())( implicit functions: Seq[Function[_]] ): Program = {
 
     import scala.language.existentials
 
-    if(seed != 0)
-      ThreadLocalRandom.current().setSeed(seed)
+    val random = new MersenneTwister(seed)
 
     val data = (0 until size).map { index =>
       val (inst, func) = if( index + inputCount > 0 ) {
-        val inst = ThreadLocalRandom.current().nextInt(functions.length)
+        val inst = random.nextInt(functions.length)
         val func = functions(inst)
         (inst, func)
       } else {
         val startFunctions = functions.filter( _.arguments == 0 )
-        val func = startFunctions(ThreadLocalRandom.current().nextInt(startFunctions.length))
+        val func = startFunctions(random.nextInt(startFunctions.length))
         val inst = functions.indexOf(func)
         (inst, func)
       }
 
       def randomWire: Int = {
         require( inputCount + index > 0 )
-        ThreadLocalRandom.current().nextInt( inputCount + index )
+        random.nextInt( inputCount + index )
       }
 
       require(func.instructionSize + func.argumentSize * func.arguments <= 32, "Need enough bits to pack operator and arguments")

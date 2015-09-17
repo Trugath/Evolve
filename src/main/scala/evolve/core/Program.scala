@@ -38,7 +38,7 @@ import scala.concurrent.forkjoin.ThreadLocalRandom
  */
 case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: Int, outputCount: Int ) {
   require( outputCount > 0, "A program must have an output" )
-  require( data.size + inputCount >= outputCount, "A program must be able to produce a result" )
+  require( data.size >= outputCount, "A program must be able to produce a result" )
 
   /**
    * Execute this program
@@ -50,9 +50,8 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
   def apply[A]( inputs: List[A] )( implicit functions: Seq[Function[A]] ): Memory[A] = {
     require( inputs.length == inputCount )
     @tailrec def execute(instructions: List[Instruction], used: List[Boolean], memory: Memory[A]): Memory[A] = instructions match {
-      case head :: tail if  used.head   => execute( tail, used.tail, functions( head.instruction( instructionSize ) )( head, memory ) )
-      case head :: tail                 => execute( tail, used.tail, memory.append( memory.apply(0) ) )
-      case Nil                          => memory
+      case head :: tail => execute( tail, used.tail, functions( head.instruction( instructionSize ) )( head, memory ) )
+      case Nil          => memory
     }
     execute(data.toList, used.toList, Memory(inputs))
   }
@@ -216,12 +215,10 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
         }
       }}
 
-      val grown = Seq.fill(growth)(Instruction(ThreadLocalRandom.current().nextInt())) ++ remapped
+      val grown = Seq.fill(growth)(Instruction(0)) ++ remapped
 
       assert(grown.length == size)
-      val result = copy(data = grown)
-      assert(used.count( a => a ) == result.used.count( a => a ))
-      Generator.repair( result )
+      copy(data = grown)
     }
   }
 }
