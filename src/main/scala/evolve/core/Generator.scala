@@ -47,9 +47,12 @@ object Generator {
    * @param functions list of functions to map to opcodes
    * @return the freshly baked program
    */
-  def apply(instructionSize: Int, size: Int, inputCount: Int, outputCount: Int)( implicit functions: Seq[Function[_]] ): Program = {
+  def apply(instructionSize: Int, size: Int, inputCount: Int, outputCount: Int, seed: Int = 0)( implicit functions: Seq[Function[_]] ): Program = {
 
     import scala.language.existentials
+
+    if(seed != 0)
+      ThreadLocalRandom.current().setSeed(seed)
 
     val data = (0 until size).map { index =>
       val (inst, func) = if( index + inputCount > 0 ) {
