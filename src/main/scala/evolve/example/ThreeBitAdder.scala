@@ -45,7 +45,7 @@ object ThreeBitAdder {
 
     import evolve.functions.BooleanFunctions._
 
-    implicit val evolveStatagy = EvolverStrategy(16, 0.01)
+    implicit val evolveStrategy = EvolverStrategy(16, 0.005)
 
     val testCases = TestCases(List(
       TestCase(List(false, false, false), List(false, false)),
@@ -74,7 +74,7 @@ object ThreeBitAdder {
       }
     }
 
-    val solution = EvolveUtil.counted(function(Generator(Nop.instructionSize, 16, 3, 2), 0, 0), 10000, optimise = false, testCases)
+    val solution = EvolveUtil.counted(function(Generator(Nop.instructionSize, 32, 3, 2), 0, 0), 10000, optimise = false, testCases)
     Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8) )
     val optimised = EvolveUtil.counted(solution.shrink, 10000, optimise = true, testCases)
     Files.write(Paths.get("optimised.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8) )
