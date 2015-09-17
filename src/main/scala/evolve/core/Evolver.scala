@@ -57,10 +57,12 @@ object Evolver {
 
     // returns the best child not worse than the parent
     val popResults = pop zip results
+    val originalScore = popResults.head._2 + (if(optimise) popResults.head._1.cost else 0)
     popResults
       .tail
-      .map( a => a.copy( _2 = a._2 + (if(optimise) a._1.cost else 0) ) )
       .filter( _._2 <= popResults.head._2 )
+      .map( a => a.copy( _2 = a._2 + (if(optimise) a._1.cost else 0) ) )
+      .filter( _._2 <= originalScore )
       .sortBy( _._2 )
       .map( _._1 )
       .headOption
