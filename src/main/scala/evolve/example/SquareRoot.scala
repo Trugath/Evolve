@@ -28,41 +28,49 @@
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-package evolve.core
+package evolve.example
 
-object Evolver {
+import java.nio.charset.StandardCharsets
+import java.nio.file.{Files, Paths}
 
-  case class EvolverStrategy( children: Int, factor: Double )
+import evolve.core.Evolver.EvolverStrategy
+import evolve.core._
+import evolve.util.EvolveUtil
 
-  /**
-   * Given a program, test cases and a scoring function will attempt to evolve a passed program
-   *
-   * @param program the program to evolve
-   * @param testCases the test cases to run against
-   * @param optimise whether we use the execution cost in the evolution
-   * @param score the scoring function to check for success
-   * @param functions list of functions to map to the program opcodes
-   * @tparam A the data type we work against
-   * @return A new program that is not worse than the parent
-   */
-  def apply[A, B]( program: Program, testCases: TestCases[A, B], optimise: Boolean )( implicit strategy: EvolverStrategy, score: (Option[A], Option[B]) => Long, functions: Seq[Function[A]] ): Option[Program] = {
-    val inputCount = testCases.cases.head.inputs.length
-    require( testCases.cases.forall( _.inputs.length == inputCount ) )
+import scala.annotation.tailrec
 
-    // create mutant children
-    val pop = program +: Seq.fill(strategy.children)( Generator.repair( Mutator( program, strategy.factor ) ) )
+object SquareRoot {
 
-    // score the children
-    val results = pop.par.map( individual => testCases.score( individual ) )
+  def main(args: Array[String]): Unit = {
 
-    // returns the best child not worse than the parent
-    val popResults = pop zip results
-    popResults
-      .tail
-      .map( a => a.copy( _2 = a._2 + (if(optimise) a._1.cost else 0) ) )
-      .filter( _._2 <= popResults.head._2 )
-      .sortBy( _._2 )
-      .map( _._1 )
-      .headOption
+    import evolve.functions.DoubleFunctions._
+
+    implicit val evolveStrategy = EvolverStrategy(12, 0.001)
+
+    val testCases = TestCases(
+      (0 until 2147483647 by 65535000)
+        .map( i => i.toDouble / 2147483647.0 )
+        .map( a => TestCase(List(a), List(math.sqrt(a))) )
+        .toList
+    )
+
+    @tailrec def function(program: Program, generation: Long): Program = {
+      if(generation >= 5000000)
+        return program
+
+      val evolved = EvolveUtil.counted(program, 1000, optimise = false, testCases)
+
+      val score = testCases.score(evolved)
+      if (score <= 100000000) {
+        evolved
+      } else {
+        function(evolved, generation + 1000)
+      }
+    }
+
+    val solution = EvolveUtil.counted(function(Generator(Nop.instructionSize, 64, 1, 1), 0), 5000, optimise = false, testCases)
+    Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8) )
+    val optimised = EvolveUtil.counted(solution.shrink, 5000, optimise = false, testCases)
+    Files.write(Paths.get("optimised.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8) )
   }
 }
