@@ -53,7 +53,7 @@ object Evolver {
     val pop = program +: Seq.fill(strategy.children)( Generator.repair( Mutator( program, strategy.factor ) ) )
 
     // score the children
-    val results = pop.map( individual => testCases.score( individual ) )
+    val results = pop.par.map( individual => testCases.score( individual ) )
 
     // returns the best child not worse than the parent
     val popResults = pop zip results
