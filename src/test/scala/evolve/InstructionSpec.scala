@@ -60,32 +60,32 @@ class InstructionSpec extends FlatSpec with PropertyChecks with GeneratorDrivenP
     assert( Instruction(0).const(0, 1) == 0 )
     assert( Instruction(0x80000000).const(0, 1) == -1 )
 
-    forAll (instructionRange, Gen.choose[Int](Int.MinValue, Int.MaxValue), Gen.choose[Int](0, 31), Gen.choose[Int](0, 32)) { (inst: Instruction, value: Int, start: Int, length: Int) =>
-      whenever(start + length <= 32) {
+    forAll (instructionRange, Gen.choose[Int](Int.MinValue, Int.MaxValue), Gen.choose[Int](0, 31), Gen.choose[Int](0, 32)) { (inst: Instruction, value: Int, start: Int, _length: Int) =>
+      val length = math.min(_length, 32 - start)
+      assert(start + length <= 32)
+      val tvalue = if (length == 32)
+        value
+      else if (length == 0)
+        0
+      else
+        value >> (start + (32 - (start + length)))
+
+      assert(tvalue === inst.const(tvalue, start, length).const(start, length))
+    }
+  }
+
+  "The pointer methods of Instruction" should "get and set correctly" in {
+    forAll (instructionRange, Gen.choose[Int](Int.MinValue, Int.MaxValue), Gen.choose[Int](0, 31), Gen.choose[Int](0, 32)) { (inst: Instruction, value: Int, start: Int, _length: Int) =>
+        val length = math.min(_length, 32 - start)
+        assert(start + length <= 32)
         val tvalue = if (length == 32)
           value
         else if (length == 0)
           0
         else
-          value >> (start + (32 - (start + length)))
+          value >>> (start + (32 - (start + length)))
 
-        assert(tvalue === inst.const(tvalue, start, length).const(start, length))
-      }
-    }
-  }
-
-  "The pointer methods of Instruction" should "get and set correctly" in {
-    forAll (instructionRange, Gen.choose[Int](Int.MinValue, Int.MaxValue), Gen.choose[Int](0, 31), Gen.choose[Int](0, 32)) { (inst: Instruction, value: Int, start: Int, length: Int) =>
-        whenever(start + length <= 32) {
-          val tvalue = if (length == 32)
-            value
-          else if (length == 0)
-            0
-          else
-            value >>> (start + (32 - (start + length)))
-
-          assert(tvalue === inst.pointer(tvalue, start, length).pointer(start, length))
-        }
+        assert(tvalue === inst.pointer(tvalue, start, length).pointer(start, length))
       }
     }
 }

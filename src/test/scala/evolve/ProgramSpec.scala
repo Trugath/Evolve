@@ -150,7 +150,9 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
 
   "Any shrunk program grown then re-shrunk" should "match itself" in {
     forAll(Gen.choose[Int](1, 16), Gen.choose[Int](0, 16), Gen.choose[Int](1, 16), Gen.choose[Int](Int.MinValue, Int.MaxValue)) {
-      (size: Int, inputCount: Int, outputCount: Int, seed: Int) => whenever( size >= outputCount && seed != 0 ) {
+      (size: Int, inputCount: Int, _outputCount: Int, seed: Int) => whenever( seed != 0 ) {
+        val outputCount = math.min(size, _outputCount)
+
         {
           import functions.BooleanFunctions._
           val program = Generator(Nop.instructionSize, size, inputCount, outputCount, seed).shrink
