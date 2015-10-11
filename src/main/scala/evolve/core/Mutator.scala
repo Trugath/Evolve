@@ -38,7 +38,11 @@ object Mutator {
 
   /**
    * Given a program and a mutation factor this function mutates the function by the set amount
-   * the factor 'should' be between 0.0 and 1.0 non-inclusive this is the amount of bits to twiddle
+   * the factor 'should' be between 0.0 and 1.0 non-inclusive
+   *
+   * random bits mutated = number of program bits * 0.75 * factor
+   * random instructions mutated = number of program instructions * 0.25 * factor
+   *
    * @param program the program to mutate
    * @param factor the amount of bits to mutate
    * @return the newly mutated program
