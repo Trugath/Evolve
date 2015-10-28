@@ -67,9 +67,12 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
 
     // get the total number of set bits in an integer
     def popCount( i: Int ): Int = {
+      /*
       val a = i - ((i >> 1) & 0x55555555)
       val b = (a & 0x33333333) + ((a >> 2) & 0x33333333)
       (((b + (b >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24
+      */
+      Integer.bitCount(i)
     }
 
     val maxLength = math.max(data.length, other.data.length)
