@@ -45,7 +45,7 @@ object SquareRoot {
 
     import evolve.functions.DoubleFunctions._
 
-    implicit val evolveStrategy = EvolverStrategy(12, 0.001)
+    implicit val evolveStrategy = EvolverStrategy(128, 0.001)
 
     val testCases = TestCases(
       (0 until 2147483647 by 65535000)

@@ -45,7 +45,7 @@ object DivideByEight {
 
     import evolve.functions.IntegerFunctions._
 
-    implicit val evolveStrategy = EvolverStrategy(16, 0.01)
+    implicit val evolveStrategy = EvolverStrategy(128, 0.01)
 
     val testCases = TestCases(
       (0 until 2147483647 by 65535000)
@@ -73,7 +73,7 @@ object DivideByEight {
 
     val solution = EvolveUtil.counted(function(Generator(Nop.instructionSize, 8, 1, 1), 0, 0), 5000, optimise = false, testCases)
     Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8) )
-    val optimised = EvolveUtil.counted(solution.shrink, 5000, optimise = false, testCases)
+    val optimised = EvolveUtil.counted(solution.shrink, 5000, optimise = true, testCases)
     Files.write(Paths.get("optimised.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8) )
   }
 }

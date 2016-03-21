@@ -30,7 +30,8 @@
 
 package evolve.core
 
-import scala.annotation.switch
+import scala.annotation.{switch, tailrec}
+import scala.collection.mutable
 import scala.concurrent.forkjoin.ThreadLocalRandom
 
 object Mutator {
@@ -72,11 +73,21 @@ object Mutator {
     val totalInstructions = program.data.length
     val mutatedInstructions = (totalInstructions * factor * 0.25).ceil.toInt
     val array = program.data.toArray
-    ( 0 until mutatedBits ).foreach( _ => mutateBit( ThreadLocalRandom.current().nextInt( totalBits ), array ) )
-    ( 0 until mutatedInstructions ).foreach( _ => mutateInstr( ThreadLocalRandom.current().nextInt( totalInstructions ), array ) )
+
+    @tailrec def go1(count: Int): Unit =  if(count > 0) {
+      mutateBit( ThreadLocalRandom.current().nextInt( totalBits ), array )
+      go1(count - 1)
+    }
+    go1(mutatedBits)
+
+    @tailrec def go2(count: Int): Unit =  if(count > 0) {
+      mutateInstr( ThreadLocalRandom.current().nextInt( totalInstructions ), array )
+      go2(count - 1)
+    }
+    go2(mutatedInstructions)
 
     program.copy(
-      data = array.toSeq
+      data = array
     )
   }
 }

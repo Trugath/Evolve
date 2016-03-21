@@ -52,8 +52,8 @@ class Memory[A]( private val memory: ArrayBuffer[A], private val length: Int ) {
 }
 
 object Memory {
-  def apply[A](inputs: List[A]): Memory[A] = {
-    val memory = new ArrayBuffer[A]( inputs.size )
+  def apply[A](inputs: List[A], expected: Int = 256): Memory[A] = {
+    val memory = new ArrayBuffer[A]( inputs.size + expected )
     memory.appendAll( inputs )
     new Memory[A]( memory, inputs.length )
   }

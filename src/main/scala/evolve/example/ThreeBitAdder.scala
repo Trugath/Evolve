@@ -45,7 +45,7 @@ object ThreeBitAdder {
 
     import evolve.functions.BooleanFunctions._
 
-    implicit val evolveStrategy = EvolverStrategy(16, 0.005)
+    implicit val evolveStrategy = EvolverStrategy(128, 0.005)
 
     val testCases = TestCases(List(
       TestCase(List(false, false, false), List(false, false)),

@@ -49,12 +49,14 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
    */
   def apply[A]( inputs: List[A] )( implicit functions: Seq[Function[A]] ): Memory[A] = {
     require( inputs.length == inputCount )
-    @tailrec def execute(instructions: List[Instruction], used: List[Boolean], memory: Memory[A]): Memory[A] = instructions match {
-      case head :: tail if  used.head   => execute( tail, used.tail, functions( head.instruction( instructionSize ) )( head, memory ) )
-      case head :: tail                 => execute( tail, used.tail, memory.append( memory.apply(0) ) )
-      case Nil                          => memory
-    }
-    execute(data.toList, used.drop(inputCount).toList, Memory(inputs))
+    @tailrec def execute(index: Int, usage: Seq[Boolean], memory: Memory[A]): Memory[A] = if(index < data.length) {
+      if(usage(index)) {
+        execute(index + 1, usage, functions( data(index).instruction( instructionSize ) )( data(index), memory ) )
+      } else {
+        execute(index + 1, usage, memory.append( memory(0) ))
+      }
+    } else memory
+    execute(0, used.drop(inputCount), Memory(inputs, data.length))
   }
 
   /**
@@ -64,24 +66,16 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
    * @return The bit distance
    */
   def difference( other: Program ): Int = {
-
-    // get the total number of set bits in an integer
-    def popCount( i: Int ): Int = {
-      /*
-      val a = i - ((i >> 1) & 0x55555555)
-      val b = (a & 0x33333333) + ((a >> 2) & 0x33333333)
-      (((b + (b >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24
-      */
-      Integer.bitCount(i)
-    }
-
     val maxLength = math.max(data.length, other.data.length)
     data
       .padTo(maxLength, Instruction(0))
       .zip(other.data.padTo(maxLength, Instruction(0)))
-      .map { case (a, b) => popCount(a.value ^ b.value) }
+      .map { case (a, b) =>  Integer.bitCount(a.value ^ b.value) }
       .sum
   }
+
+
+  private var used_memo: Map[(Seq[Function[_]]), Seq[Boolean]] = Map.empty
 
   /**
    * Returns a boolean representation showing which instructions are in use in this program
@@ -90,24 +84,30 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
    */
   def used(implicit functions: Seq[Function[_]]): Seq[Boolean] = {
 
-    val used: Array[Boolean] = Array.fill(inputCount + data.length)(false)
+    if(used_memo.contains(functions)) {
+      used_memo(functions)
+    } else {
+      val used: Array[Boolean] = Array.ofDim(inputCount + data.length)
 
-    for( i <- used.length - outputCount until used.length ) {
-      used( i ) = true
-    }
-
-    for {
-      (inst, index) <- data.zipWithIndex.reverse
-      func = functions( inst.instruction( instructionSize ) )
-      input <- 0 until func.arguments
-      pointer = inst.pointer( instructionSize + ( func.argumentSize * input ), func.argumentSize )
-    } {
-      if( used( index + inputCount ) ) {
-        used( pointer ) = true
+      for( i <- used.length - outputCount until used.length ) {
+        used( i ) = true
       }
-    }
 
-    used.toSeq
+      for {
+        (inst, index) <- data.zipWithIndex.reverse
+        func = functions( inst.instruction( instructionSize ) )
+        input <- 0 until func.arguments
+        pointer = inst.pointer( instructionSize + ( func.argumentSize * input ), func.argumentSize )
+      } {
+        if( used( index + inputCount ) ) {
+          used( pointer ) = true
+        }
+      }
+
+      val res = used.toSeq
+      used_memo += ((functions, res))
+      res
+    }
   }
 
   /**

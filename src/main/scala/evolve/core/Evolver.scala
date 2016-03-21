@@ -30,6 +30,8 @@
 
 package evolve.core
 
+import scala.collection.parallel.ParSeq
+
 object Evolver {
 
   case class EvolverStrategy( children: Int, factor: Double )
@@ -50,21 +52,27 @@ object Evolver {
     require( testCases.cases.forall( _.inputs.length == inputCount ) )
 
     // create mutant children
-    val pop = program +: Seq.fill(strategy.children)( Generator.repair( Mutator( program, strategy.factor ) ) )
+    val pop = program +: ParSeq.fill(strategy.children)( Generator.repair( Mutator( program, strategy.factor ) ) )
 
     // score the children
-    val results = pop.par.map( individual => testCases.score( individual ) )
+    val results = pop.map( individual => testCases.score( individual ) )
+
+    // get children not worse than the parent
+    val popResults = pop zip results
+    val childResults = popResults.tail.filter( _._2 <= popResults.head._2 )
 
     // returns the best child not worse than the parent
-    val popResults = pop zip results
-    val originalScore = popResults.head._2 + (if(optimise) popResults.head._1.cost else 0)
-    popResults
-      .tail
-      .filter( _._2 <= popResults.head._2 )
-      .map( a => a.copy( _2 = a._2 + (if(optimise) a._1.cost else 0) ) )
-      .filter( _._2 <= originalScore )
-      .sortBy( _._2 )
-      .map( _._1 )
-      .headOption
+    if(optimise) {
+      childResults
+        .map( a => a.copy( _2 = a._2 + a._1.cost ) )
+        .reduceOption[(Program, Long)] {
+        case (a, b) => if( a._2 < b._2 ) a else b
+      }.map( _._1 )
+    } else {
+      childResults
+        .reduceOption[(Program, Long)] {
+        case (a, b) => if( a._2 < b._2 ) a else b
+      }.map( _._1 )
+    }
   }
 }
