@@ -53,27 +53,9 @@ object DivideByEight {
         .toList
     )
 
-    @tailrec def function(program: Program, generation: Long, improvements: Long): Program = {
-      if(generation >= 5000)
-        return program
-
-      Evolver(program, testCases, optimise = false) match {
-        case Some(evolved) =>
-          val score = testCases.score(evolved)
-          if (score == 0) {
-            evolved
-          } else {
-            function(evolved, generation + 1, improvements + 1)
-          }
-
-        case None =>
-          function(program, generation + 1, improvements)
-      }
-    }
-
-    val solution = EvolveUtil.counted(function(Generator(Nop.instructionSize, 8, 1, 1), 0, 0), 5000, optimise = false, testCases)
+    val solution = EvolveUtil.counted(Generator(Nop.instructionSize, 8, 1, 1), 5000, optimise = false, testCases)
     Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8) )
-    val optimised = EvolveUtil.counted(solution.shrink, 5000, optimise = true, testCases)
+    val optimised = EvolveUtil.counted(solution.shrink.spread(10), 5000, optimise = true, testCases)
     Files.write(Paths.get("optimised.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8) )
   }
 }

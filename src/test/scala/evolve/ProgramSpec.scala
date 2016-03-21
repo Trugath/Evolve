@@ -149,8 +149,8 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
   }
 
   "Any shrunk program grown then re-shrunk" should "match itself" in {
-    forAll(Gen.choose[Int](1, 16), Gen.choose[Int](0, 16), Gen.choose[Int](1, 16), Gen.choose[Int](Int.MinValue, Int.MaxValue)) {
-      (size: Int, inputCount: Int, _outputCount: Int, seed: Int) => whenever( seed != 0 ) {
+    forAll(Gen.choose[Int](1, 16), Gen.choose[Int](0, 16), Gen.choose[Int](1, 16), Gen.choose[Int](2, 16), Gen.choose[Int](Int.MinValue, Int.MaxValue)) {
+      (size: Int, inputCount: Int, _outputCount: Int, multiplier: Int, seed: Int) => whenever( seed != 0 ) {
         val outputCount = math.min(size, _outputCount)
 
         {
@@ -159,6 +159,9 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
           val grown = program.grow(size*2)
           assert( program.used.count( a => a ) === grown.used.count( a => a ) )
           assert( program === grown.shrink )
+          val spread = program.spread(multiplier).shrink
+          assert( program.used.count( a => a ) === spread.used.count( a => a ) )
+          assert( program === spread.shrink )
         }
         {
           import functions.DoubleFunctions._
@@ -166,6 +169,9 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
           val grown = program.grow(size*2).shrink
           assert( program.used === grown.used )
           assert( program === grown )
+          val spread = program.spread(multiplier).shrink
+          assert( program.used === spread.used )
+          assert( program === spread )
         }
         {
           import functions.IntegerFunctions._
@@ -173,6 +179,9 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
           val grown = program.grow(size*2).shrink
           assert( program.used === grown.used )
           assert( program === grown )
+          val spread = program.spread(multiplier).shrink
+          assert( program.used === spread.used )
+          assert( program === spread )
         }
         {
           import functions.StringIntFunctions._
@@ -180,6 +189,9 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
           val grown = program.grow(size*2).shrink
           assert( program.used === grown.used )
           assert( program === grown )
+          val spread = program.spread(multiplier).shrink
+          assert( program.used === spread.used )
+          assert( program === spread )
         }
       }
     }

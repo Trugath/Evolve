@@ -76,7 +76,7 @@ object ThreeBitAdder {
 
     val solution = function(Generator(Nop.instructionSize, 32, 3, 2), 0, 0)
     Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8) )
-    val optimised = EvolveUtil.counted(solution.shrink, 10000, optimise = true, testCases)
+    val optimised = EvolveUtil.counted(solution.shrink.spread(2), 10000, optimise = true, testCases)
     Files.write(Paths.get("optimised.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8) )
   }
 }

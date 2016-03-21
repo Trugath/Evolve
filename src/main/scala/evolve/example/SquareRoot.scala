@@ -54,23 +54,9 @@ object SquareRoot {
         .toList
     )
 
-    @tailrec def function(program: Program, generation: Long): Program = {
-      if(generation >= 5000000)
-        return program
-
-      val evolved = EvolveUtil.counted(program, 1000, optimise = false, testCases)
-
-      val score = testCases.score(evolved)
-      if (score <= 100000000) {
-        evolved
-      } else {
-        function(evolved, generation + 1000)
-      }
-    }
-
-    val solution = EvolveUtil.counted(function(Generator(Nop.instructionSize, 64, 1, 1), 0), 5000, optimise = false, testCases)
+    val solution = EvolveUtil.counted(Generator(Nop.instructionSize, 64, 1, 1), 10000, optimise = false, testCases)
     Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8) )
-    val optimised = EvolveUtil.counted(solution.shrink, 5000, optimise = false, testCases)
+    val optimised = EvolveUtil.counted(solution.shrink.spread(10), 10000, optimise = true, testCases)
     Files.write(Paths.get("optimised.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8) )
   }
 }

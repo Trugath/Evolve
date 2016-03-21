@@ -191,4 +191,36 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
       copy(data = grown)
     }
   }
+
+  /**
+    * Interleaves instructions into the current program, increasing its size
+    * @param functions Functions which map to the instruction opcodes
+    * @return The new program
+    */
+  def spread(multiplier: Int = 2)( implicit functions: Seq[Function[_]] ): Program = {
+    val indexes: Array[Int] = {
+      val b = inputCount + (data.length - outputCount) * multiplier
+      val c = b + outputCount
+      ((0 until inputCount) ++
+      (inputCount until b by multiplier ) ++
+      (b until c)).toArray
+    }
+    assert(indexes.length == inputCount + data.length)
+
+    def go(read: Int, write: Int, acc: List[Instruction]): List[Instruction] = if(read < data.length) {
+      if(inputCount + write == indexes(inputCount + read)) {
+        val operator = data(read).instruction(instructionSize)
+        val func = functions(operator)
+        @tailrec def remap(arguments: Int, i: Instruction): Instruction = if(arguments > 0) {
+          val index = data(read).pointer(instructionSize + (func.argumentSize * (arguments - 1)), func.argumentSize)
+          remap(arguments - 1, i.pointer( indexes(index), func.instructionSize + (func.argumentSize * (arguments - 1)), func.argumentSize ) )
+        } else i
+        go( read + 1, write + 1, remap(func.arguments, data(read)) :: acc )
+      } else {
+        go( read, write + 1, Instruction(0) :: acc )
+      }
+    } else acc.reverse
+
+    copy( data = go( 0, 0, Nil ) )
+  }
 }

@@ -58,7 +58,7 @@ object DoubleFunctions {
   object Nop extends Function[Double]  {
     override def arguments: Int = 1
     override def cost: Int = 2
-    override def getLabel(inst: Instruction): String = "NopLeft"
+    override def getLabel(inst: Instruction): String = "Nop"
     override def apply(inst: Instruction, memory: Memory[Double]): Memory[Double] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       memory.append(a)

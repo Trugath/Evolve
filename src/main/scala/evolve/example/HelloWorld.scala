@@ -96,7 +96,7 @@ object HelloWorld {
       }
     }
 
-    val initial = EvolveUtil.startup(Generator(Nop.instructionSize, 128, 2, 1), testCases).shrink.grow(32)
+    val initial = EvolveUtil.startup(Generator(Nop.instructionSize, 128, 2, 1), testCases).shrink.spread(10).grow(128)
     println(s"Start program selected. length: ${initial.data.length}")
     speedMarkTime = System.nanoTime
     val solution = EvolveUtil.counted(function(initial, 0), 10000, optimise = true, testCases)
