@@ -102,9 +102,9 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
       // generate a known program
       val b = Generator(Nop.instructionSize, 3, 1, 1, -1)
       assert( b.data.length === 3 )
-      assert( b.data(2).instruction(Nop.instructionSize) === functions.indexOf(And) )
+      assert( b.data(2).instruction(Nop.instructionSize) === functions.indexOf(Not) )
       assert( b.data(2).pointer(And.instructionSize, And.argumentSize) === 1 )
-      assert( b.data(2).pointer(And.instructionSize + And.argumentSize, And.argumentSize) === 1 )
+      assert( b.data(2).pointer(And.instructionSize + And.argumentSize, And.argumentSize) === 0 )
       assert( b.data(0).instruction(Nop.instructionSize) === functions.indexOf(XOr) )
       assert( b.data(0).pointer(XOr.instructionSize, XOr.argumentSize) === 0 )
       assert( b.data(0).pointer(XOr.instructionSize + XOr.argumentSize, XOr.argumentSize) === 0 )
@@ -113,9 +113,9 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
       // shrink
       val bShrunk = b.shrink
       assert( bShrunk.data.length === 2 )
-      assert( bShrunk.data(1).instruction(Nop.instructionSize) === functions.indexOf(And) )
+      assert( bShrunk.data(1).instruction(Nop.instructionSize) === functions.indexOf(Not) )
       assert( bShrunk.data(1).pointer(And.instructionSize, And.argumentSize) === 1 )
-      assert( bShrunk.data(1).pointer(And.instructionSize + And.argumentSize, And.argumentSize) === 1 )
+      assert( bShrunk.data(1).pointer(And.instructionSize + And.argumentSize, And.argumentSize) === 0 )
       assert( bShrunk.data(0).instruction(Nop.instructionSize) === functions.indexOf(XOr) )
       assert( bShrunk.data(0).pointer(XOr.instructionSize, XOr.argumentSize) === 0 )
       assert( bShrunk.data(0).pointer(XOr.instructionSize + XOr.argumentSize, XOr.argumentSize) === 0 )

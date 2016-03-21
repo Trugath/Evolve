@@ -32,12 +32,13 @@ package evolve.core
 
 object Instruction {
   def apply( inst: Int, bits: Int ): Instruction = Instruction(0).instruction(inst, bits)
+  def apply( bits: Int ): Instruction = new Instruction( bits )
 }
 
 /**
  * 32 bit value containing the function index and argument indexes
  */
-case class Instruction( value: Int ) extends AnyVal {
+class Instruction( val value: Int ) extends AnyVal {
 
   // extracts the instruction
   def instruction(bits: Int): Int = {
