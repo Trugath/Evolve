@@ -30,7 +30,7 @@
 
 package evolve.core
 
-import scala.annotation.switch
+import scala.annotation.tailrec
 import scala.util.Random
 
 /**
@@ -109,25 +109,18 @@ object DotGraph {
           val instructionSize = program.instructionSize
           val func = inst.instruction( instructionSize )
           val argumentSize = func.argumentSize
-          (func.arguments: @switch) match {
-            case 0 =>
-            case 1 =>
-              val a = inst.pointer(instructionSize, argumentSize)
+
+          // ensure that argument inputs are wired into preceding instruction outputs
+          @tailrec def output(arguments: Int, acc: Instruction, label: Boolean): Instruction = if(arguments > 0) {
+            val a = inst.pointer(instructionSize + (func.argumentSize * (arguments - 1)), argumentSize)
+            if(label && func.ordered) {
+              buffer.append(s"${names(a)} -> ${names(index)} [label=${('a'.toByte + arguments - 1).toChar}];\r\n")
+            } else {
               buffer.append(s"${names(a)} -> ${names(index)};\r\n")
-            case 2 =>
-              val a = inst.pointer(instructionSize, argumentSize)
-              val b = inst.pointer(instructionSize + argumentSize, argumentSize)
-              buffer.append(s"${names(a)} -> ${names(index)};\r\n")
-              buffer.append(s"${names(b)} -> ${names(index)};\r\n")
-            case 3 =>
-              val a = inst.pointer(instructionSize, argumentSize)
-              val b = inst.pointer(instructionSize + argumentSize, argumentSize)
-              val c = inst.pointer(instructionSize + argumentSize + argumentSize, argumentSize)
-              buffer.append(s"${names(a)} -> ${names(index)};\r\n")
-              buffer.append(s"${names(b)} -> ${names(index)};\r\n")
-              buffer.append(s"${names(c)} -> ${names(index)};\r\n")
-            case _ => throw new IllegalArgumentException
-          }
+            }
+            output(arguments - 1, acc, label)
+          } else acc
+          output(func.arguments, inst, func.arguments > 1)
         }
       }
 

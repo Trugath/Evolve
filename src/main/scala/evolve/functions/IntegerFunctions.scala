@@ -59,7 +59,7 @@ object IntegerFunctions {
   object Nop extends Function[Int]  {
     override def arguments: Int = 1
     override def cost: Int = 2
-    override def getLabel(inst: Instruction): String = "NopLeft"
+    override def getLabel(inst: Instruction): String = "Nop"
     override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       memory.append(a)
@@ -91,6 +91,7 @@ object IntegerFunctions {
   object Subtract extends Function[Int]  {
     override def cost: Int = 4
     override def getLabel(inst: Instruction): String = "Subtract"
+    override def ordered: Boolean = true
     override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
@@ -111,6 +112,7 @@ object IntegerFunctions {
   object Divide extends Function[Int]  {
     override def cost: Int = 10
     override def getLabel(inst: Instruction): String = "Divide"
+    override def ordered: Boolean = true
     override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
@@ -125,6 +127,7 @@ object IntegerFunctions {
   object Modulus extends Function[Int]  {
     override def cost: Int = 10
     override def getLabel(inst: Instruction): String = "Modulus"
+    override def ordered: Boolean = true
     override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
@@ -199,6 +202,7 @@ object IntegerFunctions {
   object ShiftLeft extends Function[Int]  {
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = "<<"
+    override def ordered: Boolean = true
     override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
@@ -209,6 +213,7 @@ object IntegerFunctions {
   object ShiftUnsignedRight extends Function[Int]  {
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = ">>>"
+    override def ordered: Boolean = true
     override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
@@ -219,6 +224,7 @@ object IntegerFunctions {
   object ShiftSignedRight extends Function[Int]  {
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = ">>"
+    override def ordered: Boolean = true
     override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))

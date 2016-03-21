@@ -103,6 +103,7 @@ object DoubleFunctions {
   object Subtract extends Function[Double]  {
     override def cost: Int = 4
     override def getLabel(inst: Instruction): String = "Subtract"
+    override def ordered: Boolean = true
     override def apply(inst: Instruction, memory: Memory[Double]): Memory[Double] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
@@ -123,6 +124,7 @@ object DoubleFunctions {
   object Divide extends Function[Double]  {
     override def cost: Int = 10
     override def getLabel(inst: Instruction): String = "Divide"
+    override def ordered: Boolean = true
     override def apply(inst: Instruction, memory: Memory[Double]): Memory[Double] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
@@ -137,6 +139,7 @@ object DoubleFunctions {
   object Modulus extends Function[Double]  {
     override def cost: Int = 10
     override def getLabel(inst: Instruction): String = "Modulus"
+    override def ordered: Boolean = true
     override def apply(inst: Instruction, memory: Memory[Double]): Memory[Double] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))

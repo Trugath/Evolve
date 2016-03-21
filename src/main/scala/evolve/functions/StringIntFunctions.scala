@@ -92,6 +92,7 @@ object StringIntFunctions {
 
     override def getLabel(inst: Instruction): String = "Nop"
 
+
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       memory.append(a)
@@ -123,11 +124,11 @@ object StringIntFunctions {
   }
 
   object Min extends Function[(String, Int)] {
-    override def arguments: Int = 2
 
     override def cost: Int = 10
 
     override def getLabel(inst: Instruction): String = "Min"
+
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
@@ -140,11 +141,11 @@ object StringIntFunctions {
   }
 
   object Max extends Function[(String, Int)] {
-    override def arguments: Int = 2
 
     override def cost: Int = 10
 
     override def getLabel(inst: Instruction): String = "Max"
+
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
@@ -163,6 +164,7 @@ object StringIntFunctions {
     override def cost: Int = 10
 
     override def getLabel(inst: Instruction): String = "Token"
+
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
@@ -183,6 +185,7 @@ object StringIntFunctions {
 
     override def getLabel(inst: Instruction): String = "CharAt"
 
+
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       val char = math.max(-1, math.min(a._1.length - 1, a._2))
@@ -194,11 +197,12 @@ object StringIntFunctions {
   }
 
   object TakeString extends Function[(String, Int)] {
-    override def arguments: Int = 2
 
     override def cost: Int = 10
 
     override def getLabel(inst: Instruction): String = "TakeString"
+
+    override def ordered: Boolean = true
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
@@ -208,11 +212,12 @@ object StringIntFunctions {
   }
 
   object TakeInt extends Function[(String, Int)] {
-    override def arguments: Int = 2
 
     override def cost: Int = 10
 
     override def getLabel(inst: Instruction): String = "TakeInt"
+
+    override def ordered: Boolean = true
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
@@ -222,11 +227,12 @@ object StringIntFunctions {
   }
 
   object OrElse extends Function[(String, Int)] {
-    override def arguments: Int = 2
 
     override def cost: Int = 10
 
     override def getLabel(inst: Instruction): String = "OrElse"
+
+    override def ordered: Boolean = true
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
@@ -242,6 +248,7 @@ object StringIntFunctions {
 
     override def getLabel(inst: Instruction): String = "Length"
 
+
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       memory.append(a.copy( _2 = a._1.length ))
@@ -255,6 +262,7 @@ object StringIntFunctions {
 
     override def getLabel(inst: Instruction): String = "Hash"
 
+
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       memory.append(a.copy( _2 = a._1.hashCode ))
@@ -262,11 +270,11 @@ object StringIntFunctions {
   }
 
   object Distance extends Function[(String, Int)] {
-    override def arguments: Int = 2
 
     override def cost: Int = 10
 
     override def getLabel(inst: Instruction): String = "Distance"
+
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
@@ -276,11 +284,11 @@ object StringIntFunctions {
   }
 
   object Compare extends Function[(String, Int)] {
-    override def arguments: Int = 2
 
     override def cost: Int = 10
 
     override def getLabel(inst: Instruction): String = "Compare"
+
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
@@ -290,11 +298,12 @@ object StringIntFunctions {
   }
 
   object Contains extends Function[(String, Int)] {
-    override def arguments: Int = 2
 
     override def cost: Int = 10
 
     override def getLabel(inst: Instruction): String = "Contains"
+
+    override def ordered: Boolean = true
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
@@ -310,6 +319,7 @@ object StringIntFunctions {
 
     override def getLabel(inst: Instruction): String = "Start"
 
+
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       memory.append( a.copy( _1 = a._1.splitAt( math.max(0, math.min( a._1.length, a._2 ) ) )._1 ) )
@@ -323,6 +333,7 @@ object StringIntFunctions {
 
     override def getLabel(inst: Instruction): String = "End"
 
+
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       memory.append( a.copy( _1 = a._1.splitAt( math.max(0, math.min( a._1.length, a._2 ) ) )._2 ) )
@@ -330,11 +341,12 @@ object StringIntFunctions {
   }
 
   object Concatenate extends Function[(String, Int)] {
-    override def arguments: Int = 2
 
     override def cost: Int = 10
 
     override def getLabel(inst: Instruction): String = "Concatenate"
+
+    override def ordered: Boolean = true
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
@@ -350,6 +362,7 @@ object StringIntFunctions {
 
     override def getLabel(inst: Instruction): String = "Head"
 
+
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       memory.append(a.copy( _1 = a._1.headOption.getOrElse("").toString ))
@@ -362,6 +375,7 @@ object StringIntFunctions {
     override def cost: Int = 10
 
     override def getLabel(inst: Instruction): String = "Tail"
+
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
@@ -380,6 +394,7 @@ object StringIntFunctions {
 
     override def getLabel(inst: Instruction): String = "Capitalise"
 
+
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       memory.append(a.copy( _1 = a._1.capitalize ))
@@ -392,6 +407,7 @@ object StringIntFunctions {
     override def cost: Int = 10
 
     override def getLabel(inst: Instruction): String = "UpperCase"
+
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
@@ -406,6 +422,7 @@ object StringIntFunctions {
 
     override def getLabel(inst: Instruction): String = "LowerCase"
 
+
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       memory.append(a.copy( _1 = a._1.toLowerCase ))
@@ -418,6 +435,7 @@ object StringIntFunctions {
     override def cost: Int = 10
 
     override def getLabel(inst: Instruction): String = "Reverse"
+
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
@@ -439,6 +457,7 @@ object StringIntFunctions {
   object Subtract extends Function[(String, Int)]  {
     override def cost: Int = 4
     override def getLabel(inst: Instruction): String = "Subtract"
+    override def ordered: Boolean = true
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
@@ -459,6 +478,7 @@ object StringIntFunctions {
   object Divide extends Function[(String, Int)]  {
     override def cost: Int = 10
     override def getLabel(inst: Instruction): String = "Divide"
+    override def ordered: Boolean = true
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
@@ -473,6 +493,7 @@ object StringIntFunctions {
   object Modulus extends Function[(String, Int)]  {
     override def cost: Int = 10
     override def getLabel(inst: Instruction): String = "Modulus"
+    override def ordered: Boolean = true
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
@@ -505,9 +526,9 @@ object StringIntFunctions {
   }
 
   object Average extends Function[(String, Int)]  {
-    override def arguments: Int = 2
     override def cost: Int = 10
     override def getLabel(inst: Instruction): String = "Average"
+    override def ordered: Boolean = true
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): Memory[(String, Int)] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))

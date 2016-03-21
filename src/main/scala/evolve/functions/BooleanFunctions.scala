@@ -31,13 +31,13 @@
 package evolve.functions
 
 import evolve.core.{Function, Instruction, Memory}
-import evolve.functions.IntegerFunctions.Const._
 
 object BooleanFunctions {
 
   implicit val functions = Seq[Function[Boolean]](
     Nop, Const,
-    And, Or, XOr, Not
+    And, Or, Not,
+    Implication, XOr, Equal
   )
 
   implicit def scoreFunc: (Option[Boolean], Option[Boolean]) => Long = (a, b) => {
@@ -55,6 +55,7 @@ object BooleanFunctions {
     override def arguments: Int = 1
     override def cost: Int = 1
     override def getLabel(inst: Instruction): String = "Nop"
+
     override def apply(inst: Instruction, memory: Memory[Boolean]): Memory[Boolean] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       memory.append(a)
@@ -74,7 +75,6 @@ object BooleanFunctions {
   }
 
   object And extends Function[Boolean]  {
-    override def arguments: Int = 2
     override def cost: Int = 2
     override def getLabel(inst: Instruction): String = "&"
     override def apply(inst: Instruction, memory: Memory[Boolean]): Memory[Boolean] = {
@@ -85,24 +85,12 @@ object BooleanFunctions {
   }
 
   object Or extends Function[Boolean]  {
-    override def arguments: Int = 2
     override def cost: Int = 2
     override def getLabel(inst: Instruction): String = "|"
     override def apply(inst: Instruction, memory: Memory[Boolean]): Memory[Boolean] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
       memory.append(a|b)
-    }
-  }
-
-  object XOr extends Function[Boolean]  {
-    override def arguments: Int = 2
-    override def cost: Int = 6
-    override def getLabel(inst: Instruction): String = "^"
-    override def apply(inst: Instruction, memory: Memory[Boolean]): Memory[Boolean] = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
-      memory.append(a^b)
     }
   }
 
@@ -113,6 +101,37 @@ object BooleanFunctions {
     override def apply(inst: Instruction, memory: Memory[Boolean]): Memory[Boolean] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       memory.append(!a)
+    }
+  }
+
+  object Implication extends Function[Boolean]  {
+    override def cost: Int = 6 // we want (!a | b) to be cheaper
+    override def getLabel(inst: Instruction): String = "->"
+    override def ordered: Boolean = true
+    override def apply(inst: Instruction, memory: Memory[Boolean]): Memory[Boolean] = {
+      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      memory.append(!a||b)
+    }
+  }
+
+  object XOr extends Function[Boolean]  {
+    override def cost: Int = 3 // we want to be cheaper than the equivalent basic gate setup
+    override def getLabel(inst: Instruction): String = "^"
+    override def apply(inst: Instruction, memory: Memory[Boolean]): Memory[Boolean] = {
+      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      memory.append(a^b)
+    }
+  }
+
+  object Equal extends Function[Boolean]  {
+    override def cost: Int = 10 // we want XOR -> NOT to be cheaper
+    override def getLabel(inst: Instruction): String = "=="
+    override def apply(inst: Instruction, memory: Memory[Boolean]): Memory[Boolean] = {
+      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      memory.append(a==b)
     }
   }
 }

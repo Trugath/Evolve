@@ -50,6 +50,9 @@ trait Function[A] {
   // label for printing/graphing
   def getLabel(inst: Instruction): String = "Unknown"
 
+  // are the inputs order dependant
+  def ordered: Boolean = false
+
   // the function itself
   def apply(inst: Instruction, memory: Memory[A]): Memory[A]
 }
