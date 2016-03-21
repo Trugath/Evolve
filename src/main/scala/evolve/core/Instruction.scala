@@ -30,6 +30,10 @@
 
 package evolve.core
 
+object Instruction {
+  def apply( inst: Int, bits: Int ): Instruction = Instruction(0).instruction(inst, bits)
+}
+
 /**
  * 32 bit value containing the function index and argument indexes
  */

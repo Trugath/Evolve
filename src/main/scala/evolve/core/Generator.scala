@@ -32,7 +32,7 @@ package evolve.core
 
 import evolve.util.MersenneTwister
 
-import scala.annotation.switch
+import scala.annotation.{switch, tailrec}
 import scala.concurrent.forkjoin.ThreadLocalRandom
 
 /**
@@ -72,28 +72,13 @@ object Generator {
         random.nextInt( inputCount + index )
       }
 
+      // randomly wire the inputs of the instruction into earlier outputs
+      @tailrec def wire(arguments: Int, i: Instruction): Instruction = if(arguments > 0) {
+        wire(arguments - 1, i.pointer( randomWire, func.instructionSize + (func.argumentSize * (arguments - 1)), func.argumentSize ) )
+      } else i
+
       require(func.instructionSize + func.argumentSize * func.arguments <= 32, "Need enough bits to pack operator and arguments")
-      (func.arguments: @switch) match {
-        case 0 =>
-          Instruction(0)
-            .instruction(inst, func.instructionSize)
-        case 1 =>
-          Instruction(0)
-            .instruction(inst, func.instructionSize)
-            .pointer( randomWire, func.instructionSize, func.argumentSize )
-        case 2 =>
-          Instruction(0)
-            .instruction(inst, func.instructionSize)
-            .pointer( randomWire, func.instructionSize, func.argumentSize )
-            .pointer( randomWire, func.instructionSize + func.argumentSize, func.argumentSize )
-        case 3 =>
-          Instruction(0)
-            .instruction(inst, func.instructionSize)
-            .pointer( randomWire, func.instructionSize, func.argumentSize )
-            .pointer( randomWire, func.instructionSize + func.argumentSize, func.argumentSize )
-            .pointer( randomWire, func.instructionSize + func.argumentSize + func.argumentSize, func.argumentSize )
-        case _ => throw new IllegalArgumentException
-      }
+      wire(func.arguments, Instruction(inst, func.instructionSize))
     }
 
     Program(instructionSize, data, inputCount, outputCount)
@@ -130,25 +115,11 @@ object Generator {
         (operator, func)
       }
 
-      (func.arguments: @switch) match {
-        case 0 => inst.instruction(operator, instructionSize)
-        case 1 =>
-          inst
-            .instruction(operator, instructionSize)
-            .pointer( inst.pointer(instructionSize, func.argumentSize) % index, instructionSize, func.argumentSize )
-        case 2 =>
-          inst
-            .instruction(operator, instructionSize)
-            .pointer( inst.pointer(instructionSize, func.argumentSize) % index, instructionSize, func.argumentSize )
-            .pointer( inst.pointer(instructionSize + func.argumentSize, func.argumentSize) % index, instructionSize + func.argumentSize, func.argumentSize )
-        case 3 =>
-          inst
-            .instruction(operator, instructionSize)
-            .pointer( inst.pointer(instructionSize, func.argumentSize) % index, instructionSize, func.argumentSize )
-            .pointer( inst.pointer(instructionSize + func.argumentSize, func.argumentSize) % index, instructionSize + func.argumentSize, func.argumentSize )
-            .pointer( inst.pointer(instructionSize + func.argumentSize + func.argumentSize, func.argumentSize) % index, instructionSize + func.argumentSize + func.argumentSize, func.argumentSize )
-        case _ => throw new IllegalArgumentException
-      }
+      // ensure that argument inputs are wired into preceding instruction outputs
+      @tailrec def repair(arguments: Int, acc: Instruction): Instruction = if(arguments > 0) {
+        repair(arguments - 1, acc.pointer( inst.pointer(instructionSize + (func.argumentSize * (arguments - 1)), func.argumentSize) % index, instructionSize + (func.argumentSize * (arguments - 1)), func.argumentSize ) )
+      } else acc
+      repair(func.arguments, inst.instruction(operator, instructionSize))
     }
 
     assert( instructions.forall( _.instruction(instructionSize) < functions.length ) )

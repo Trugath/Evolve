@@ -144,32 +144,15 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
     val shrunkData = data
       .zipWithIndex
       .filter( a => u( a._2 + inputCount ) )
-      .map { case (inst, _) => {
-      val operator = inst.instruction(instructionSize)
-      val func = functions(operator)
-      (func.arguments: @switch) match {
-        case 0 => inst
-        case 1 =>
-          val a = inst.pointer(instructionSize, func.argumentSize)
-          inst
-            .pointer( indexMap( a ), instructionSize, func.argumentSize )
-        case 2 =>
-          val a = inst.pointer(instructionSize, func.argumentSize)
-          val b = inst.pointer(instructionSize + func.argumentSize, func.argumentSize)
-          inst
-            .pointer( indexMap(a), instructionSize, func.argumentSize )
-            .pointer( indexMap(b), instructionSize + func.argumentSize, func.argumentSize )
-        case 3 =>
-          val a = inst.pointer(instructionSize, func.argumentSize)
-          val b = inst.pointer(instructionSize + func.argumentSize, func.argumentSize)
-          val c = inst.pointer(instructionSize + func.argumentSize + func.argumentSize, func.argumentSize)
-          inst
-            .pointer( indexMap(a), instructionSize, func.argumentSize )
-            .pointer( indexMap(b), instructionSize + func.argumentSize, func.argumentSize )
-            .pointer( indexMap(c), instructionSize + func.argumentSize + func.argumentSize, func.argumentSize )
-        case _ => throw new IllegalArgumentException
+      .map { case (inst, _) =>
+        val operator = inst.instruction(instructionSize)
+        val func = functions(operator)
+        @tailrec def rewire(arguments: Int, i: Instruction): Instruction = if(arguments > 0) {
+          val index = inst.pointer(instructionSize + (func.argumentSize * (arguments - 1)), func.argumentSize)
+          rewire(arguments - 1, i.pointer( indexMap(index), func.instructionSize + (func.argumentSize * (arguments - 1)), func.argumentSize ) )
+        } else i
+        rewire(func.arguments, inst)
       }
-    }}
     assert( shrunkData.length == u.drop(inputCount).count( a => a ) )
     copy( data = shrunkData )
   }
@@ -192,28 +175,11 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
       val remapped = data.map { inst => {
         val operator = inst.instruction(instructionSize)
         val func = functions(operator)
-        (func.arguments: @switch) match {
-          case 0 => inst
-          case 1 =>
-            val a = inst.pointer(instructionSize, func.argumentSize)
-            inst
-              .pointer(indexSeq(a), instructionSize, func.argumentSize)
-          case 2 =>
-            val a = inst.pointer(instructionSize, func.argumentSize)
-            val b = inst.pointer(instructionSize + func.argumentSize, func.argumentSize)
-            inst
-              .pointer(indexSeq(a), instructionSize, func.argumentSize)
-              .pointer(indexSeq(b), instructionSize + func.argumentSize, func.argumentSize)
-          case 3 =>
-            val a = inst.pointer(instructionSize, func.argumentSize)
-            val b = inst.pointer(instructionSize + func.argumentSize, func.argumentSize)
-            val c = inst.pointer(instructionSize + func.argumentSize + func.argumentSize, func.argumentSize)
-            inst
-              .pointer(indexSeq(a), instructionSize, func.argumentSize)
-              .pointer(indexSeq(b), instructionSize + func.argumentSize, func.argumentSize)
-              .pointer(indexSeq(c), instructionSize + func.argumentSize + func.argumentSize, func.argumentSize)
-          case _ => throw new IllegalArgumentException
-        }
+        @tailrec def remap(arguments: Int, i: Instruction): Instruction = if(arguments > 0) {
+          val index = inst.pointer(instructionSize + (func.argumentSize * (arguments - 1)), func.argumentSize)
+          remap(arguments - 1, i.pointer( indexSeq(index), func.instructionSize + (func.argumentSize * (arguments - 1)), func.argumentSize ) )
+        } else i
+        remap(func.arguments, inst)
       }}
 
       val grown = Seq.fill(growth)(Instruction(0)) ++ remapped
