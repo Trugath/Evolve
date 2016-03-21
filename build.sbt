@@ -13,4 +13,4 @@ scalacOptions ++= Seq(
 
 libraryDependencies += "org.scalacheck" % "scalacheck_2.11" % "1.12.5" % "test"
 
-libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.5" % "test"
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.0-M9" % "test"
