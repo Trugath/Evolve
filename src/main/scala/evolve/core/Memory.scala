@@ -36,7 +36,7 @@ import scala.collection.mutable.ArrayBuffer
  * Memory is a write only expanding data structure
  * Currently implemented with a mutable array buffer backing
  */
-class Memory[A]( private val memory: ArrayBuffer[A], private val length: Int ) {
+class Memory[A] private ( private val memory: ArrayBuffer[A], private val length: Int ) {
 
   def apply(index: Int): A = memory( index )
 
