@@ -193,7 +193,9 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
   }
 
   /**
-    * Interleaves instructions into the current program, increasing its size
+    * Interleaves instructions into the current program, increasing its size.
+    * Program grows by ( program size - output count ) * ( multiplier - 1 ) Instructions.
+    * @param multiplier Changes the amount the program grows by.
     * @param functions Functions which map to the instruction opcodes
     * @return The new program
     */
@@ -207,7 +209,7 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
     }
     assert(indexes.length == inputCount + data.length)
 
-    def go(read: Int, write: Int, acc: List[Instruction]): List[Instruction] = if(read < data.length) {
+    @tailrec def go(read: Int, write: Int, acc: List[Instruction]): List[Instruction] = if(read < data.length) {
       if(inputCount + write == indexes(inputCount + read)) {
         val operator = data(read).instruction(instructionSize)
         val func = functions(operator)
