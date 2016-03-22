@@ -54,9 +54,17 @@ object SquareRoot {
         .toList
     )
 
-    val solution = EvolveUtil.counted(Generator(Nop.instructionSize, 64, 1, 1), 10000, optimise = false, testCases)
+    // program can increase size if it improves accuracy, dark genome data is stripped out every 1000 generations
+    // and replaced with random junk instructions
+    def function(count: Int, program: Program): Program = if (count > 0) {
+      function( count - 1,
+        EvolveUtil.counted(EvolveUtil.counted(program.spread(10), 1000, optimise = false, testCases).shrink, 1000, optimise = true, testCases).shrink
+      )
+    } else program
+
+    val solution = function(10, Generator(Nop.instructionSize, 4, 1, 1))
     Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8) )
-    val optimised = EvolveUtil.counted(solution.shrink.spread(10), 10000, optimise = true, testCases)
+    val optimised = EvolveUtil.counted(solution.shrink, 20000, optimise = true, testCases)
     Files.write(Paths.get("optimised.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8) )
   }
 }

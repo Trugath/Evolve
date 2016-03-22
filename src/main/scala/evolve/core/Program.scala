@@ -193,7 +193,7 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
   }
 
   /**
-    * Interleaves instructions into the current program, increasing its size.
+    * Interleaves random instructions into the current program, increasing its size.
     * Program grows by ( program size - output count ) * ( multiplier - 1 ) Instructions.
     * @param multiplier Changes the amount the program grows by.
     * @param functions Functions which map to the instruction opcodes
@@ -219,10 +219,11 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
         } else i
         go( read + 1, write + 1, remap(func.arguments, data(read)) :: acc )
       } else {
-        go( read, write + 1, Instruction(0) :: acc )
+        go( read, write + 1, Instruction(ThreadLocalRandom.current().nextInt()) :: acc )
       }
     } else acc.reverse
 
-    copy( data = go( 0, 0, Nil ) )
+    // fix any invalid instructions before returning the program
+    Generator.repair( copy( data = go( 0, 0, Nil ) ) )
   }
 }
