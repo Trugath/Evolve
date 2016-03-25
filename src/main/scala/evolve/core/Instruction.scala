@@ -95,7 +95,7 @@ case class Instruction( value: Int ) extends AnyVal {
       val end = 32 - (start + length)
       val mask = (((0xffffffff << start) >>> start) >>> end) << end
       Instruction(
-        (value & ~mask) | (const << (32 - (start + length)))
+        (value & ~mask) | ((const & mask) << end)
       )
     }
   }
