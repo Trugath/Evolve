@@ -107,12 +107,18 @@ object Generator {
         val func = functions(operator)
         (operator, func)
       } else {
-        val startFunctions = functions.filter( _.arguments == 0 )
-        val func = startFunctions( inst.instruction(instructionSize) % startFunctions.length )
-        val operator = functions.indexOf(func)
-        assert( functions(operator) == func )
-        assert( func.arguments == 0 )
-        (operator, func)
+        val operator = inst.instruction(instructionSize) % functions.length
+        val func = functions(operator)
+        if(func.arguments == 0) {
+          (operator, func)
+        } else {
+          val startFunctions = functions.filter( _.arguments == 0 )
+          val func = startFunctions( inst.instruction(instructionSize) % startFunctions.length )
+          val operator = functions.indexOf(func)
+          assert( functions(operator) == func )
+          assert( func.arguments == 0 )
+          (operator, func)
+        }
       }
 
       // ensure that argument inputs are wired into preceding instruction outputs

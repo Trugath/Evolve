@@ -159,9 +159,6 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
           val grown = program.grow(size*2)
           assert( program.used.count( a => a ) === grown.used.count( a => a ) )
           assert( program === grown.shrink )
-          val spread = program.spread(multiplier).shrink
-          assert( program.used.count( a => a ) === spread.used.count( a => a ) )
-          assert( program === spread.shrink )
         }
         {
           import functions.DoubleFunctions._
@@ -169,9 +166,6 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
           val grown = program.grow(size*2).shrink
           assert( program.used === grown.used )
           assert( program === grown )
-          val spread = program.spread(multiplier).shrink
-          assert( program.used === spread.used )
-          assert( program === spread )
         }
         {
           import functions.IntegerFunctions._
@@ -179,9 +173,6 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
           val grown = program.grow(size*2).shrink
           assert( program.used === grown.used )
           assert( program === grown )
-          val spread = program.spread(multiplier).shrink
-          assert( program.used === spread.used )
-          assert( program === spread )
         }
         {
           import functions.StringIntFunctions._
@@ -189,9 +180,56 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
           val grown = program.grow(size*2).shrink
           assert( program.used === grown.used )
           assert( program === grown )
-          val spread = program.spread(multiplier).shrink
-          assert( program.used === spread.used )
-          assert( program === spread )
+        }
+      }
+    }
+  }
+
+  "A Problematic program" should "spread and shrink correctly" in {
+    import functions.DoubleFunctions._
+    val program = Program(6,Vector(Instruction(134217728), Instruction(0), Instruction(67108864), Instruction(402669569), Instruction(335568898)),0,1)
+    val spread = program.spread(10)
+    val shrunk = spread.shrink
+    assert( program.used === shrunk.used )
+    assert( program === shrunk )
+  }
+
+  "Any shrunk program spread then re-shrunk" should "match itself" in {
+    forAll(Gen.choose[Int](1, 16), Gen.choose[Int](0, 16), Gen.choose[Int](1, 16), Gen.choose[Int](2, 16), Gen.choose[Int](Int.MinValue, Int.MaxValue)) {
+      (size: Int, inputCount: Int, _outputCount: Int, multiplier: Int, seed: Int) => whenever( seed != 0 ) {
+        val outputCount = math.min(size, _outputCount)
+
+        {
+          import functions.BooleanFunctions._
+          val program = Generator(Nop.instructionSize, size, inputCount, outputCount, seed).shrink
+          val spread = program.spread(multiplier)
+          val shrunk = spread.shrink
+          assert( program.used === shrunk.used )
+          assert( program === shrunk )
+        }
+        {
+          import functions.DoubleFunctions._
+          val program = Generator(Nop.instructionSize, size, inputCount, outputCount, seed).shrink
+          val spread = program.spread(multiplier)
+          val shrunk = spread.shrink
+          assert( program.used === shrunk.used )
+          assert( program === shrunk )
+        }
+        {
+          import functions.IntegerFunctions._
+          val program = Generator(Nop.instructionSize, size, inputCount, outputCount, seed).shrink
+          val spread = program.spread(multiplier)
+          val shrunk = spread.shrink
+          assert( program.used === shrunk.used )
+          assert( program === shrunk )
+        }
+        {
+          import functions.StringIntFunctions._
+          val program = Generator(Nop.instructionSize, size, inputCount, outputCount, seed).shrink
+          val spread = program.spread(multiplier)
+          val shrunk = spread.shrink
+          assert( program.used === shrunk.used )
+          assert( program === shrunk )
         }
       }
     }

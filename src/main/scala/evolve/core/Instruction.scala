@@ -32,17 +32,17 @@ package evolve.core
 
 object Instruction {
   def apply( inst: Int, bits: Int ): Instruction = Instruction(0).instruction(inst, bits)
-  def apply( bits: Int ): Instruction = new Instruction( bits )
+  // def apply( bits: Int ): Instruction = new Instruction( bits )
 }
 
 /**
  * 32 bit value containing the function index and argument indexes
  */
-class Instruction( val value: Int ) extends AnyVal {
+case class Instruction( value: Int ) extends AnyVal {
 
   // extracts the instruction
   def instruction(bits: Int): Int = {
-    //require(bits >= 0 && bits <= 32, "Instructions are only 32 bits")
+    require(bits >= 0 && bits <= 32, "Instructions are only 32 bits")
     if (bits == 0) {
       0
     } else if( bits == 32 ) {
@@ -54,13 +54,13 @@ class Instruction( val value: Int ) extends AnyVal {
 
   // sets the instruction
   def instruction( inst: Int, bits: Int ): Instruction = {
-    //require( bits >= 0 && bits <= 32, "Instructions are only 32 bits" )
+    require( bits >= 0 && bits <= 32, "Instructions are only 32 bits" )
     if( bits == 0 ) {
       this
     } else if( bits == 32 ) {
       Instruction(inst)
     } else {
-      //require(inst >= 0 && inst <= ( 0xffffffff >>> (32 - bits) ), s"the value($inst) should fit in its bits($bits)")
+      require(inst >= 0 && inst <= ( 0xffffffff >>> (32 - bits) ), s"the value($inst) should fit in its bits($bits)")
       Instruction(
         (value & (0xffffffff >>> bits)) | (inst << (32 - bits))
       )
@@ -69,8 +69,8 @@ class Instruction( val value: Int ) extends AnyVal {
 
   // extracts the const value
   def const(start: Int, length: Int): Int = {
-    //require(start >= 0 && length <= 32, "Instructions are only 32 bits")
-    //require(start + length <= 32)
+    require(start >= 0 && length <= 32, "Instructions are only 32 bits")
+    require(start + length <= 32)
     if (length == 0) {
       0
     } else if( length == 32 ) {
@@ -83,15 +83,15 @@ class Instruction( val value: Int ) extends AnyVal {
 
   // sets a const value
   def const(const: Int, start: Int, length: Int): Instruction = {
-    //require(start >= 0 && start < 32)
-    //require(length >= 0 && length <= 32)
-    //require(start + length <= 32)
+    require(start >= 0 && start < 32)
+    require(length >= 0 && length <= 32)
+    require(start + length <= 32)
     if(length == 0) {
       this
     } else if(length == 32) {
       Instruction(const)
     } else {
-      //require(const >= ( Int.MinValue >> (32 - length) ) && const <= ( Int.MaxValue >>> (32 - length) ), s"the value($const) should fit in its bits($length)")
+      require(const >= ( Int.MinValue >> (32 - length) ) && const <= ( Int.MaxValue >>> (32 - length) ), s"the value($const) should fit in its bits($length)")
       val end = 32 - (start + length)
       val mask = (((0xffffffff << start) >>> start) >>> end) << end
       Instruction(
@@ -102,9 +102,9 @@ class Instruction( val value: Int ) extends AnyVal {
 
   // extracts a pointer value
   def pointer(start: Int, length: Int): Int = {
-    //require(start >= 0 && start < 32)
-    //require(length >= 0 && length <= 32)
-    //require(start + length <= 32)
+    require(start >= 0 && start < 32)
+    require(length >= 0 && length <= 32)
+    require(start + length <= 32)
     if(length == 0) {
       0
     } else if(length == 32) {
@@ -118,15 +118,15 @@ class Instruction( val value: Int ) extends AnyVal {
 
   // set a pointer value
   def pointer(pointer: Int, start: Int, length: Int): Instruction = {
-    //require(start >= 0 && start < 32)
-    //require(length >= 0 && length <= 32)
-    //require(start + length <= 32)
+    require(start >= 0 && start < 32)
+    require(length >= 0 && length <= 32)
+    require(start + length <= 32)
     if(length == 0) {
       this
     } else if(length == 32) {
       Instruction(pointer)
     } else {
-      //require(pointer >= 0 && pointer <= ( 0xffffffff >>> (32 - length) ), s"the value($pointer) should fit in its bits($length)")
+      require(pointer >= 0 && pointer <= ( 0xffffffff >>> (32 - length) ), s"the value($pointer) should fit in its bits($length)")
       val end = 32 - (start + length)
       val mask = (((0xffffffff << start) >>> start) >>> end) << end
       Instruction(
