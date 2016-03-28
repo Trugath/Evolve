@@ -39,7 +39,8 @@ object IntegerFunctions {
     Const,
     Add, Subtract, Multiply, Divide, Modulus, Increment, Decrement,
     And, Or, XOr, Not,
-    ShiftLeft, ShiftSignedRight, ShiftUnsignedRight
+    ShiftLeft, ShiftSignedRight, ShiftUnsignedRight,
+    Min, Max
   )
 
   implicit def scoreFunc: (Option[Int], Option[Int]) => Long = (a, b) => {
@@ -229,6 +230,29 @@ object IntegerFunctions {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
       memory.append(a >> b)
+    }
+  }
+
+
+  object Max extends Function[Int] {
+    override def cost: Int = 3
+    override def getLabel(inst: Instruction): String = "Max"
+    override def ordered: Boolean = true
+    override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
+      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      memory.append(math.max(a, b))
+    }
+  }
+
+  object Min extends Function[Int] {
+    override def cost: Int = 3
+    override def getLabel(inst: Instruction): String = "Min"
+    override def ordered: Boolean = true
+    override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
+      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      memory.append(math.min(a, b))
     }
   }
 }

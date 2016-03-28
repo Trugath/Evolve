@@ -79,6 +79,8 @@ class IntegerProgramSpec extends FlatSpec with PropertyChecks with GeneratorDriv
     val shl = Program( instructionSize, Seq( ins( functions.indexOf(ShiftLeft), 0, 1 ) ), 2, 1 )
     val shsr = Program( instructionSize, Seq( ins( functions.indexOf(ShiftSignedRight), 0, 1 ) ), 2, 1 )
     val shur = Program( instructionSize, Seq( ins( functions.indexOf(ShiftUnsignedRight), 0, 1 ) ), 2, 1 )
+    val max = Program( instructionSize, Seq( ins( functions.indexOf(Max), 0, 1 ) ), 2, 1 )
+    val min = Program( instructionSize, Seq( ins( functions.indexOf(Min), 0, 1 ) ), 2, 1 )
 
     forAll { (a: Int, b: Int) =>
       assert( nopL(List(a)).result(1).head === a )
@@ -96,6 +98,8 @@ class IntegerProgramSpec extends FlatSpec with PropertyChecks with GeneratorDriv
       assert( shl(List(a, b)).result(1).head === (a << b) )
       assert( shsr(List(a, b)).result(1).head === (a >> b) )
       assert( shur(List(a, b)).result(1).head === (a >>> b) )
+      assert( max(List(a, b)).result(1).head === math.max(a, b) )
+      assert( min(List(a, b)).result(1).head === math.min(a, b) )
     }
   }
 }
