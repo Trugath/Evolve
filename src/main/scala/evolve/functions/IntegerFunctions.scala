@@ -237,7 +237,6 @@ object IntegerFunctions {
   object Max extends Function[Int] {
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = "Max"
-    override def ordered: Boolean = true
     override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
@@ -248,7 +247,6 @@ object IntegerFunctions {
   object Min extends Function[Int] {
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = "Min"
-    override def ordered: Boolean = true
     override def apply(inst: Instruction, memory: Memory[Int]): Memory[Int] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
