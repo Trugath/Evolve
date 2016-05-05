@@ -83,13 +83,13 @@ object EvolveUtil {
   /**
    * Evolve until a set fitness or a generation limit has been reached
    */
-  def fitness[A, B](program: Program, fitness: Long, limit: Long, testCases: TestCases[A, B])( implicit strategy: EvolverStrategy, score: (Option[A], Option[B]) => Long, functions: Seq[Function[A]] ): Program = {
+  def fitness[A, B](program: Program, fitness: Long, limit: Long, testCases: TestCases[A, B], optimise: Boolean = false)( implicit strategy: EvolverStrategy, score: (Option[A], Option[B]) => Long, functions: Seq[Function[A]] ): Program = {
 
     @tailrec def evolve(program: Program, generation: Long): Program = {
       if(generation >= limit)
         return program
 
-      Evolver(program, testCases, optimise = false) match {
+      Evolver(program, testCases, optimise) match {
         case Some(evolved) =>
           val scores = for {
             testCase <- testCases.cases
