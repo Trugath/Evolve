@@ -30,7 +30,6 @@
 
 package evolve.core
 
-import scala.collection.parallel.ParSeq
 
 object Evolver {
 
@@ -48,17 +47,22 @@ object Evolver {
    * @return A new program that is not worse than the parent
    */
   def apply[A, B]( program: Program, testCases: TestCases[A, B], optimise: Boolean )( implicit strategy: EvolverStrategy, score: (Option[A], Option[B]) => Long, functions: Seq[Function[A]] ): Option[Program] = {
+    import scala.concurrent._
+    import scala.concurrent.duration._
+    import ExecutionContext.Implicits.global
+    import scala.language.postfixOps
+
     val inputCount = testCases.cases.head.inputs.length
     require( testCases.cases.forall( _.inputs.length == inputCount ) )
 
     // create mutant children
-    val pop = program +: ParSeq.fill(strategy.children)( Generator.repair( Mutator( program, strategy.factor ) ) )
+    val popF = Future { program } +: Seq.fill(strategy.children)( Future { Generator.repair( Mutator( program, strategy.factor ) ) } )
 
     // score the children
-    val results = pop.map( individual => testCases.score( individual ) )
+    val resultsF = popF.map( _.map( individual => testCases.score( individual ) ) )
 
     // get children not worse than the parent
-    val popResults = pop zip results
+    val popResults = (popF zip resultsF).map( { case (a, b) => a.zip(b) } ).map( Await.result( _, 60 seconds ) )
     val childResults = popResults.tail.filter( _._2 <= popResults.head._2 )
 
     // returns the best child not worse than the parent
