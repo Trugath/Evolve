@@ -60,24 +60,26 @@ object EvolveUtil {
   }
 
   /**
-   * Evolve (successfully) a set number of generations
+   * Evolve (successfully) a set number of generations, every failed generation reduces the mutation rate by 10% and grows the program by one gene
+    * A failed generation is where none of the children had equal or better fitness than the parent. This indicates either a lack of inactive genes
+    * or too high a mutation rate
    */
   def counted[A, B](program: Program, generations: Int, optimise: Boolean, testCases: TestCases[A, B])( implicit strategy: EvolverStrategy, score: (Option[A], Option[B]) => Long, functions: Seq[Function[A]] ): Program = {
     /**
      * Run the evolution for a fixed number of generations
      */
-    @tailrec def evolve(program: Program, generations: Int, optimise: Boolean): Program = {
+    @tailrec def evolve(program: Program, generations: Int, strat: EvolverStrategy, optimise: Boolean): Program = {
       if (generations <= 0) {
         program
       } else {
-        Evolver(program, testCases, optimise) match {
-          case Some(evolved) => evolve(evolved, generations - 1, optimise)
-          case None => evolve(program, generations, optimise)
+        Evolver(program, testCases, optimise)(strat, score, functions) match {
+          case Some(evolved) => evolve(evolved, generations - 1, strat, optimise)
+          case None          => evolve(program.grow( program.data.length + 1 ), generations - 1, strat.copy( factor = strat.factor * 0.9 ), optimise)
         }
       }
     }
 
-    evolve(program, generations, optimise)
+    evolve(program, generations, strategy, optimise)
   }
 
   /**

@@ -37,7 +37,9 @@ object DoubleFunctions {
   implicit val functions = Seq[Function[Double]](
     Nop,
     ConstLarge, ConstSmall,
-    Add, Subtract, Multiply, Divide, Modulus, Increment, Decrement
+    Add, Subtract, Multiply, Divide, Modulus, Increment, Decrement,
+    Min, Max,
+    GreaterThanZero, LessThanZero
   )
 
   implicit def scoreFunc: (Option[Double], Option[Double]) => Long = (a, b) => {
@@ -168,6 +170,56 @@ object DoubleFunctions {
     override def apply(inst: Instruction, memory: Memory[Double]): Memory[Double] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       memory.append(a-1)
+    }
+  }
+
+  object Max extends Function[Double] {
+    override def cost: Int = 3
+    override def getLabel(inst: Instruction): String = "Max"
+    override def apply(inst: Instruction, memory: Memory[Double]): Memory[Double] = {
+      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      memory.append(math.max(a, b))
+    }
+  }
+
+  object Min extends Function[Double] {
+    override def cost: Int = 3
+    override def getLabel(inst: Instruction): String = "Min"
+    override def apply(inst: Instruction, memory: Memory[Double]): Memory[Double] = {
+      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      memory.append(math.min(a, b))
+    }
+  }
+
+  object GreaterThanZero extends Function[Double] {
+    override def cost: Int = 3
+    override def getLabel(inst: Instruction): String = "GreaterThanZero"
+    override def ordered: Boolean = true
+    override def apply(inst: Instruction, memory: Memory[Double]): Memory[Double] = {
+      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      if( a > 0.0 ) {
+        memory.append(b)
+      } else {
+        memory.append(0.0)
+      }
+    }
+  }
+
+  object LessThanZero extends Function[Double] {
+    override def cost: Int = 3
+    override def getLabel(inst: Instruction): String = "LessThanZero"
+    override def ordered: Boolean = true
+    override def apply(inst: Instruction, memory: Memory[Double]): Memory[Double] = {
+      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      if( a < 0.0 ) {
+        memory.append(b)
+      } else {
+        memory.append(0.0)
+      }
     }
   }
 }
