@@ -40,7 +40,7 @@ object DoubleFunctions {
     Add, Subtract, Multiply, Divide, Modulus, Increment, Decrement,
     Min, Max,
     GreaterThanZero, LessThanZero,
-    Sigmoid
+    Sigmoid, NaturalExp, NaturalLog
   )
 
   implicit def scoreFunc: (Option[Double], Option[Double]) => Long = (a, b) => {
@@ -232,6 +232,26 @@ object DoubleFunctions {
     override def apply(inst: Instruction, memory: Memory[Double]): Memory[Double] = {
       val a = memory(inst.pointer(instructionSize, argumentSize))
       memory.append(1.0 / (1.0 + math.exp(-a)))
+    }
+  }
+
+  object NaturalExp extends Function[Double] {
+    override def arguments: Int = 1
+    override def cost: Int = 5
+    override def getLabel(inst: Instruction): String = "NaturalExp"
+    override def apply(inst: Instruction, memory: Memory[Double]): Memory[Double] = {
+      val a = memory(inst.pointer(instructionSize, argumentSize))
+      memory.append(math.exp(a))
+    }
+  }
+
+  object NaturalLog extends Function[Double] {
+    override def arguments: Int = 1
+    override def cost: Int = 5
+    override def getLabel(inst: Instruction): String = "NaturalLog"
+    override def apply(inst: Instruction, memory: Memory[Double]): Memory[Double] = {
+      val a = memory(inst.pointer(instructionSize, argumentSize))
+      memory.append(math.log(a))
     }
   }
 }
