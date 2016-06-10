@@ -30,7 +30,6 @@
 
 package evolve.core
 
-import scala.concurrent.forkjoin.ThreadLocalRandom
 import scala.util.Random
 
 /**
@@ -39,6 +38,10 @@ import scala.util.Random
  * @tparam A the datatype used
  */
 case class TestCases[A, B](cases: List[TestCase[A, B]]) {
+  import scala.concurrent._
+  import scala.concurrent.duration.Duration._
+  import ExecutionContext.Implicits.global
+  import scala.language.postfixOps
 
   /**
    * Given a program score it against the test cases
@@ -48,7 +51,16 @@ case class TestCases[A, B](cases: List[TestCase[A, B]]) {
    * @return the summed score
    */
   def score( program: Program )( implicit scoreFunc: (Option[A], Option[B]) => Long, functions: Seq[Function[A]] ): Long = {
-    score( cases.map( testCase => program(testCase.inputs).result( program.outputCount ) ) )
+    val resultF = cases.map( testCase => Future{ program(testCase.inputs).result( program.outputCount ) } )
+    val total = cases
+      .zip(resultF)
+      .map { case (testCase, output) => output.map(testCase.score) }
+      .map( Await.result( _, Inf ) )
+      .sum
+    assert( total >= 0 )
+    if(total < 0) {
+      Long.MaxValue
+    } else total
   }
 
   /**

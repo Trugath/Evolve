@@ -39,7 +39,8 @@ object DoubleFunctions {
     ConstLarge, ConstSmall,
     Add, Subtract, Multiply, Divide, Modulus, Increment, Decrement,
     Min, Max,
-    GreaterThanZero, LessThanZero
+    GreaterThanZero, LessThanZero,
+    Sigmoid
   )
 
   implicit def scoreFunc: (Option[Double], Option[Double]) => Long = (a, b) => {
@@ -220,6 +221,17 @@ object DoubleFunctions {
       } else {
         memory.append(0.0)
       }
+    }
+  }
+
+
+  object Sigmoid extends Function[Double] {
+    override def arguments: Int = 1
+    override def cost: Int = 5
+    override def getLabel(inst: Instruction): String = "Sigmoid"
+    override def apply(inst: Instruction, memory: Memory[Double]): Memory[Double] = {
+      val a = memory(inst.pointer(instructionSize, argumentSize))
+      memory.append(1.0 / (1.0 + math.exp(-a)))
     }
   }
 }

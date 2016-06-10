@@ -48,7 +48,7 @@ object Evolver {
    */
   def apply[A, B]( program: Program, testCases: TestCases[A, B], optimise: Boolean )( implicit strategy: EvolverStrategy, score: (Option[A], Option[B]) => Long, functions: Seq[Function[A]] ): Option[Program] = {
     import scala.concurrent._
-    import scala.concurrent.duration._
+    import scala.concurrent.duration.Duration._
     import ExecutionContext.Implicits.global
     import scala.language.postfixOps
 
@@ -56,13 +56,16 @@ object Evolver {
     require( testCases.cases.forall( _.inputs.length == inputCount ) )
 
     // create mutant children
-    val popF = Future { program } +: Seq.fill(strategy.children)( Future { Generator.repair( Mutator( program, strategy.factor ) ) } )
+    val popF: Seq[Future[Program]] = Future { program } +: Seq.fill(strategy.children)( Future { Generator.repair( Mutator( program, strategy.factor ) ) } )
 
     // score the children
-    val resultsF = popF.map( _.map( individual => testCases.score( individual ) ) )
+    val resultsF: Seq[Future[Long]] = popF.map( _.map( individual => testCases.score( individual ) ) )
 
     // get children not worse than the parent
-    val popResults = (popF zip resultsF).map( { case (a, b) => a.zip(b) } ).map( Await.result( _, 60 seconds ) )
+    val popResults = (popF zip resultsF)
+      .map( { case (a, b) => a.zip(b) } )
+      .map( Await.result( _, Inf ) )
+
     val childResults = popResults.tail.filter( _._2 <= popResults.head._2 )
 
     // returns the best child not worse than the parent
