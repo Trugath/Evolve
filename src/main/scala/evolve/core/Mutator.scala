@@ -31,8 +31,7 @@
 package evolve.core
 
 import scala.annotation.{switch, tailrec}
-import scala.collection.mutable
-import scala.concurrent.forkjoin.ThreadLocalRandom
+import java.util.concurrent.ThreadLocalRandom
 
 object Mutator {
 
