@@ -1,10 +1,10 @@
 name := "evolve"
 
-version := "1.0"
+version := "0.1"
 
 scalaVersion := "2.12.0-M4"
 
-crossScalaVersions := Seq("2.11.8", "2.12.0-M3")
+crossScalaVersions := Seq("2.11.8", "2.12.0-M4")
 
 scalacOptions ++= Seq(
   "-unchecked",
