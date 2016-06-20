@@ -14,6 +14,6 @@ resolvers ++= Seq(
   Resolver.sonatypeRepo("public")
 )
 
-libraryDependencies += "org.scalacheck" % "scalacheck_2.12.0-M4" % "1.12.5" % "test"
+libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.12.5" % "test"
 
-libraryDependencies += "org.scalatest" % "scalatest_2.12.0-M4" % "2.2.6" % "test"
+libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.6" % "test"
