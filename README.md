@@ -1,5 +1,5 @@
 # Evolve
-Genetic Algorithm Library [![Build Status](https://travis-ci.org/Trugath/Evolve.svg?branch=master)](https://travis-ci.org/Trugath/Evolve)[![Coverage Status](https://coveralls.io/repos/github/Trugath/Evolve/badge.svg?branch=master)](https://coveralls.io/github/Trugath/Evolve?branch=master)
+Genetic Algorithm Library [![Build Status](https://travis-ci.org/Trugath/Evolve.svg?branch=2_12)](https://travis-ci.org/Trugath/Evolve)[![Coverage Status](https://coveralls.io/repos/github/Trugath/Evolve/badge.svg?branch=2_12)](https://coveralls.io/github/Trugath/Evolve?branch=2_12)
 
 This is a core library for use in generating Cartesian Genetic Programs.
 The runtime execution requires no external libraries. External libraries are used only in testing.
