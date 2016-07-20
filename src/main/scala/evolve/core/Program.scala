@@ -51,7 +51,7 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
     require( inputs.length == inputCount )
     @tailrec def execute(index: Int, usage: Seq[Boolean], memory: Memory[A]): Memory[A] = if(index < data.length) {
       if(usage(index)) {
-        execute(index + 1, usage, functions( data(index).instruction( instructionSize ) )( data(index), memory ) )
+        execute(index + 1, usage, memory.append( functions( data(index).instruction( instructionSize ) )( data(index), memory ) ) )
       } else {
         execute(index + 1, usage, memory.append( memory(0) ))
       }

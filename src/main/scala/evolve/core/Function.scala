@@ -54,5 +54,5 @@ trait Function[A] {
   def ordered: Boolean = false
 
   // the function itself
-  def apply(inst: Instruction, memory: Memory[A]): Memory[A]
+  def apply(inst: Instruction, memory: Memory[A]): A
 }
