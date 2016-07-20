@@ -62,7 +62,7 @@ object IntegerFunctions {
     override def cost: Int = 2
     override def getLabel(inst: Instruction): String = "Nop"
     override def apply(inst: Instruction, memory: Memory[Int]): Int = {
-      memory(inst.pointer(instructionSize, argumentSize))
+      argument(inst, 0, memory)
     }
   }
 
