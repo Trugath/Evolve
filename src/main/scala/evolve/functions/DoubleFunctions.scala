@@ -64,7 +64,7 @@ object DoubleFunctions {
     override def cost: Int = 2
     override def getLabel(inst: Instruction): String = "Nop"
     override def apply(inst: Instruction, memory: Memory[Double]): Double = {
-      memory(inst.pointer(instructionSize, argumentSize))
+      argument(inst, 0, memory)
     }
   }
 
@@ -97,8 +97,8 @@ object DoubleFunctions {
     override def cost: Int = 4
     override def getLabel(inst: Instruction): String = "Add"
     override def apply(inst: Instruction, memory: Memory[Double]): Double = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       a + b
     }
   }
@@ -108,8 +108,8 @@ object DoubleFunctions {
     override def getLabel(inst: Instruction): String = "Subtract"
     override def ordered: Boolean = true
     override def apply(inst: Instruction, memory: Memory[Double]): Double = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       a - b
     }
   }
@@ -118,8 +118,8 @@ object DoubleFunctions {
     override def cost: Int = 5
     override def getLabel(inst: Instruction): String = "Multiply"
     override def apply(inst: Instruction, memory: Memory[Double]): Double = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       a * b
     }
   }
@@ -129,8 +129,8 @@ object DoubleFunctions {
     override def getLabel(inst: Instruction): String = "Divide"
     override def ordered: Boolean = true
     override def apply(inst: Instruction, memory: Memory[Double]): Double = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       try {
         a / b
       } catch {
@@ -144,8 +144,8 @@ object DoubleFunctions {
     override def getLabel(inst: Instruction): String = "Modulus"
     override def ordered: Boolean = true
     override def apply(inst: Instruction, memory: Memory[Double]): Double = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       try {
         a % b
       } catch {
@@ -159,7 +159,7 @@ object DoubleFunctions {
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = "Increment"
     override def apply(inst: Instruction, memory: Memory[Double]): Double = {
-      memory(inst.pointer(instructionSize, argumentSize)) + 1.0
+      argument(inst, 0, memory) + 1.0
     }
   }
 
@@ -168,7 +168,7 @@ object DoubleFunctions {
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = "Decrement"
     override def apply(inst: Instruction, memory: Memory[Double]): Double = {
-      memory(inst.pointer(instructionSize, argumentSize)) - 1.0
+      argument(inst, 0, memory) - 1.0
     }
   }
 
@@ -176,8 +176,8 @@ object DoubleFunctions {
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = "Max"
     override def apply(inst: Instruction, memory: Memory[Double]): Double = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       math.max(a, b)
     }
   }
@@ -186,8 +186,8 @@ object DoubleFunctions {
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = "Min"
     override def apply(inst: Instruction, memory: Memory[Double]): Double = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       math.min(a, b)
     }
   }
@@ -197,8 +197,8 @@ object DoubleFunctions {
     override def getLabel(inst: Instruction): String = "GreaterThanZero"
     override def ordered: Boolean = true
     override def apply(inst: Instruction, memory: Memory[Double]): Double = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       if( a > 0.0 ) {
         b
       } else {
@@ -212,8 +212,8 @@ object DoubleFunctions {
     override def getLabel(inst: Instruction): String = "LessThanZero"
     override def ordered: Boolean = true
     override def apply(inst: Instruction, memory: Memory[Double]): Double = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       if( a < 0.0 ) {
         b
       } else {
@@ -228,7 +228,7 @@ object DoubleFunctions {
     override def cost: Int = 5
     override def getLabel(inst: Instruction): String = "Sigmoid"
     override def apply(inst: Instruction, memory: Memory[Double]): Double = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val a = argument(inst, 0, memory)
       1.0 / (1.0 + math.exp(-a))
     }
   }
@@ -238,7 +238,7 @@ object DoubleFunctions {
     override def cost: Int = 5
     override def getLabel(inst: Instruction): String = "NaturalExp"
     override def apply(inst: Instruction, memory: Memory[Double]): Double = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val a = argument(inst, 0, memory)
       math.exp(a)
     }
   }
@@ -248,7 +248,7 @@ object DoubleFunctions {
     override def cost: Int = 5
     override def getLabel(inst: Instruction): String = "NaturalLog"
     override def apply(inst: Instruction, memory: Memory[Double]): Double = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val a = argument(inst, 0, memory)
       math.log(a)
     }
   }
@@ -258,7 +258,7 @@ object DoubleFunctions {
     override def cost: Int = 2
     override def getLabel(inst: Instruction): String = "Signum"
     override def apply(inst: Instruction, memory: Memory[Double]): Double = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val a = argument(inst, 0, memory)
       math.signum(a)
     }
   }

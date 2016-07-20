@@ -94,7 +94,7 @@ object StringIntFunctions {
 
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val a = argument(inst, 0, memory)
       a
     }
   }
@@ -131,8 +131,8 @@ object StringIntFunctions {
 
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       if(a._2 <= b._2)
         a
       else
@@ -148,8 +148,8 @@ object StringIntFunctions {
 
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       if(a._2 >= b._2)
         a
       else
@@ -167,7 +167,7 @@ object StringIntFunctions {
 
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val a = argument(inst, 0, memory)
       val tokens = a._1.split("\\s+")
       val token = math.max(-1, math.min(tokens.length - 1, a._2))
       if(token == -1)
@@ -187,7 +187,7 @@ object StringIntFunctions {
 
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val a = argument(inst, 0, memory)
       val char = math.max(-1, math.min(a._1.length - 1, a._2))
       if(char == -1)
         a.copy(_1 = "")
@@ -205,8 +205,8 @@ object StringIntFunctions {
     override def ordered: Boolean = true
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       a.copy(_1 = b._1)
     }
   }
@@ -220,8 +220,8 @@ object StringIntFunctions {
     override def ordered: Boolean = true
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       a.copy(_2 = b._2)
     }
   }
@@ -235,8 +235,8 @@ object StringIntFunctions {
     override def ordered: Boolean = true
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       if (a._1.length() > 0) a else b
     }
   }
@@ -250,7 +250,7 @@ object StringIntFunctions {
 
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val a = argument(inst, 0, memory)
       a.copy(_2 = a._1.length)
     }
   }
@@ -264,7 +264,7 @@ object StringIntFunctions {
 
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val a = argument(inst, 0, memory)
       a.copy(_2 = a._1.hashCode)
     }
   }
@@ -277,8 +277,8 @@ object StringIntFunctions {
 
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       (a._1, distance(a._1, b._1))
     }
   }
@@ -291,8 +291,8 @@ object StringIntFunctions {
 
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       (a._1, a._1.compareTo(b._1))
     }
   }
@@ -306,8 +306,8 @@ object StringIntFunctions {
     override def ordered: Boolean = true
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       (a._1, if (a._1.contains(b._1)) 1 else 0)
     }
   }
@@ -321,7 +321,7 @@ object StringIntFunctions {
 
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val a = argument(inst, 0, memory)
       a.copy(_1 = a._1.splitAt(math.max(0, math.min(a._1.length, a._2)))._1)
     }
   }
@@ -335,7 +335,7 @@ object StringIntFunctions {
 
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val a = argument(inst, 0, memory)
       a.copy(_1 = a._1.splitAt(math.max(0, math.min(a._1.length, a._2)))._2)
     }
   }
@@ -349,8 +349,8 @@ object StringIntFunctions {
     override def ordered: Boolean = true
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       (a._1 + b._1, a._2)
     }
   }
@@ -364,7 +364,7 @@ object StringIntFunctions {
 
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val a = argument(inst, 0, memory)
       a.copy(_1 = a._1.headOption.getOrElse("").toString)
     }
   }
@@ -378,7 +378,7 @@ object StringIntFunctions {
 
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val a = argument(inst, 0, memory)
       try {
         a.copy(_1 = a._1.tail)
       } catch {
@@ -396,7 +396,7 @@ object StringIntFunctions {
 
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val a = argument(inst, 0, memory)
       a.copy(_1 = a._1.capitalize)
     }
   }
@@ -410,7 +410,7 @@ object StringIntFunctions {
 
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val a = argument(inst, 0, memory)
       a.copy( _1 = a._1.toUpperCase )
     }
   }
@@ -424,7 +424,7 @@ object StringIntFunctions {
 
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val a = argument(inst, 0, memory)
       a.copy( _1 = a._1.toLowerCase )
     }
   }
@@ -438,7 +438,7 @@ object StringIntFunctions {
 
 
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val a = argument(inst, 0, memory)
       a.copy( _1 = a._1.reverse )
     }
   }
@@ -448,8 +448,8 @@ object StringIntFunctions {
     override def cost: Int = 4
     override def getLabel(inst: Instruction): String = "Add"
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       (a._1, a._2 + b._2)
     }
   }
@@ -459,8 +459,8 @@ object StringIntFunctions {
     override def getLabel(inst: Instruction): String = "Subtract"
     override def ordered: Boolean = true
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       (a._1, a._2 - b._2)
     }
   }
@@ -469,8 +469,8 @@ object StringIntFunctions {
     override def cost: Int = 5
     override def getLabel(inst: Instruction): String = "Multiply"
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       (a._1, a._2 * b._2)
     }
   }
@@ -480,8 +480,8 @@ object StringIntFunctions {
     override def getLabel(inst: Instruction): String = "Divide"
     override def ordered: Boolean = true
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       try {
         (a._1, a._2 / b._2)
       } catch {
@@ -495,8 +495,8 @@ object StringIntFunctions {
     override def getLabel(inst: Instruction): String = "Modulus"
     override def ordered: Boolean = true
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       try {
         (a._1, a._2 % b._2)
       } catch {
@@ -510,7 +510,7 @@ object StringIntFunctions {
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = "Increment"
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val a = argument(inst, 0, memory)
       a.copy( _2 = a._2 + 1)
     }
   }
@@ -520,7 +520,7 @@ object StringIntFunctions {
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = "Decrement"
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val a = argument(inst, 0, memory)
       a.copy( _2 = a._2 - 1)
     }
   }
@@ -530,8 +530,8 @@ object StringIntFunctions {
     override def getLabel(inst: Instruction): String = "Average"
     override def ordered: Boolean = true
     override def apply(inst: Instruction, memory: Memory[(String, Int)]): (String, Int) = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       a.copy( _2 = ((a._2.toLong + b._2.toLong) / 2).toInt  )
     }
   }

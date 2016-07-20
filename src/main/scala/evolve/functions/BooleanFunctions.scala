@@ -57,7 +57,7 @@ object BooleanFunctions {
     override def getLabel(inst: Instruction): String = "Nop"
 
     override def apply(inst: Instruction, memory: Memory[Boolean]): Boolean = {
-      memory(inst.pointer(instructionSize, argumentSize))
+      argument(inst, 0, memory)
     }
   }
 
@@ -77,8 +77,8 @@ object BooleanFunctions {
     override def cost: Int = 2
     override def getLabel(inst: Instruction): String = "&"
     override def apply(inst: Instruction, memory: Memory[Boolean]): Boolean = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       a&b
     }
   }
@@ -87,8 +87,8 @@ object BooleanFunctions {
     override def cost: Int = 2
     override def getLabel(inst: Instruction): String = "|"
     override def apply(inst: Instruction, memory: Memory[Boolean]): Boolean = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       a|b
     }
   }
@@ -98,7 +98,7 @@ object BooleanFunctions {
     override def cost: Int = 2
     override def getLabel(inst: Instruction): String = "~"
     override def apply(inst: Instruction, memory: Memory[Boolean]): Boolean = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
+      val a = argument(inst, 0, memory)
       !a
     }
   }
@@ -108,8 +108,8 @@ object BooleanFunctions {
     override def getLabel(inst: Instruction): String = "->"
     override def ordered: Boolean = true
     override def apply(inst: Instruction, memory: Memory[Boolean]): Boolean = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       !a||b
     }
   }
@@ -118,8 +118,8 @@ object BooleanFunctions {
     override def cost: Int = 3 // we want to be cheaper than the equivalent basic gate setup
     override def getLabel(inst: Instruction): String = "^"
     override def apply(inst: Instruction, memory: Memory[Boolean]): Boolean = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       a^b
     }
   }
@@ -128,8 +128,8 @@ object BooleanFunctions {
     override def cost: Int = 10 // we want XOR -> NOT to be cheaper
     override def getLabel(inst: Instruction): String = "=="
     override def apply(inst: Instruction, memory: Memory[Boolean]): Boolean = {
-      val a = memory(inst.pointer(instructionSize, argumentSize))
-      val b = memory(inst.pointer(instructionSize + argumentSize, argumentSize))
+      val a = argument(inst, 0, memory)
+      val b = argument(inst, 1, memory)
       a==b
     }
   }
