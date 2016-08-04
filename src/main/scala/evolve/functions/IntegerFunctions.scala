@@ -61,8 +61,8 @@ object IntegerFunctions {
     override def arguments: Int = 1
     override def cost: Int = 2
     override def getLabel(inst: Instruction): String = "Nop"
-    override def apply(inst: Instruction, memory: Memory[Int]): Int = {
-      memory(inst.pointer(instructionSize, argumentSize))
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      arguments.head
     }
   }
 
@@ -73,7 +73,7 @@ object IntegerFunctions {
       val value = inst.const(instructionSize, 32 - instructionSize)
       s"Const ($value)"
     }
-    override def apply(inst: Instruction, memory: Memory[Int]): Int = {
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
       inst.const(instructionSize, 32 - instructionSize)
     }
   }
@@ -81,9 +81,9 @@ object IntegerFunctions {
   object Add extends Function[Int]  {
     override def cost: Int = 4
     override def getLabel(inst: Instruction): String = "Add"
-    override def apply(inst: Instruction, memory: Memory[Int]): Int = {
-      val a = argument(inst, 0, memory)
-      val b = argument(inst, 1, memory)
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      val b = arguments(1)
       a + b
     }
   }
@@ -92,9 +92,9 @@ object IntegerFunctions {
     override def cost: Int = 4
     override def getLabel(inst: Instruction): String = "Subtract"
     override def ordered: Boolean = true
-    override def apply(inst: Instruction, memory: Memory[Int]): Int = {
-      val a = argument(inst, 0, memory)
-      val b = argument(inst, 1, memory)
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      val b = arguments(1)
       a - b
     }
   }
@@ -102,9 +102,9 @@ object IntegerFunctions {
   object Multiply extends Function[Int]  {
     override def cost: Int = 5
     override def getLabel(inst: Instruction): String = "Multiply"
-    override def apply(inst: Instruction, memory: Memory[Int]): Int = {
-      val a = argument(inst, 0, memory)
-      val b = argument(inst, 1, memory)
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      val b = arguments(1)
       a * b
     }
   }
@@ -113,9 +113,9 @@ object IntegerFunctions {
     override def cost: Int = 10
     override def getLabel(inst: Instruction): String = "Divide"
     override def ordered: Boolean = true
-    override def apply(inst: Instruction, memory: Memory[Int]): Int = {
-      val a = argument(inst, 0, memory)
-      val b = argument(inst, 1, memory)
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      val b = arguments(1)
       try {
         a / b
       } catch {
@@ -128,9 +128,9 @@ object IntegerFunctions {
     override def cost: Int = 10
     override def getLabel(inst: Instruction): String = "Modulus"
     override def ordered: Boolean = true
-    override def apply(inst: Instruction, memory: Memory[Int]): Int = {
-      val a = argument(inst, 0, memory)
-      val b = argument(inst, 1, memory)
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      val b = arguments(1)
       try {
         a % b
       } catch {
@@ -143,8 +143,8 @@ object IntegerFunctions {
     override def arguments: Int = 1
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = "Increment"
-    override def apply(inst: Instruction, memory: Memory[Int]): Int = {
-      argument(inst, 0, memory) + 1
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      arguments.head + 1
     }
   }
 
@@ -152,17 +152,17 @@ object IntegerFunctions {
     override def arguments: Int = 1
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = "Decrement"
-    override def apply(inst: Instruction, memory: Memory[Int]): Int = {
-      argument(inst, 0, memory) - 1
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      arguments.head - 1
     }
   }
 
   object And extends Function[Int]  {
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = "&"
-    override def apply(inst: Instruction, memory: Memory[Int]): Int = {
-      val a = argument(inst, 0, memory)
-      val b = argument(inst, 1, memory)
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      val b = arguments(1)
       a&b
     }
   }
@@ -170,9 +170,9 @@ object IntegerFunctions {
   object Or extends Function[Int]  {
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = "|"
-    override def apply(inst: Instruction, memory: Memory[Int]): Int = {
-      val a = argument(inst, 0, memory)
-      val b = argument(inst, 1, memory)
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      val b = arguments(1)
       a|b
     }
   }
@@ -180,9 +180,9 @@ object IntegerFunctions {
   object XOr extends Function[Int]  {
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = "^"
-    override def apply(inst: Instruction, memory: Memory[Int]): Int = {
-      val a = argument(inst, 0, memory)
-      val b = argument(inst, 1, memory)
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      val b = arguments(1)
       a^b
     }
   }
@@ -191,8 +191,8 @@ object IntegerFunctions {
     override def arguments: Int = 1
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = "~"
-    override def apply(inst: Instruction, memory: Memory[Int]): Int = {
-      ~argument(inst, 0, memory)
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      ~arguments.head
     }
   }
 
@@ -200,9 +200,9 @@ object IntegerFunctions {
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = "<<"
     override def ordered: Boolean = true
-    override def apply(inst: Instruction, memory: Memory[Int]): Int = {
-      val a = argument(inst, 0, memory)
-      val b = argument(inst, 1, memory)
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      val b = arguments(1)
       a << b
     }
   }
@@ -211,9 +211,9 @@ object IntegerFunctions {
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = ">>>"
     override def ordered: Boolean = true
-    override def apply(inst: Instruction, memory: Memory[Int]): Int = {
-      val a = argument(inst, 0, memory)
-      val b = argument(inst, 1, memory)
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      val b = arguments(1)
       a >>> b
     }
   }
@@ -222,9 +222,9 @@ object IntegerFunctions {
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = ">>"
     override def ordered: Boolean = true
-    override def apply(inst: Instruction, memory: Memory[Int]): Int = {
-      val a = argument(inst, 0, memory)
-      val b = argument(inst, 1, memory)
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      val b = arguments(1)
       a >> b
     }
   }
@@ -233,9 +233,9 @@ object IntegerFunctions {
   object Max extends Function[Int] {
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = "Max"
-    override def apply(inst: Instruction, memory: Memory[Int]): Int = {
-      val a = argument(inst, 0, memory)
-      val b = argument(inst, 1, memory)
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      val b = arguments(1)
       math.max(a, b)
     }
   }
@@ -243,9 +243,9 @@ object IntegerFunctions {
   object Min extends Function[Int] {
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = "Min"
-    override def apply(inst: Instruction, memory: Memory[Int]): Int = {
-      val a = argument(inst, 0, memory)
-      val b = argument(inst, 1, memory)
+    override def apply(inst: Instruction, arguments: List[Int]): Int = {
+      val a = arguments.head
+      val b = arguments(1)
       math.min(a, b)
     }
   }

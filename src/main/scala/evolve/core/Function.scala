@@ -30,6 +30,8 @@
 
 package evolve.core
 
+import scala.annotation.tailrec
+
 /**
  * Function takes instruction and memory and returns the new memory
  */
@@ -54,11 +56,5 @@ trait Function[A] {
   def ordered: Boolean = false
 
   // the function itself
-  def apply(inst: Instruction, memory: Memory[A]): A
-
-  // helper to get an argument out of memory
-  protected def argument(inst: Instruction, index: Int, memory: Memory[A]): A = {
-    require(index <= arguments)
-    memory(inst.pointer(instructionSize + argumentSize * index, argumentSize))
-  }
+  def apply(inst: Instruction, arguments: List[A]): A
 }

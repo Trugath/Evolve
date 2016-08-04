@@ -49,13 +49,28 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
    */
   def apply[A]( inputs: List[A] )( implicit functions: Seq[Function[A]] ): Memory[A] = {
     require( inputs.length == inputCount )
+
+    // extracts arguments from memory
+    def arguments(func: Function[A], inst: Instruction, memory: Memory[A]): List[A] = {
+
+      @tailrec def extract( index: Int, acc: List[A] ): List[A] = if (index >= 0) {
+        extract( index - 1, memory(inst.pointer(instructionSize + func.argumentSize * index, func.argumentSize)) :: acc )
+      } else acc
+
+      extract( func.arguments - 1, Nil )
+    }
+
     @tailrec def execute(index: Int, usage: Seq[Boolean], memory: Memory[A]): Memory[A] = if(index < data.length) {
       if(usage(index)) {
-        execute(index + 1, usage, memory.append( functions( data(index).instruction( instructionSize ) )( data(index), memory ) ) )
+        def inst = data(index)
+        def func = functions( inst.instruction( instructionSize ) )
+        def args = arguments(func, inst, memory)
+        execute(index + 1, usage, memory.append( func( inst, args ) ) )
       } else {
         execute(index + 1, usage, memory.append( memory(0) ))
       }
     } else memory
+
     execute(0, used.drop(inputCount), Memory(inputs, data.length))
   }
 

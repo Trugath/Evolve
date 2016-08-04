@@ -30,7 +30,7 @@
 
 package evolve.functions
 
-import evolve.core.{Function, Instruction, Memory}
+import evolve.core.{Function, Instruction}
 
 object BooleanFunctions {
 
@@ -56,8 +56,8 @@ object BooleanFunctions {
     override def cost: Int = 1
     override def getLabel(inst: Instruction): String = "Nop"
 
-    override def apply(inst: Instruction, memory: Memory[Boolean]): Boolean = {
-      argument(inst, 0, memory)
+    override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
+      arguments.head
     }
   }
 
@@ -68,7 +68,7 @@ object BooleanFunctions {
       val value = inst.const(instructionSize, 1) == -1
       s"Const ($value)"
     }
-    override def apply(inst: Instruction, memory: Memory[Boolean]): Boolean = {
+    override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
       inst.const(instructionSize, 1) == -1
     }
   }
@@ -76,9 +76,9 @@ object BooleanFunctions {
   object And extends Function[Boolean]  {
     override def cost: Int = 2
     override def getLabel(inst: Instruction): String = "&"
-    override def apply(inst: Instruction, memory: Memory[Boolean]): Boolean = {
-      val a = argument(inst, 0, memory)
-      val b = argument(inst, 1, memory)
+    override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
+      val a = arguments.head
+      val b = arguments(1)
       a&b
     }
   }
@@ -86,9 +86,9 @@ object BooleanFunctions {
   object Or extends Function[Boolean]  {
     override def cost: Int = 2
     override def getLabel(inst: Instruction): String = "|"
-    override def apply(inst: Instruction, memory: Memory[Boolean]): Boolean = {
-      val a = argument(inst, 0, memory)
-      val b = argument(inst, 1, memory)
+    override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
+      val a = arguments.head
+      val b = arguments(1)
       a|b
     }
   }
@@ -97,8 +97,8 @@ object BooleanFunctions {
     override def arguments: Int = 1
     override def cost: Int = 2
     override def getLabel(inst: Instruction): String = "~"
-    override def apply(inst: Instruction, memory: Memory[Boolean]): Boolean = {
-      val a = argument(inst, 0, memory)
+    override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
+      val a = arguments.head
       !a
     }
   }
@@ -107,9 +107,9 @@ object BooleanFunctions {
     override def cost: Int = 6 // we want (!a | b) to be cheaper
     override def getLabel(inst: Instruction): String = "->"
     override def ordered: Boolean = true
-    override def apply(inst: Instruction, memory: Memory[Boolean]): Boolean = {
-      val a = argument(inst, 0, memory)
-      val b = argument(inst, 1, memory)
+    override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
+      val a = arguments.head
+      val b = arguments(1)
       !a||b
     }
   }
@@ -117,9 +117,9 @@ object BooleanFunctions {
   object XOr extends Function[Boolean]  {
     override def cost: Int = 3 // we want to be cheaper than the equivalent basic gate setup
     override def getLabel(inst: Instruction): String = "^"
-    override def apply(inst: Instruction, memory: Memory[Boolean]): Boolean = {
-      val a = argument(inst, 0, memory)
-      val b = argument(inst, 1, memory)
+    override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
+      val a = arguments.head
+      val b = arguments(1)
       a^b
     }
   }
@@ -127,9 +127,9 @@ object BooleanFunctions {
   object Equal extends Function[Boolean]  {
     override def cost: Int = 10 // we want XOR -> NOT to be cheaper
     override def getLabel(inst: Instruction): String = "=="
-    override def apply(inst: Instruction, memory: Memory[Boolean]): Boolean = {
-      val a = argument(inst, 0, memory)
-      val b = argument(inst, 1, memory)
+    override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
+      val a = arguments.head
+      val b = arguments(1)
       a==b
     }
   }
