@@ -30,8 +30,8 @@
 
 package evolve.core
 
-import scala.annotation.{switch, tailrec}
-import scala.concurrent.forkjoin.ThreadLocalRandom
+import scala.annotation.tailrec
+import java.util.concurrent.ThreadLocalRandom
 
 /**
  * A program is a list of instructions to execute
