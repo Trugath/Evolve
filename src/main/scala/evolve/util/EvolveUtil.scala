@@ -44,7 +44,7 @@ object EvolveUtil {
   /**
    * Startup the evolution using a wide search strategy ( large population, heavy mutation )
    */
-  def startup[A, B](program: Program, testCases: TestCases[A, B])( implicit scoreFunc: (Option[A], Option[B]) => Long, functions: Seq[Function[A]] ): Program = {
+  def startup[A](program: Program, testCases: TestCases[A])( implicit scoreFunc: (Option[A], Option[A]) => Long, functions: Seq[Function[A]] ): Program = {
     @tailrec def evolve(program: Program, iteration: Int, strat: EvolverStrategy): Program = {
       if (iteration <= 0) {
         program
@@ -64,7 +64,7 @@ object EvolveUtil {
     * A failed generation is where none of the children had equal or better fitness than the parent. This indicates either a lack of inactive genes
     * or too high a mutation rate
    */
-  def counted[A, B](program: Program, generations: Int, optimise: Boolean, testCases: TestCases[A, B])( implicit strategy: EvolverStrategy, score: (Option[A], Option[B]) => Long, functions: Seq[Function[A]] ): Program = {
+  def counted[A](program: Program, generations: Int, optimise: Boolean, testCases: TestCases[A])( implicit strategy: EvolverStrategy, score: (Option[A], Option[A]) => Long, functions: Seq[Function[A]] ): Program = {
     /**
      * Run the evolution for a fixed number of generations
      */
@@ -85,7 +85,7 @@ object EvolveUtil {
   /**
    * Evolve until a set fitness or a generation limit has been reached
    */
-  def fitness[A, B](program: Program, fitness: Long, limit: Long, testCases: TestCases[A, B], optimise: Boolean = false)( implicit strategy: EvolverStrategy, score: (Option[A], Option[B]) => Long, functions: Seq[Function[A]] ): Program = {
+  def fitness[A](program: Program, fitness: Long, limit: Long, testCases: TestCases[A], optimise: Boolean = false)( implicit strategy: EvolverStrategy, score: (Option[A], Option[A]) => Long, functions: Seq[Function[A]] ): Program = {
 
     @tailrec def evolve(program: Program, generation: Long): Program = {
       if(generation >= limit)

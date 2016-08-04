@@ -46,7 +46,7 @@ object Evolver {
    * @tparam A the data type we work against
    * @return A new program that is not worse than the parent
    */
-  def apply[A, B]( program: Program, testCases: TestCases[A, B], optimise: Boolean )( implicit strategy: EvolverStrategy, score: (Option[A], Option[B]) => Long, functions: Seq[Function[A]] ): Option[Program] = {
+  def apply[A]( program: Program, testCases: TestCases[A], optimise: Boolean )( implicit strategy: EvolverStrategy, score: (Option[A], Option[A]) => Long, functions: Seq[Function[A]] ): Option[Program] = {
     import scala.concurrent._
     import scala.concurrent.duration.Duration._
     import ExecutionContext.Implicits.global

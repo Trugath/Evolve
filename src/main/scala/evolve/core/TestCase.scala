@@ -37,7 +37,7 @@ import scala.util.Random
  * @param cases the test cases to use
  * @tparam A the datatype used
  */
-case class TestCases[A, B](cases: List[TestCase[A, B]]) {
+case class TestCases[A](cases: List[TestCase[A]]) {
   import scala.concurrent._
   import scala.concurrent.duration.Duration._
   import ExecutionContext.Implicits.global
@@ -50,7 +50,7 @@ case class TestCases[A, B](cases: List[TestCase[A, B]]) {
    * @param functions The functions to map to the programs operators
    * @return the summed score
    */
-  def score( program: Program )( implicit scoreFunc: (Option[A], Option[B]) => Long, functions: Seq[Function[A]] ): Long = {
+  def score( program: Program )( implicit scoreFunc: (Option[A], Option[A]) => Long, functions: Seq[Function[A]] ): Long = {
     val resultF = cases.map( testCase => Future{ program(testCase.inputs).result( program.outputCount ) } )
     val total = cases
       .zip(resultF)
@@ -69,7 +69,7 @@ case class TestCases[A, B](cases: List[TestCase[A, B]]) {
    * @param scoreFunc scoring function
    * @return the summed score
    */
-  def score( result: List[List[A]] )( implicit scoreFunc: (Option[A], Option[B]) => Long ): Long = {
+  def score( result: List[List[A]] )( implicit scoreFunc: (Option[A], Option[A]) => Long ): Long = {
     assert(result.length == cases.length)
     val total = cases
       .zip(result)
@@ -81,15 +81,15 @@ case class TestCases[A, B](cases: List[TestCase[A, B]]) {
     } else total
   }
 
-  def take(count: Int): TestCases[A, B] = {
+  def take(count: Int): TestCases[A] = {
     TestCases(cases.take(count))
   }
 
-  def drop(count: Int): TestCases[A, B] = {
+  def drop(count: Int): TestCases[A] = {
     TestCases(cases.drop(count))
   }
 
-  def shuffle: TestCases[A, B] = {
+  def shuffle: TestCases[A] = {
     TestCases( Random.shuffle(cases) )
   }
 }
@@ -100,7 +100,7 @@ case class TestCases[A, B](cases: List[TestCase[A, B]]) {
  * @param outputs expected outputs
  * @tparam A the data type used
  */
-case class TestCase[A, B](inputs: List[A], outputs: List[B]) {
+case class TestCase[A](inputs: List[A], outputs: List[A]) {
 
   /**
    * Given a result from a program, score the rest
@@ -108,7 +108,7 @@ case class TestCase[A, B](inputs: List[A], outputs: List[B]) {
    * @param scoreFunc the scoring function to use
    * @return the final score
    */
-  def score( results: List[A] )( implicit scoreFunc: (Option[A], Option[B]) => Long ): Long = {
+  def score( results: List[A] )( implicit scoreFunc: (Option[A], Option[A]) => Long ): Long = {
     val maxLength = math.max( results.length, outputs.length )
     val resultCompare =
       results
