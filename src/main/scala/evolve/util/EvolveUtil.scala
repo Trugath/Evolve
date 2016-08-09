@@ -32,7 +32,6 @@ package evolve.util
 
 import evolve.core.Evolver.EvolverStrategy
 import evolve.core.{Function, TestCases, Evolver, Program}
-import evolve.functions.StringIntFunctions._
 
 import scala.annotation.tailrec
 

@@ -78,11 +78,6 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
           val program = Generator(Nop.instructionSize, size, inputCount, outputCount, seed).shrink
           assert( program.used.drop(inputCount).forall( _ == true ))
         }
-        {
-          import functions.StringIntFunctions._
-          val program = Generator(Nop.instructionSize, size, inputCount, outputCount, seed).shrink
-          assert( program.used.drop(inputCount).forall( _ == true ))
-        }
       }
     }
   }
@@ -174,13 +169,6 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
           assert( program.used === grown.used )
           assert( program === grown )
         }
-        {
-          import functions.StringIntFunctions._
-          val program = Generator(Nop.instructionSize, size, inputCount, outputCount, seed).shrink
-          val grown = program.grow(size*2).shrink
-          assert( program.used === grown.used )
-          assert( program === grown )
-        }
       }
     }
   }
@@ -217,14 +205,6 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
         }
         {
           import functions.IntegerFunctions._
-          val program = Generator(Nop.instructionSize, size, inputCount, outputCount, seed).shrink
-          val spread = program.spread(multiplier)
-          val shrunk = spread.shrink
-          assert( program.used === shrunk.used )
-          assert( program === shrunk )
-        }
-        {
-          import functions.StringIntFunctions._
           val program = Generator(Nop.instructionSize, size, inputCount, outputCount, seed).shrink
           val spread = program.spread(multiplier)
           val shrunk = spread.shrink

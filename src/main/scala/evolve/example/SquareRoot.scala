@@ -45,7 +45,7 @@ object SquareRoot {
 
     import evolve.functions.DoubleFunctions._
 
-    implicit val evolveStrategy = EvolverStrategy(128, 0.001)
+    implicit val evolveStrategy = EvolverStrategy(32, 0.001)
 
     val testCases = TestCases(
       (0 until 2147483647 by 65535000)
@@ -64,7 +64,7 @@ object SquareRoot {
 
     val solution = function(10, Generator(Nop.instructionSize, 4, 1, 1))
     Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8) )
-    val optimised = EvolveUtil.counted(solution.shrink, 20000, optimise = true, testCases)
+    val optimised = EvolveUtil.counted(solution.shrink, 200000, optimise = true, testCases)
     Files.write(Paths.get("optimised.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8) )
   }
 }
