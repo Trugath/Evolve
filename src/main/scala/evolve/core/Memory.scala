@@ -52,6 +52,9 @@ class Memory[A] private ( private val memory: ArrayBuffer[A], private val length
 }
 
 object Memory {
+
+  case class ZeroValueMemory[A]( value: A ) extends AnyVal
+
   def apply[A](inputs: List[A], expected: Int = 256): Memory[A] = {
     val memory = new ArrayBuffer[A]( inputs.size + expected )
     memory.appendAll( inputs )

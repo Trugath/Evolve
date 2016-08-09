@@ -31,7 +31,8 @@
 package evolve.util
 
 import evolve.core.Evolver.EvolverStrategy
-import evolve.core.{Function, TestCases, Evolver, Program}
+import evolve.core.Memory.ZeroValueMemory
+import evolve.core.{Evolver, Function, Program, TestCases}
 
 import scala.annotation.tailrec
 
@@ -43,12 +44,12 @@ object EvolveUtil {
   /**
    * Startup the evolution using a wide search strategy ( large population, heavy mutation )
    */
-  def startup[A](program: Program, testCases: TestCases[A])( implicit scoreFunc: (Option[A], Option[A]) => Long, functions: Seq[Function[A]] ): Program = {
+  def startup[A](program: Program, testCases: TestCases[A])( implicit scoreFunc: (Option[A], Option[A]) => Long, functions: Seq[Function[A]], zero: ZeroValueMemory[A] ): Program = {
     @tailrec def evolve(program: Program, iteration: Int, strat: EvolverStrategy): Program = {
       if (iteration <= 0) {
         program
       } else {
-        Evolver(program, testCases, optimise = false)(strat, scoreFunc, functions) match {
+        Evolver(program, testCases, optimise = false)(strat, scoreFunc, functions, zero) match {
           case Some(evolved) => evolve(evolved, iteration - 1, strat)
           case None          => evolve(program, iteration, strat.copy( factor = strat.factor * 0.9 ))
         }
@@ -63,7 +64,7 @@ object EvolveUtil {
     * A failed generation is where none of the children had equal or better fitness than the parent. This indicates either a lack of inactive genes
     * or too high a mutation rate
    */
-  def counted[A](program: Program, generations: Int, optimise: Boolean, testCases: TestCases[A])( implicit strategy: EvolverStrategy, score: (Option[A], Option[A]) => Long, functions: Seq[Function[A]] ): Program = {
+  def counted[A](program: Program, generations: Int, optimise: Boolean, testCases: TestCases[A])( implicit strategy: EvolverStrategy, score: (Option[A], Option[A]) => Long, functions: Seq[Function[A]], zero: ZeroValueMemory[A] ): Program = {
     /**
      * Run the evolution for a fixed number of generations
      */
@@ -71,7 +72,7 @@ object EvolveUtil {
       if (generations <= 0) {
         program
       } else {
-        Evolver(program, testCases, optimise)(strat, score, functions) match {
+        Evolver(program, testCases, optimise)(strat, score, functions, zero) match {
           case Some(evolved) => evolve(evolved, generations - 1, strat, optimise)
           case None          => evolve(program.grow( program.data.length + 1 ), generations - 1, strat.copy( factor = strat.factor * 0.9 ), optimise)
         }
@@ -84,7 +85,7 @@ object EvolveUtil {
   /**
    * Evolve until a set fitness or a generation limit has been reached
    */
-  def fitness[A](program: Program, fitness: Long, limit: Long, testCases: TestCases[A], optimise: Boolean = false)( implicit strategy: EvolverStrategy, score: (Option[A], Option[A]) => Long, functions: Seq[Function[A]] ): Program = {
+  def fitness[A](program: Program, fitness: Long, limit: Long, testCases: TestCases[A], optimise: Boolean = false)( implicit strategy: EvolverStrategy, score: (Option[A], Option[A]) => Long, functions: Seq[Function[A]], zero: ZeroValueMemory[A] ): Program = {
 
     @tailrec def evolve(program: Program, generation: Long): Program = {
       if(generation >= limit)

@@ -30,6 +30,8 @@
 
 package evolve.core
 
+import evolve.core.Memory.ZeroValueMemory
+
 import scala.util.Random
 
 /**
@@ -50,7 +52,7 @@ case class TestCases[A](cases: List[TestCase[A]]) {
    * @param functions The functions to map to the programs operators
    * @return the summed score
    */
-  def score( program: Program )( implicit scoreFunc: (Option[A], Option[A]) => Long, functions: Seq[Function[A]] ): Long = {
+  def score( program: Program )( implicit scoreFunc: (Option[A], Option[A]) => Long, functions: Seq[Function[A]], zero: ZeroValueMemory[A] ): Long = {
     val resultF = cases.map( testCase => Future{ program(testCase.inputs).result( program.outputCount ) } )
     val total = cases
       .zip(resultF)

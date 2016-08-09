@@ -31,9 +31,10 @@
 package evolve.example
 
 import java.nio.charset.StandardCharsets
-import java.nio.file.{Paths, Files}
+import java.nio.file.{Files, Paths}
 
 import evolve.core.Evolver.EvolverStrategy
+import evolve.core.Memory.ZeroValueMemory
 import evolve.core._
 import evolve.util.EvolveUtil
 
@@ -54,6 +55,8 @@ object StringIntFunctions {
 
     dist(s2.length)(s1.length)
   }
+
+  implicit val zero = ZeroValueMemory[(String, Int)]( ("", 0) )
 
   implicit val functions = Seq[Function[(String, Int)]](
     Nop,

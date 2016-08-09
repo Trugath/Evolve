@@ -30,9 +30,12 @@
 
 package evolve.functions
 
+import evolve.core.Memory.ZeroValueMemory
 import evolve.core.{Function, Instruction, Memory}
 
 object DoubleFunctions {
+
+  implicit val zero = ZeroValueMemory[Double]( 0.0 )
 
   implicit val functions = Seq[Function[Double]](
     Nop,

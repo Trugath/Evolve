@@ -33,6 +33,8 @@ package evolve.core
 import scala.annotation.tailrec
 import java.util.concurrent.ThreadLocalRandom
 
+import evolve.core.Memory.ZeroValueMemory
+
 /**
  * A program is a list of instructions to execute
  */
@@ -47,7 +49,7 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
    * @tparam A The data type to manipulate
    * @return the final memory state of the program
    */
-  def apply[A]( inputs: List[A] )( implicit functions: Seq[Function[A]] ): Memory[A] = {
+  def apply[A]( inputs: List[A] )( implicit functions: Seq[Function[A]], zero: ZeroValueMemory[A] ): Memory[A] = {
     require( inputs.length == inputCount )
 
     // extracts arguments from memory
@@ -67,7 +69,7 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
         def args = arguments(func, inst, memory)
         execute(index + 1, usage, memory.append( func( inst, args ) ) )
       } else {
-        execute(index + 1, usage, memory.append( memory(0) ))
+        execute(index + 1, usage, memory.append( zero.value ))
       }
     } else memory
 

@@ -30,9 +30,12 @@
 
 package evolve.functions
 
+import evolve.core.Memory.ZeroValueMemory
 import evolve.core.{Function, Instruction}
 
 object BooleanFunctions {
+
+  implicit val zero = ZeroValueMemory[Boolean]( false )
 
   implicit val functions = Seq[Function[Boolean]](
     Nop, Const,
