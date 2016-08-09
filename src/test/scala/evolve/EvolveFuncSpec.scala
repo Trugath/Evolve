@@ -17,31 +17,12 @@ class EvolveFuncSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPr
 
   private implicit val evolveStrategy = EvolverStrategy(4, 0.005)
 
-  private def evolveBoolean(program: Program, testCases: TestCases[Boolean]): Program = {
-    @tailrec def go(program: Program, generation: Long, improvements: Long): Program = {
-      Evolver(program, testCases, optimise = false) match {
-        case Some(evolved) =>
-          val score = testCases.score(evolved)
-          if (score == 0) {
-            evolved
-          } else {
-            go(evolved, generation + 1, improvements + 1)
-          }
-
-        case None =>
-          go(program, generation + 1, improvements)
-      }
-    }
-
-    go( program, 0, 0 )
-  }
-
   "The Evolve system" should "evolve a basic program (Output True)" in {
     val testCases = TestCases(List(
       TestCase(Nil, List(true))
     ))
 
-    val solution = evolveBoolean( Generator(Nop.instructionSize, 4, inputCount = 0, outputCount = 1), testCases )
+    val solution = EvolveUtil.fitness( Generator(Nop.instructionSize, 4, inputCount = 0, outputCount = 1), 0, Long.MaxValue, testCases )
     assert( solution(Nil).result(1) === List( true ) )
 
     val optimised = EvolveUtil.counted(solution.shrink.spread(2), 100, optimise = true, testCases)
@@ -55,7 +36,7 @@ class EvolveFuncSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPr
       TestCase(Nil, List(false))
     ))
 
-    val solution = evolveBoolean( Generator(Nop.instructionSize, 4, inputCount = 0, outputCount = 1), testCases )
+    val solution = EvolveUtil.fitness( Generator(Nop.instructionSize, 4, inputCount = 0, outputCount = 1), 0, Long.MaxValue, testCases )
     assert( solution(Nil).result(1) === List( false ) )
 
     val optimised = EvolveUtil.counted(solution.shrink.spread(2), 100, optimise = true, testCases)
@@ -70,7 +51,7 @@ class EvolveFuncSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPr
       TestCase(List(false), List(false))
     ))
 
-    val solution = evolveBoolean( Generator(Nop.instructionSize, 4, inputCount = 1, outputCount = 1), testCases )
+    val solution = EvolveUtil.fitness( Generator(Nop.instructionSize, 4, inputCount = 1, outputCount = 1), 0, Long.MaxValue, testCases )
     assert( solution( List( true ) ).result(1) === List( true ) )
     assert( solution( List( false ) ).result(1) === List( false ) )
 
@@ -87,7 +68,7 @@ class EvolveFuncSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPr
       TestCase(List(false), List(true))
     ))
 
-    val solution = evolveBoolean( Generator(Nop.instructionSize, 4, inputCount = 1, outputCount = 1), testCases )
+    val solution = EvolveUtil.fitness( Generator(Nop.instructionSize, 4, inputCount = 1, outputCount = 1), 0, Long.MaxValue, testCases )
     assert( solution( List( true ) ).result(1) === List( false ) )
     assert( solution( List( false ) ).result(1) === List( true ) )
 
@@ -106,7 +87,7 @@ class EvolveFuncSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPr
       TestCase(List(true, true), List(true))
     ))
 
-    val solution = evolveBoolean( Generator(Nop.instructionSize, 4, inputCount = 2, outputCount = 1), testCases )
+    val solution = EvolveUtil.fitness( Generator(Nop.instructionSize, 4, inputCount = 2, outputCount = 1), 0, Long.MaxValue, testCases )
     assert( solution( List( false, false ) ).result(1) === List( false ) )
     assert( solution( List( false, true ) ).result(1) === List( false ) )
     assert( solution( List( true, false ) ).result(1) === List( false ) )
@@ -133,7 +114,7 @@ class EvolveFuncSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPr
       TestCase(List(true, true, true), List(true, true))
     ))
 
-    val solution = evolveBoolean( Generator(Nop.instructionSize, 64, inputCount = 3, outputCount = 2), testCases )
+    val solution = EvolveUtil.fitness( Generator(Nop.instructionSize, 32, inputCount = 3, outputCount = 2), 0, Long.MaxValue, testCases )
     val optimised = EvolveUtil.counted(solution.shrink.spread(2), 1000, optimise = true, testCases)
 
     assert( solution.cost >= optimised.cost )
