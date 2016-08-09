@@ -72,11 +72,11 @@ object Evolver {
 
     // returns the best child not worse than the parent
     if(optimise) {
-      childResults
+      (popResults.head +: childResults)
         .map( a => a.copy( _2 = a._2 + a._1.cost ) )
         .reduceOption[(Program, Long)] {
         case (a, b) => if( a._2 < b._2 ) a else b
-      }.map( _._1 )
+      }.map( _._1 ).filterNot( _ == program )
     } else {
       childResults
         .reduceOption[(Program, Long)] {
