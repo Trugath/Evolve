@@ -14,9 +14,7 @@ class DotGraphSpec extends FlatSpec {
     assert( p1( List( false ) ).result(1) === List( false ) )
 
     val graph = DotGraph( p1 )
-    assert( graph.startsWith("""digraph graphname {
-                               |rankdir="LR";
-                               |subgraph cluster_0 {""".stripMargin ))
+    assert( graph.startsWith("digraph graphname {\r\nrankdir=\"LR\";\r\nsubgraph cluster_0 {" ))
     assert( graph.contains( "Nop" ))
     assert( graph.contains( "\"Input 0\"") )
     assert( graph.contains( "\"Output 0\"") )
