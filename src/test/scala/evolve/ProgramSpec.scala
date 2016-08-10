@@ -153,6 +153,7 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
           val program = Generator(Nop.instructionSize, size, inputCount, outputCount, seed).shrink
           val grown = program.grow(size*2)
           assert( program.used.count( a => a ) === grown.used.count( a => a ) )
+          assert( program.cost === grown.cost )
           assert( program === grown.shrink )
         }
         {
@@ -160,6 +161,7 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
           val program = Generator(Nop.instructionSize, size, inputCount, outputCount, seed).shrink
           val grown = program.grow(size*2).shrink
           assert( program.used === grown.used )
+          assert( program.cost === grown.cost )
           assert( program === grown )
         }
         {
@@ -167,6 +169,7 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
           val program = Generator(Nop.instructionSize, size, inputCount, outputCount, seed).shrink
           val grown = program.grow(size*2).shrink
           assert( program.used === grown.used )
+          assert( program.cost === grown.cost )
           assert( program === grown )
         }
       }
@@ -179,6 +182,7 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
     val spread = program.spread(10)
     val shrunk = spread.shrink
     assert( program.used === shrunk.used )
+    assert( program.cost === shrunk.cost )
     assert( program === shrunk )
   }
 
@@ -193,6 +197,7 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
           val spread = program.spread(multiplier)
           val shrunk = spread.shrink
           assert( program.used === shrunk.used )
+          assert( program.cost === shrunk.cost )
           assert( program === shrunk )
         }
         {
@@ -201,6 +206,7 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
           val spread = program.spread(multiplier)
           val shrunk = spread.shrink
           assert( program.used === shrunk.used )
+          assert( program.cost === shrunk.cost )
           assert( program === shrunk )
         }
         {
@@ -209,6 +215,7 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
           val spread = program.spread(multiplier)
           val shrunk = spread.shrink
           assert( program.used === shrunk.used )
+          assert( program.cost === shrunk.cost )
           assert( program === shrunk )
         }
       }
