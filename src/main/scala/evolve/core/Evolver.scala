@@ -30,6 +30,8 @@
 
 package evolve.core
 
+import java.util.concurrent.Executors
+
 import evolve.core.Memory.ZeroValueMemory
 
 
@@ -51,24 +53,25 @@ object Evolver {
   def apply[A]( program: Program, testCases: TestCases[A], optimise: Boolean )( implicit strategy: EvolverStrategy, score: (Option[A], Option[A]) => Long, functions: Seq[Function[A]], zero: ZeroValueMemory[A] ): Option[Program] = {
     import scala.concurrent._
     import scala.concurrent.duration.Duration._
-    import ExecutionContext.Implicits.global
     import scala.language.postfixOps
+
+    implicit val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(strategy.children))
 
     val inputCount = testCases.cases.head.inputs.length
     require( testCases.cases.forall( _.inputs.length == inputCount ) )
 
-    // create mutant children
-    val popF: Seq[Future[Program]] = Future { program } +: Seq.fill(strategy.children)( Future { Generator.repair( Mutator( program, strategy.factor ) ) } )
+    // score the parent
+    val programScore = testCases.score( program )( score, functions, zero )
 
-    // score the children
-    val resultsF: Seq[Future[Long]] = popF.map( _.map( individual => testCases.score( individual ) ) )
+    // create mutant children
+    val popF: Seq[Future[(Program, Long)]] = Seq.fill(strategy.children)( Future {
+      val child = Generator.repair( Mutator( program, strategy.factor ) )
+      (child, testCases.score( child )( score, functions, zero ))
+    } )
 
     // get children not worse than the parent
-    val popResults = (popF zip resultsF)
-      .map( { case (a, b) => a.zip(b) } )
-      .map( Await.result( _, Inf ) )
-
-    val childResults = popResults.tail.filter( _._2 <= popResults.head._2 )
+    val popResults = popF.map( Await.result( _, Inf ) )
+    val childResults = popResults.filter( _._2 <= programScore )
 
     // returns the best child not worse than the parent
     if(optimise) {
