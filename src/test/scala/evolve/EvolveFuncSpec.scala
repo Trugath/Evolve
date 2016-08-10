@@ -23,9 +23,11 @@ class EvolveFuncSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPr
     val startup = EvolveUtil.startup( Generator(Nop.instructionSize, size = 4, inputCount = 0, outputCount = 1), testCases )
 
     val solution = EvolveUtil.fitness( startup, fitness = 0, limit = Long.MaxValue, testCases )
+    assert( testCases.score( solution ) === 0L )
     assert( solution(Nil).result(1) === List( true ) )
 
     val optimised = EvolveUtil.counted(solution.shrink.spread(2), 100, optimise = true, testCases)
+    assert( testCases.score( optimised ) === 0L )
     assert( optimised(Nil).result(1) === List( true ) )
 
     assert( solution.cost >= optimised.cost )
@@ -39,9 +41,11 @@ class EvolveFuncSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPr
     val startup = EvolveUtil.startup( Generator(Nop.instructionSize, size = 4, inputCount = 0, outputCount = 1), testCases )
 
     val solution = EvolveUtil.fitness( startup, fitness = 0, limit = Long.MaxValue, testCases )
+    assert( testCases.score( solution ) === 0L )
     assert( solution(Nil).result(1) === List( false ) )
 
     val optimised = EvolveUtil.counted(solution.shrink.spread(2), 100, optimise = true, testCases)
+    assert( testCases.score( optimised ) === 0L )
     assert( optimised(Nil).result(1) === List( false ) )
 
     assert( solution.cost >= optimised.cost )
@@ -56,10 +60,12 @@ class EvolveFuncSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPr
     val startup = EvolveUtil.startup( Generator(Nop.instructionSize, size = 4, inputCount = 1, outputCount = 1), testCases )
 
     val solution = EvolveUtil.fitness( startup, fitness = 0, limit = Long.MaxValue, testCases )
+    assert( testCases.score( solution ) === 0L )
     assert( solution( List( true ) ).result(1) === List( true ) )
     assert( solution( List( false ) ).result(1) === List( false ) )
 
     val optimised = EvolveUtil.counted(solution.shrink.spread(2), 100, optimise = true, testCases)
+    assert( testCases.score( optimised ) === 0L )
     assert( optimised( List( true ) ).result(1) === List( true ) )
     assert( optimised( List( false ) ).result(1) === List( false ) )
 
@@ -75,10 +81,12 @@ class EvolveFuncSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPr
     val startup = EvolveUtil.startup( Generator(Nop.instructionSize, size = 4, inputCount = 1, outputCount = 1), testCases )
 
     val solution = EvolveUtil.fitness( startup, fitness = 0, limit = Long.MaxValue, testCases )
+    assert( testCases.score( solution ) === 0L )
     assert( solution( List( true ) ).result(1) === List( false ) )
     assert( solution( List( false ) ).result(1) === List( true ) )
 
     val optimised = EvolveUtil.counted(solution.shrink.spread(2), 100, optimise = true, testCases)
+    assert( testCases.score( optimised ) === 0L )
     assert( optimised( List( true ) ).result(1) === List( false ) )
     assert( optimised( List( false ) ).result(1) === List( true ) )
 
@@ -96,12 +104,14 @@ class EvolveFuncSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPr
     val startup = EvolveUtil.startup( Generator(Nop.instructionSize, size = 32, inputCount = 2, outputCount = 1), testCases )
 
     val solution = EvolveUtil.fitness( startup, fitness = 0, limit = Long.MaxValue, testCases )
+    assert( testCases.score( solution ) === 0L )
     assert( solution( List( false, false ) ).result(1) === List( false ) )
     assert( solution( List( false, true ) ).result(1) === List( false ) )
     assert( solution( List( true, false ) ).result(1) === List( false ) )
     assert( solution( List( true, true ) ).result(1) === List( true ) )
 
     val optimised = EvolveUtil.counted(solution.shrink.spread(2), 100, optimise = true, testCases)
+    assert( testCases.score( optimised ) === 0L )
     assert( optimised( List( false, false ) ).result(1) === List( false ) )
     assert( optimised( List( false, true ) ).result(1) === List( false ) )
     assert( optimised( List( true, false ) ).result(1) === List( false ) )
@@ -124,7 +134,10 @@ class EvolveFuncSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPr
 
     val startup = EvolveUtil.startup( Generator(Nop.instructionSize, size = 32, inputCount = 3, outputCount = 2), testCases )
     val solution = EvolveUtil.fitness( startup, fitness = 0, limit = Long.MaxValue, testCases )
+    assert( testCases.score( solution ) === 0L )
+
     val optimised = EvolveUtil.counted(solution.shrink.spread(2), 1000, optimise = true, testCases)
+    assert( testCases.score( optimised ) === 0L )
 
     assert( solution.cost >= optimised.cost )
   }
