@@ -65,24 +65,6 @@ case class TestCases[A](cases: List[TestCase[A]]) {
     } else total
   }
 
-  /**
-   * Given a programs result list this will score it against the testcases
-   * @param result list of results for each test case
-   * @param scoreFunc scoring function
-   * @return the summed score
-   */
-  def score( result: List[List[A]] )( implicit scoreFunc: (Option[A], Option[A]) => Long ): Long = {
-    assert(result.length == cases.length)
-    val total = cases
-      .zip(result)
-      .map { case (testCase, output) => testCase.score(output) }
-      .sum
-    assert( total >= 0 )
-    if(total < 0) {
-      Long.MaxValue
-    } else total
-  }
-
   def take(count: Int): TestCases[A] = {
     TestCases(cases.take(count))
   }
