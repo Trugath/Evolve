@@ -36,12 +36,6 @@ object Evolver {
 
   case class EvolverStrategy( children: Int, factor: Double )
 
-  private implicit lazy val ec = {
-    import java.util.concurrent.Executors
-    import scala.concurrent.ExecutionContext
-    ExecutionContext.fromExecutor(Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ))
-  }
-
   /**
    * Given a program, test cases and a scoring function will attempt to evolve a passed program
    *
@@ -57,6 +51,7 @@ object Evolver {
     import scala.concurrent._
     import scala.concurrent.duration.Duration._
     import scala.language.postfixOps
+    import ExecutionContext.Implicits.global
 
     val inputCount = testCases.cases.head.inputs.length
     require( testCases.cases.forall( _.inputs.length == inputCount ) )
