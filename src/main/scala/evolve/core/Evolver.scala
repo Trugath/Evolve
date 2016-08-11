@@ -60,14 +60,15 @@ object Evolver {
     val programScore = testCases.score( program )( score, functions, zero )
 
     // create mutant children
-    val popF: Seq[Future[(Program, Long)]] = Seq.fill(strategy.children)( Future {
+    val popF: Future[Seq[(Program, Long)]] = Future.sequence( Seq.fill(strategy.children)( Future {
       val child = Generator.repair( Mutator( program, strategy.factor ) )
       (child, testCases.score( child )( score, functions, zero ))
-    } )
+    } ) )
 
     // get children not worse than the parent
-    val popResults = popF.map( Await.result( _, Inf ) )
-    val childResults = popResults.filter( _._2 <= programScore )
+    val childResults = Await
+      .result( popF, Inf )
+      .filter( _._2 <= programScore )
 
     // returns the best child not worse than the parent
     if(optimise) {

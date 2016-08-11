@@ -13,7 +13,7 @@ class EvolveFuncSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPr
 
   import evolve.functions.BooleanFunctions._
 
-  private implicit val evolveStrategy = EvolverStrategy( children = 4, factor = 0.005 )
+  private implicit val evolveStrategy = EvolverStrategy( children = Math.max(4, Runtime.getRuntime.availableProcessors()), factor = 0.005 )
 
   "The Evolve system" should "evolve a basic program (Output True)" in {
     val testCases = TestCases(List(
@@ -140,5 +140,41 @@ class EvolveFuncSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPr
     assert( testCases.score( optimised ) === 0L )
 
     assert( solution.cost >= optimised.cost )
+  }
+
+  "optimising" should "never make the score worse" in {
+    val testCases = TestCases(List(
+      TestCase(List(false, false), List(false)),
+      TestCase(List(false, true), List(false)),
+      TestCase(List(true, false), List(false)),
+      TestCase(List(true, true), List(true))
+    ))
+
+    forAll { seed: Int =>
+      val initial = Generator( Nop.instructionSize, size = 8, inputCount = 2, outputCount = 1, seed )
+      val initialScore = testCases.score( initial )
+
+      val optimised = EvolveUtil.counted(initial, 100, optimise = true, testCases)
+      val optimisedScore = testCases.score( optimised )
+
+      assert( optimisedScore <= initialScore )
+    }
+  }
+
+  "optimising a perfect scoring program" should "not make its cost worse" in {
+    val testCases = TestCases(List(
+      TestCase(List(false, false), List(false)),
+      TestCase(List(false, true), List(false)),
+      TestCase(List(true, false), List(false)),
+      TestCase(List(true, true), List(true))
+    ))
+
+    forAll { seed: Int =>
+      val solution = EvolveUtil.fitness( Generator(Nop.instructionSize, size = 8, inputCount = 2, outputCount = 1, seed), fitness = 0, limit = Long.MaxValue, testCases)
+      assert( testCases.score(solution) === 0L )
+      val optimised = EvolveUtil.counted(solution, 100, optimise = true, testCases)
+      assert( testCases.score(optimised) === 0L )
+      assert( optimised.cost <= solution.cost )
+    }
   }
 }

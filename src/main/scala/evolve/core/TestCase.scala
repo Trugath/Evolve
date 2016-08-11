@@ -53,16 +53,14 @@ case class TestCases[A](cases: List[TestCase[A]]) {
    * @return the summed score
    */
   def score( program: Program )( implicit scoreFunc: (Option[A], Option[A]) => Long, functions: Seq[Function[A]], zero: ZeroValueMemory[A] ): Long = {
-    val resultF = cases.map( testCase => Future{ program(testCase.inputs).result( program.outputCount ) } )
-    val total = cases
-      .zip(resultF)
-      .map { case (testCase, output) => output.map(testCase.score) }
-      .map( Await.result( _, Inf ) )
-      .sum
-    assert( total >= 0 )
-    if(total < 0) {
-      Long.MaxValue
-    } else total
+      val total =
+        cases.map( testCase =>
+          testCase.score( program(testCase.inputs).result( program.outputCount ) )
+        )
+        .sum
+
+      assert( total >= 0 )
+      total
   }
 
   def take(count: Int): TestCases[A] = {
