@@ -67,7 +67,7 @@ object DotGraph {
       buffer.append(" rankdir=\"LR\";\r\n\r\n")
 
       buffer.append(" // Inputs\r\n")
-      buffer.append(" subgraph cluster_0 {")
+      buffer.append(" subgraph cluster_0 {\r\n")
       (0 until program.inputCount).foreach( i => {
         val index = i
         val node = names(i)
@@ -94,7 +94,7 @@ object DotGraph {
       }
 
       buffer.append("\r\n // Outputs\r\n")
-      buffer.append(" subgraph cluster_1 {")
+      buffer.append(" subgraph cluster_1 {\r\n")
       (0 until program.outputCount).foreach( i => {
         val index = i
         val node = names(program.inputCount + program.data.length + index)

@@ -16,7 +16,7 @@ class DotGraphSpec extends FlatSpec with PropertyChecks with GeneratorDrivenProp
     assert( p1( List( false ) ).result(1) === List( false ) )
 
     val graph = DotGraph( p1 )
-    assert( graph.startsWith("digraph graphname {\r\n rankdir=\"LR\";\r\n\r\n // Inputs\r\n subgraph cluster_0 {  " ))
+    assert( graph.startsWith("digraph graphname {\r\n rankdir=\"LR\";\r\n\r\n // Inputs\r\n subgraph cluster_0 {\r\n" ))
     assert( graph.contains( "Nop" ))
     assert( graph.contains( "\"Input 0\"") )
     assert( graph.contains( "\"Output 0\"") )
