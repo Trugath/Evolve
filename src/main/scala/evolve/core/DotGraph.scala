@@ -64,14 +64,20 @@ object DotGraph {
       val used = program.used
 
       buffer.append("digraph graphname {\r\n")
-      buffer.append("rankdir=\"LR\";\r\n")
-      buffer.append("subgraph cluster_0 {")
+      buffer.append(" rankdir=\"LR\";\r\n\r\n")
+
+      buffer.append(" // Inputs\r\n")
+      buffer.append(" subgraph cluster_0 {")
       (0 until program.inputCount).foreach( i => {
         val index = i
         val node = names(i)
-        buffer.append(s" $node [label=" + "\"" + s"Input $index" + "\"" + "];\r\n")
+        buffer.append(
+          s"""  $node [label="Input $index"];
+             |""".stripMargin)
       })
-      buffer.append("}")
+      buffer.append(" }\r\n\r\n")
+
+      buffer.append(" // Nodes\r\n")
       program
         .data
         .zipWithIndex
@@ -81,22 +87,32 @@ object DotGraph {
           val node = names(index)
           val func = functions(inst.instruction(program.instructionSize))
           val label = func.getLabel(inst)
-          buffer.append(s" $node [label=" + "\"" + label + "\"" + "];\r\n")
+          buffer.append(
+            s""" $node [label="$label"];
+               |""".stripMargin)
         }
       }
-      buffer.append("subgraph cluster_1 {")
+
+      buffer.append("\r\n // Outputs\r\n")
+      buffer.append(" subgraph cluster_1 {")
       (0 until program.outputCount).foreach( i => {
         val index = i
         val node = names(program.inputCount + program.data.length + index)
         val source = names(program.inputCount + program.data.length - program.outputCount + index)
-        buffer.append(s" $node [label=" + "\"" + s"Output $index" + "\"" + "];\r\n")
+        buffer.append(
+          s"""  $node [label="Output $index"];
+             |""".stripMargin)
       })
-      buffer.append("}")
+      buffer.append(" }\r\n\r\n")
+
+      buffer.append(" // Links\r\n")
       (0 until program.outputCount).foreach( i => {
         val index = i
         val node = names(program.inputCount + program.data.length + index)
         val source = names(program.inputCount + program.data.length - program.outputCount + index)
-        buffer.append(s"$source -> $node;\r\n")
+        buffer.append(
+          s""" $source -> $node;
+             |""".stripMargin)
       })
       program
         .data
@@ -114,9 +130,13 @@ object DotGraph {
           @tailrec def output(arguments: Int, acc: Instruction, label: Boolean): Instruction = if(arguments > 0) {
             val a = inst.pointer(instructionSize + (func.argumentSize * (arguments - 1)), argumentSize)
             if(label && func.ordered) {
-              buffer.append(s"${names(a)} -> ${names(index)} [label=${('a'.toByte + arguments - 1).toChar}];\r\n")
+              buffer.append(
+                s""" ${names(a)} -> ${names(index)} [label=${('a'.toByte + arguments - 1).toChar}];
+                   |""".stripMargin)
             } else {
-              buffer.append(s"${names(a)} -> ${names(index)};\r\n")
+              buffer.append(
+                s""" ${names(a)} -> ${names(index)};
+                   |""".stripMargin)
             }
             output(arguments - 1, acc, label)
           } else acc
