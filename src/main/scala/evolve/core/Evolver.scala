@@ -66,9 +66,11 @@ object Evolver {
     } ) )
 
     // get children not worse than the parent
-    val childResults = Await
-      .result( popF, Inf )
-      .filter( _._2 <= programScore )
+    val childResults = blocking {
+      Await
+        .result(popF, Inf)
+        .filter(_._2 <= programScore)
+    }
 
     // returns the best child not worse than the parent
     if(optimise) {

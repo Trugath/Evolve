@@ -41,7 +41,6 @@ class Memory[A] private ( private val memory: ArrayBuffer[A], private val length
   def apply(index: Int): A = memory( index )
 
   def append(data: A): Memory[A] = {
-    require( memory.length == length )
     memory.append(data)
     new Memory(memory, length + 1)
   }

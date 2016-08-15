@@ -30,7 +30,7 @@
 
 package evolve.core
 
-import scala.annotation.tailrec
+import scala.annotation.{switch, tailrec}
 import java.util.concurrent.ThreadLocalRandom
 
 import evolve.core.Memory.ZeroValueMemory
@@ -59,14 +59,20 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
         extract( index - 1, memory(inst.pointer(instructionSize + func.argumentSize * index, func.argumentSize)) :: acc )
       } else acc
 
-      extract( func.arguments - 1, Nil )
+      (func.arguments: @switch) match {
+          case 0 => Nil
+          case 1 => memory(inst.pointer(instructionSize, func.argumentSize)) :: Nil
+          case 2 => memory(inst.pointer(instructionSize, func.argumentSize)) ::
+                    memory(inst.pointer(instructionSize + func.argumentSize, func.argumentSize)) :: Nil
+          case _ => extract( func.arguments - 1, Nil )
+        }
     }
 
     @tailrec def execute(index: Int, usage: Seq[Boolean], memory: Memory[A]): Memory[A] = if(index < data.length) {
       if(usage(index)) {
-        def inst = data(index)
-        def func = functions( inst.instruction( instructionSize ) )
-        def args = arguments(func, inst, memory)
+        val inst = data(index)
+        val func = functions( inst.instruction( instructionSize ) )
+        val args = arguments(func, inst, memory)
         execute(index + 1, usage, memory.append( func( inst, args ) ) )
       } else {
         execute(index + 1, usage, memory.append( zero.value ))
