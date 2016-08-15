@@ -45,10 +45,35 @@ object ThreeBitAdderNAND {
 
     import evolve.functions.BooleanFunctions.zero
     import evolve.functions.BooleanFunctions.scoreFunc
-    import evolve.functions.BooleanFunctions.Nop
 
-    object NAnd extends Function[Boolean]  {
-      override def cost: Int = 2
+    object Nop extends Function[Boolean]  {
+      override def instructionSize: Int = 3
+      override def argumentSize: Int = 9
+      override def arguments: Int = 1
+      override def cost: Int = 1
+      override def getLabel(inst: Instruction): String = "Nop"
+
+      override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
+        arguments.head
+      }
+    }
+
+    object NAnd1 extends Function[Boolean]  {
+      override def instructionSize: Int = 3
+      override def argumentSize: Int = 9
+      override def cost: Int = 5
+      override def arguments: Int = 1
+      override def getLabel(inst: Instruction): String = "!&"
+      override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
+        !arguments.head
+      }
+    }
+
+    object NAnd2 extends Function[Boolean]  {
+      override def instructionSize: Int = 3
+      override def argumentSize: Int = 9
+      override def cost: Int = 6
+      override def arguments: Int = 2
       override def getLabel(inst: Instruction): String = "!&"
       override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
         val a = arguments.head
@@ -57,8 +82,22 @@ object ThreeBitAdderNAND {
       }
     }
 
+    object NAnd3 extends Function[Boolean]  {
+      override def instructionSize: Int = 3
+      override def argumentSize: Int = 9
+      override def cost: Int = 7
+      override def arguments: Int = 3
+      override def getLabel(inst: Instruction): String = "!&"
+      override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
+        val a = arguments.head
+        val b = arguments(1)
+        val c = arguments(2)
+        !(a&b&c)
+      }
+    }
+
     implicit val functions = Seq[Function[Boolean]](
-      Nop, NAnd
+      Nop, NAnd1, NAnd2, NAnd3
     )
 
     implicit val evolveStrategy = EvolverStrategy(12, 0.005)
@@ -92,7 +131,7 @@ object ThreeBitAdderNAND {
 
     val solution = function(Generator(Nop.instructionSize, 32, 3, 2), 0, 0)
     Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8) )
-    val optimised = EvolveUtil.counted(solution.shrink.spread(2), 10000, optimise = true, testCases)
+    val optimised = EvolveUtil.counted(solution.shrink.spread(4), 100000, optimise = true, testCases)
     Files.write(Paths.get("optimised.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8) )
   }
 }

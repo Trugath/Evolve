@@ -36,6 +36,7 @@ import scala.annotation.tailrec
  * Function takes instruction and memory and returns the new memory
  */
 trait Function[A] {
+  require( instructionSize + argumentSize * arguments <= 32, "Instruction must fit into 32 bits" )
 
   // bits used by the opcode
   def instructionSize: Int = 6
