@@ -69,13 +69,13 @@ object EvolveUtil {
     /**
      * Run the evolution for a fixed number of generations
      */
-    @tailrec def evolve(program: Program, generations: Int, strat: EvolverStrategy, optimise: Boolean): Program = {
-      if (generations <= 0) {
+    @tailrec def evolve(program: Program, generation: Int, strat: EvolverStrategy, optimise: Boolean): Program = {
+      if (generation <= 0) {
         program
       } else {
         Evolver(program, testCases, optimise)(strat, score, functions, zero) match {
-          case Some(evolved) => evolve(evolved, generations - 1, strat, optimise)
-          case None          => evolve(program.grow( program.data.length + 1 ), generations - 1, strat.copy( factor = strat.factor * 0.9 ), optimise)
+          case Some(evolved) => evolve(evolved, generation - 1, strat, optimise)
+          case None          => evolve(program.grow( program.data.length + 1 ), generation - 1, strat.copy( factor = strat.factor * 0.9 ), optimise)
         }
       }
     }
@@ -89,22 +89,10 @@ object EvolveUtil {
   def fitness[A](program: Program, fitness: Long, limit: Long, testCases: TestCases[A], optimise: Boolean = false)( implicit strategy: EvolverStrategy, score: (Option[A], Option[A]) => Long, functions: Seq[Function[A]], zero: ZeroValueMemory[A] ): Program = {
 
     @tailrec def evolve(program: Program, generation: Long): Program = {
-      if(generation >= limit)
-        return program
-
-      Evolver(program, testCases, optimise) match {
-        case Some(evolved) =>
-          val scores = for {
-            testCase <- testCases.cases
-          } yield testCase.score(evolved(testCase.inputs).result(testCase.outputs.length))
-          if (scores.sum <= fitness) {
-            evolved
-          } else {
-            evolve(evolved, generation + 1)
-          }
-
-        case None =>
-          evolve(program, generation + 1)
+      if(generation >= limit || testCases.score( program ) <= fitness) {
+        program
+      } else {
+        evolve( Evolver(program, testCases, optimise).getOrElse(program), generation + 1 )
       }
     }
 
@@ -112,10 +100,11 @@ object EvolveUtil {
   }
 
   /**
-    * Split the testcases into groups of 'groupSize' and evolve the program against the worse subgroup
+    * Split the test cases into groups of 'groupSize' and evolve the program against the worse subgroup
     * @param generations The number of generations
     */
   def worstSubGroup[A](program: Program, groupSize: Int, generations: Int, testCases: TestCases[A], optimise: Boolean = false)( implicit strategy: EvolverStrategy, score: (Option[A], Option[A]) => Long, functions: Seq[Function[A]], zero: ZeroValueMemory[A] ): Program = {
+    require( groupSize > 0, "Minimum group size is 1" )
 
     val worstSubGroup =
       Random
@@ -129,11 +118,11 @@ object EvolveUtil {
     /**
       * Run the evolution for a fixed number of generations
       */
-    @tailrec def evolve(program: Program, generations: Int): Program = {
-      if (generations <= 0) {
+    @tailrec def evolve(program: Program, generation: Int): Program = {
+      if (generation <= 0) {
         program
       } else {
-        evolve( Evolver(program, worstSubGroup, optimise).getOrElse(program), generations - 1 )
+        evolve( Evolver(program, worstSubGroup, optimise).getOrElse(program), generation - 1 )
       }
     }
 
