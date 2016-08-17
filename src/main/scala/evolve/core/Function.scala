@@ -48,10 +48,10 @@ trait Function[A] {
   def argumentSize: Int = 13
 
   // execution cost
-  def cost: Int = 4
+  def cost: Int
 
   // label for printing/graphing
-  def getLabel(inst: Instruction): String = "Unknown"
+  def getLabel(inst: Instruction): String
 
   // are the inputs order dependant
   def ordered: Boolean = false

@@ -40,10 +40,6 @@ import scala.util.Random
  * @tparam A the datatype used
  */
 case class TestCases[A](cases: List[TestCase[A]]) {
-  import scala.concurrent._
-  import scala.concurrent.duration.Duration._
-  import ExecutionContext.Implicits.global
-  import scala.language.postfixOps
 
   /**
    * Given a program score it against the test cases
@@ -61,18 +57,6 @@ case class TestCases[A](cases: List[TestCase[A]]) {
 
       assert( total >= 0 )
       total
-  }
-
-  def take(count: Int): TestCases[A] = {
-    TestCases(cases.take(count))
-  }
-
-  def drop(count: Int): TestCases[A] = {
-    TestCases(cases.drop(count))
-  }
-
-  def shuffle: TestCases[A] = {
-    TestCases( Random.shuffle(cases) )
   }
 }
 
@@ -105,7 +89,7 @@ case class TestCase[A](inputs: List[A], outputs: List[A]) {
     val totals = resultCompare
       .map( a => scoreFunc( a._1, a._2 ) )
     assert( totals.sum >= 0 )
-   val total = totals.sum
+    val total = totals.sum
     if(total < 0) {
       Long.MaxValue
     } else total
