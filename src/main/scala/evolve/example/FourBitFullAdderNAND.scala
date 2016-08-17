@@ -38,6 +38,7 @@ import evolve.core._
 import evolve.util.EvolveUtil
 
 import scala.annotation.tailrec
+import scala.util.Random
 
 object FourBitFullAdderNAND {
 
@@ -45,10 +46,35 @@ object FourBitFullAdderNAND {
 
     import evolve.functions.BooleanFunctions.zero
     import evolve.functions.BooleanFunctions.scoreFunc
-    import evolve.functions.BooleanFunctions.Nop
 
-    object NAnd extends Function[Boolean]  {
-      override def cost: Int = 2
+    object Nop extends Function[Boolean]  {
+      override def instructionSize: Int = 3
+      override def argumentSize: Int = 9
+      override def arguments: Int = 1
+      override def cost: Int = 1
+      override def getLabel(inst: Instruction): String = "Nop"
+
+      override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
+        arguments.head
+      }
+    }
+
+    object NAnd1 extends Function[Boolean]  {
+      override def instructionSize: Int = 3
+      override def argumentSize: Int = 9
+      override def cost: Int = 5
+      override def arguments: Int = 1
+      override def getLabel(inst: Instruction): String = "!&"
+      override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
+        !arguments.head
+      }
+    }
+
+    object NAnd2 extends Function[Boolean]  {
+      override def instructionSize: Int = 3
+      override def argumentSize: Int = 9
+      override def cost: Int = 6
+      override def arguments: Int = 2
       override def getLabel(inst: Instruction): String = "!&"
       override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
         val a = arguments.head
@@ -57,11 +83,25 @@ object FourBitFullAdderNAND {
       }
     }
 
+    object NAnd3 extends Function[Boolean]  {
+      override def instructionSize: Int = 3
+      override def argumentSize: Int = 9
+      override def cost: Int = 7
+      override def arguments: Int = 3
+      override def getLabel(inst: Instruction): String = "!&"
+      override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
+        val a = arguments.head
+        val b = arguments(1)
+        val c = arguments(2)
+        !(a&b&c)
+      }
+    }
+
     implicit val functions = Seq[Function[Boolean]](
-      Nop, NAnd
+      Nop, NAnd1, NAnd2, NAnd3
     )
 
-    implicit val evolveStrategy = EvolverStrategy(12, 0.001)
+    implicit val evolveStrategy = EvolverStrategy(24, 0.00025)
 
     def bitsToBools(value: Int, bits: Int): List[Boolean] = {
       require(value >= 0 && value <= math.pow(2, bits))
@@ -77,28 +117,48 @@ object FourBitFullAdderNAND {
     } yield TestCase[Boolean](bitsToBools(l, 4) ::: bitsToBools(r, 4), bitsToBools(l + r, 5))).toList )
 
 
-    @tailrec def function(program: Program, generation: Long, improvements: Long): Program = {
-      Evolver(program, testCases, optimise = false) match {
-        case Some(evolved) =>
-          val score = testCases.score(evolved)
-          if (score == 0) {
-            println( s"Solution found after $generation generations with $improvements mutations." )
-            evolved
-          } else {
-            if( generation % 100 == 0) {
-              println( s"Processed $generation generations with $improvements mutations. Current score: $score" )
-            }
-            function(evolved, generation + 1, improvements + 1)
-          }
+    @tailrec def function(program: Program, generation: Long, optimise: Boolean = false): Program = {
 
-        case None =>
-          function(program, generation + 1, improvements)
+      /*
+       * Evolving against the whole list of test cases caused the evolver to be risk averse. As such evolution would
+       * stall at about a score of 64k and still be going after 1 million generations. To combat this the test cases
+       * are randomly shuffled into 4 groups of 64 cases and scored against the current program. The worst group of
+       * 64 is selected for a short run of evolution. This allows the evolver to evolve to solve currently un-solved
+       * cases at the expense of others. CGP lends itself towards this as 'unused-genes' persist between generations.
+       * Result: Once implemented this evolve function regularly solves in under 200k generations.
+       */
+      val worstSubGroup =
+        Random
+          .shuffle( testCases.cases )
+          .grouped( 64 )
+          .map( TestCases(_) )
+          .map( tc => (tc, tc.score( program ) ) )
+          .reduce[(TestCases[Boolean], Long)]( { case (a, b) => if( a._2 > b._2 ) a else b } )
+          ._1
+
+      val partial =  EvolveUtil.fitness(program, 0, 100, worstSubGroup, optimise = false)
+      val result =  EvolveUtil.fitness(partial, 0, 900, testCases, optimise)
+      val score = testCases.score(result)
+      if (score == 0) {
+        println( s"Solution found after $generation generations." )
+        result
+      } else {
+        println( s"Processed $generation generations. Current score: $score. Current size: ${program.data.length}" )
+        if( generation % 10000 == 0 ) {
+          function(result, generation + 1000, !optimise)
+        } else {
+          function(result, generation + 1000, optimise)
+        }
       }
     }
 
-    val solution = function(Generator(Nop.instructionSize, 512, 8, 5), 0, 0)
+    val solution = function(EvolveUtil.startup(Generator(Nop.instructionSize, 504, 8, 5), testCases), 0)
     Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8) )
-    val optimised = EvolveUtil.counted(solution.shrink.spread(2), 10000, optimise = true, testCases)
-    Files.write(Paths.get("optimised.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8) )
+
+    // three rounds of optimisation and shrinking
+    val optimised1 = EvolveUtil.counted(solution, 100000, optimise = true, testCases).shrink
+    val optimised2 = EvolveUtil.counted(optimised1, 100000, optimise = true, testCases).shrink
+    val optimised3 = EvolveUtil.counted(optimised2, 100000, optimise = true, testCases).shrink
+    Files.write(Paths.get("optimised.dot"), DotGraph(optimised3).getBytes(StandardCharsets.UTF_8) )
   }
 }
