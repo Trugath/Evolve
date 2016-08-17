@@ -127,16 +127,8 @@ object FourBitFullAdderNAND {
        * cases at the expense of others. CGP lends itself towards this as 'unused-genes' persist between generations.
        * Result: Once implemented this evolve function regularly solves in under 200k generations.
        */
-      val worstSubGroup =
-        Random
-          .shuffle( testCases.cases )
-          .grouped( 64 )
-          .map( TestCases(_) )
-          .map( tc => (tc, tc.score( program ) ) )
-          .reduce[(TestCases[Boolean], Long)]( { case (a, b) => if( a._2 > b._2 ) a else b } )
-          ._1
+      val partial =  EvolveUtil.worstSubGroup(program, 64, 100, testCases, optimise = false)
 
-      val partial =  EvolveUtil.fitness(program, 0, 100, worstSubGroup, optimise = false)
       val result =  EvolveUtil.fitness(partial, 0, 900, testCases, optimise)
       val score = testCases.score(result)
       if (score == 0) {

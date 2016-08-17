@@ -35,6 +35,7 @@ import evolve.core.Memory.ZeroValueMemory
 import evolve.core.{Evolver, Function, Program, TestCases}
 
 import scala.annotation.tailrec
+import scala.util.Random
 
 /**
  * Just some pre-canned evolution functions
@@ -108,5 +109,34 @@ object EvolveUtil {
     }
 
     evolve(program, 0)
+  }
+
+  /**
+    * Split the testcases into groups of 'groupSize' and evolve the program against the worse subgroup
+    * @param generations The number of generations
+    */
+  def worstSubGroup[A](program: Program, groupSize: Int, generations: Int, testCases: TestCases[A], optimise: Boolean = false)( implicit strategy: EvolverStrategy, score: (Option[A], Option[A]) => Long, functions: Seq[Function[A]], zero: ZeroValueMemory[A] ): Program = {
+
+    val worstSubGroup =
+      Random
+        .shuffle( testCases.cases )
+        .grouped( groupSize )
+        .map( TestCases(_) )
+        .map( tc => (tc, tc.score( program ) ) )
+        .reduce[(TestCases[A], Long)]( { case (a, b) => if( a._2 > b._2 ) a else b } )
+        ._1
+
+    /**
+      * Run the evolution for a fixed number of generations
+      */
+    @tailrec def evolve(program: Program, generations: Int): Program = {
+      if (generations <= 0) {
+        program
+      } else {
+        evolve( Evolver(program, worstSubGroup, optimise).getOrElse(program), generations - 1 )
+      }
+    }
+
+    evolve(program, generations)
   }
 }
