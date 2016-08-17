@@ -38,7 +38,6 @@ import evolve.core._
 import evolve.util.EvolveUtil
 
 import scala.annotation.tailrec
-import scala.util.Random
 
 object FourBitFullAdderNAND {
 

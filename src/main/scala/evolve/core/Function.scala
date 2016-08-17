@@ -30,8 +30,6 @@
 
 package evolve.core
 
-import scala.annotation.tailrec
-
 /**
  * Function takes instruction and memory and returns the new memory
  */
