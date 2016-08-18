@@ -150,7 +150,9 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
   }
 
   /**
-    *
+    * Walks all possible datapaths through this program and measures the maximum pipeline length.
+    * @param functions list of functions to map the opcodes to
+    * @return The longest possible pipeline through this program
     */
   def maxPipelineLength( implicit functions: Seq[Function[_]] ): Long = {
 
