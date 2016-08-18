@@ -107,7 +107,7 @@ object BooleanFunctions {
   }
 
   object Implication extends Function[Boolean]  {
-    override def cost: Int = 6 // we want (!a | b) to be cheaper
+    override def cost: Int = 7 // we want (!a | b) to be cheaper
     override def getLabel(inst: Instruction): String = "->"
     override def ordered: Boolean = true
     override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
