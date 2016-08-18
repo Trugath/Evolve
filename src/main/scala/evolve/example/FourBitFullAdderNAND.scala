@@ -123,7 +123,7 @@ object FourBitFullAdderNAND {
        * Evolving against the whole list of test cases caused the evolver to be risk averse. As such evolution would
        * stall at about a score of 64k and still be going after 1 million generations. To combat this the test cases
        * are randomly shuffled into 4 groups of 64 cases and scored against the current program. The worst group of
-       * 64 is selected for a short run of evolution. This allows the evolver to evolve to solve currently un-solved
+       * 64 is selected for a short run of evolution. This allows the evolver to evolve to selectively solve some
        * cases at the expense of others. CGP lends itself towards this as 'unused-genes' persist between generations.
        * Result: Once implemented this evolve function regularly solves in under 200k generations.
        */
