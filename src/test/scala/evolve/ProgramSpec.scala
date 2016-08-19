@@ -30,7 +30,11 @@
 
 package evolve
 
+import java.nio.charset.StandardCharsets
+import java.nio.file.{Files, Paths}
+
 import evolve.core._
+import evolve.util.ProgramUtil
 import org.scalacheck.Gen
 import org.scalatest.FlatSpec
 import org.scalatest.prop.{GeneratorDrivenPropertyChecks, PropertyChecks}
@@ -222,25 +226,9 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
     }
   }
 
-  def nopProgram( length: Int )( implicit functions: Seq[Function[_]] ): Program = {
-    val f = functions.head
-    def gen( index: Int, acc: List[Instruction] ): List[Instruction] = {
-      val inst = Instruction(0).pointer( index, f.instructionSize, f.argumentSize )
-      if(index == 0) {
-        inst :: acc
-      } else {
-        gen( index - 1, inst :: acc )
-      }
-    }
-
-    val result = Program( f.instructionSize, gen( length - 1, Nil ), 1, 1 )
-    assert( result.data.length === length )
-    result
-  }
-
   "A simple NOP program" should "have a pipeline length of one" in {
     import functions.BooleanFunctions._
-    val program = nopProgram(1)
+    val program = ProgramUtil.nopProgramLong(1, 1, 1)
     assert( program( List(false) ).result(1) === List( false ))
     assert( program( List(true)  ).result(1) === List( true ) )
     assert( program.maxPipelineLength === 1 )
@@ -248,16 +236,26 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
 
   "A simple two NOP program" should "have a pipeline length of two" in {
     import functions.BooleanFunctions._
-    val program = nopProgram(2)
+    val program = ProgramUtil.nopProgramLong(2, 1, 1)
     assert( program( List(false) ).result(1) === List( false ))
     assert( program( List(true)  ).result(1) === List( true ) )
     assert( program.maxPipelineLength === 2 )
   }
 
-  "Any valid length NOP program" should "have a pipeline length equal its length" in {
+  "Any length 'ShortNOP' program" should "have a pipeline length of one" in {
     import functions.BooleanFunctions._
-    forAll(Gen.choose[Int](1, 4096)) { length =>
-      val program = nopProgram(length)
+    forAll(Gen.choose[Int](1, 256)) { length =>
+      val program = ProgramUtil.nopProgramShort(length, 1, 1)
+      assert( program( List(false) ).result(1) === List( false ))
+      assert( program( List(true)  ).result(1) === List( true ) )
+      assert( program.maxPipelineLength === 1 )
+    }
+  }
+
+  "Any length 'LongNOP' program" should "have a pipeline length equal its length" in {
+    import functions.BooleanFunctions._
+    forAll(Gen.choose[Int](1, 256)) { length =>
+      val program = ProgramUtil.nopProgramLong(length, 1, 1)
       assert( program( List(false) ).result(1) === List( false ))
       assert( program( List(true)  ).result(1) === List( true ) )
       assert( program.maxPipelineLength === length )
