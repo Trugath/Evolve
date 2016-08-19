@@ -1,15 +1,18 @@
 name := "evolve"
 
-version := "1.0"
+version := "0.1"
 
-scalaVersion := "2.11.8"
+scalaVersion := "2.12.0-M5"
 
 scalacOptions ++= Seq(
-  "-Yinline-warnings",
   "-unchecked",
   "-deprecation",
   "-feature",
   "-Xfatal-warnings")
+
+resolvers ++= Seq(
+  Resolver.sonatypeRepo("public")
+)
 
 libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.12.5" % "test"
 
