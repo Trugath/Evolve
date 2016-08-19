@@ -30,7 +30,7 @@
 
 package evolve
 
-import evolve.core.{Instruction, Program, Generator}
+import evolve.core._
 import org.scalacheck.Gen
 import org.scalatest.FlatSpec
 import org.scalatest.prop.{GeneratorDrivenPropertyChecks, PropertyChecks}
@@ -220,5 +220,85 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
         }
       }
     }
+  }
+
+  def nopProgram( length: Int )( implicit functions: Seq[Function[_]] ): Program = {
+    val f = functions.head
+    def gen( index: Int, acc: List[Instruction] ): List[Instruction] = {
+      val inst = Instruction(0).pointer( index, f.instructionSize, f.argumentSize )
+      if(index == 0) {
+        inst :: acc
+      } else {
+        gen( index - 1, inst :: acc )
+      }
+    }
+
+    val result = Program( f.instructionSize, gen( length - 1, Nil ), 1, 1 )
+    assert( result.data.length === length )
+    result
+  }
+
+  "A simple NOP program" should "have a pipeline length of one" in {
+    import functions.BooleanFunctions._
+    val program = nopProgram(1)
+    assert( program( List(false) ).result(1) === List( false ))
+    assert( program( List(true)  ).result(1) === List( true ) )
+    assert( program.maxPipelineLength === 1 )
+  }
+
+  "A simple two NOP program" should "have a pipeline length of two" in {
+    import functions.BooleanFunctions._
+    val program = nopProgram(2)
+    assert( program( List(false) ).result(1) === List( false ))
+    assert( program( List(true)  ).result(1) === List( true ) )
+    assert( program.maxPipelineLength === 2 )
+  }
+
+  "Any valid length NOP program" should "have a pipeline length equal its length" in {
+    import functions.BooleanFunctions._
+    forAll(Gen.choose[Int](1, 4096)) { length =>
+      val program = nopProgram(length)
+      assert( program( List(false) ).result(1) === List( false ))
+      assert( program( List(true)  ).result(1) === List( true ) )
+      assert( program.maxPipelineLength === length )
+    }
+  }
+
+  "A known 4 length pipeline three bit adder" should "show the correct information" in {
+    import functions.BooleanFunctions._
+    val testCases = TestCases(List(
+      TestCase(List(false, false, false), List(false, false)),
+      TestCase(List(false, false, true), List(false, true)),
+      TestCase(List(false, true, false), List(false, true)),
+      TestCase(List(false, true, true), List(true, false)),
+      TestCase(List(true, false, false), List(false, true)),
+      TestCase(List(true, false, true), List(true, false)),
+      TestCase(List(true, true, false), List(true, false)),
+      TestCase(List(true, true, true), List(true, true))
+    ))
+
+    val program = Program(6,Seq(Instruction(335552514), Instruction(134225922), Instruction(402685952), Instruction(402669572), Instruction(201359365), Instruction(35544), Instruction(268437419), Instruction(402669573), Instruction(201351174), Instruction(201359367), Instruction(201334786), Instruction(268536609), Instruction(201416715), Instruction(6700), Instruction(268550145), Instruction(134283274), Instruction(268542972), Instruction(201334801), Instruction(134324231), Instruction(402759685)),3,2)
+    assert( testCases.score(program) === 0 )
+    assert( program.cost === 14 )
+    assert( program.maxPipelineLength === 4 )
+  }
+
+  "A known 3 length pipeline three bit adder" should "show the correct information" in {
+    import functions.BooleanFunctions._
+    val testCases = TestCases(List(
+      TestCase(List(false, false, false), List(false, false)),
+      TestCase(List(false, false, true), List(false, true)),
+      TestCase(List(false, true, false), List(false, true)),
+      TestCase(List(false, true, true), List(true, false)),
+      TestCase(List(true, false, false), List(false, true)),
+      TestCase(List(true, false, true), List(true, false)),
+      TestCase(List(true, true, false), List(true, false)),
+      TestCase(List(true, true, true), List(true, true))
+    ))
+
+    val program = Program(6,Seq(Instruction(335560706), Instruction(469778432), Instruction(69206018), Instruction(201367557), Instruction(335577091), Instruction(201326593), Instruction(134217729), Instruction(335609859), Instruction(402653186), Instruction(402743306), Instruction(268486579), Instruction(201392132), Instruction(201400322), Instruction(37874), Instruction(201326601), Instruction(201392137), Instruction(402653193), Instruction(402792466), Instruction(201465866), Instruction(134275084), Instruction(402669579), Instruction(469934083), Instruction(90803981), Instruction(67223689), Instruction(402702356), Instruction(134340616), Instruction(402743297)),3,2)
+    assert( testCases.score(program) === 0 )
+    assert( program.cost === 14 )
+    assert( program.maxPipelineLength === 3 )
   }
 }

@@ -150,6 +150,32 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
   }
 
   /**
+    *
+    */
+  def maxPipelineLength( implicit functions: Seq[Function[_]] ): Long = {
+
+    val u = used
+    val pipeline: Array[Long] = Array.ofDim(inputCount + data.length)
+
+    @tailrec def pipelineLength(arguments: Int, i: Instruction, f: Function[_], max: Long): Long = if (arguments >= 0) {
+      val pointer = i.pointer( instructionSize + f.argumentSize * arguments, f.argumentSize )
+      pipelineLength( arguments - 1, i, f, math.max( max, pipeline(pointer) + 1 ) )
+    } else {
+      max
+    }
+
+    data
+      .zipWithIndex
+      .filter( a => u( a._2 + inputCount ) )
+      .foreach { case (inst, index) =>
+        val func = functions( inst.instruction(instructionSize) )
+        pipeline(index + inputCount) = pipelineLength( func.arguments - 1, inst, func, 0L )
+      }
+
+    pipeline.max
+  }
+
+  /**
    * Uses the usage data to shrink and remap the instructions to a minimal set
    * @param functions list of functions to map the opcodes to
    * @return the shrunk program
