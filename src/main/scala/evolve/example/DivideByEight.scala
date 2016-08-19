@@ -37,8 +37,6 @@ import evolve.core.Evolver.EvolverStrategy
 import evolve.core._
 import evolve.util.EvolveUtil
 
-import scala.annotation.tailrec
-
 object DivideByEight {
 
   def main(args: Array[String]): Unit = {

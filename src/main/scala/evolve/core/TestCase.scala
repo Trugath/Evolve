@@ -32,8 +32,6 @@ package evolve.core
 
 import evolve.core.Memory.ZeroValueMemory
 
-import scala.util.Random
-
 /**
  * a set of testcases used in evolving/testing a program
  * @param cases the test cases to use

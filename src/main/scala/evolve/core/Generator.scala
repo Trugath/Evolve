@@ -32,7 +32,7 @@ package evolve.core
 
 import evolve.util.MersenneTwister
 
-import scala.annotation.{switch, tailrec}
+import scala.annotation.tailrec
 import scala.concurrent.forkjoin.ThreadLocalRandom
 
 /**

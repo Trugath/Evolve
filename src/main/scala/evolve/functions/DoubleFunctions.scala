@@ -31,7 +31,7 @@
 package evolve.functions
 
 import evolve.core.Memory.ZeroValueMemory
-import evolve.core.{Function, Instruction, Memory}
+import evolve.core.{Function, Instruction}
 
 object DoubleFunctions {
 

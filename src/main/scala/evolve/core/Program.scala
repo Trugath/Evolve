@@ -115,7 +115,7 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
       for( i <- used.length - outputCount until used.length ) {
         used( i ) = true
       }
-
+/*
       for {
         (inst, index) <- data.zipWithIndex.reverse
         func = functions( inst.instruction( instructionSize ) )
@@ -126,6 +126,29 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
           used( pointer ) = true
         }
       }
+*/
+
+      // mark used instructions, only check known used instructions for its arguments
+      def stackBased( stack: List[Int] ): Unit = stack match {
+        case head :: tail if head >= inputCount =>
+          val inst = data( head - inputCount )
+          val func = functions( inst.instruction( instructionSize ) )
+          val unique: Seq[Int] = for {
+            input <- 0 until func.arguments
+            pointer: Int = inst.pointer( instructionSize + ( func.argumentSize * input ), func.argumentSize )
+            if !used( pointer )
+          } yield {
+            used(pointer) = true
+            pointer
+          }
+          stackBased( unique.toList ::: tail )
+
+        case head :: tail    =>
+          stackBased( tail )
+
+        case Nil          =>
+      }
+      stackBased( (used.length - outputCount until used.length).toList )
 
       val res = used.toSeq
       used_memo += ((functions, res))
@@ -133,20 +156,26 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
     }
   }
 
+  private var cost_memo: Map[(Seq[Function[_]]), Long] = Map.empty
   /**
    * Uses the usage data to calculate the total execution cost for this program
    * @param functions functions to map to the opcodes
    * @return the total execution cost
    */
   def cost( implicit functions: Seq[Function[_]] ): Long = {
+    if( cost_memo.contains( functions ) ) {
+      cost_memo( functions )
+    } else {
+      val u = used
+      val result = data
+        .zipWithIndex
+        .filter( a => u( a._2 + inputCount ) )
+        .map { case (inst, _) => functions( inst.instruction(instructionSize)).cost }
+        .sum
 
-    val u = used
-
-    data
-      .zipWithIndex
-      .filter( a => u( a._2 + inputCount ) )
-      .map { case (inst, _) => functions( inst.instruction(instructionSize)).cost }
-      .sum
+      cost_memo += ((functions, result))
+      result
+    }
   }
 
   /**
