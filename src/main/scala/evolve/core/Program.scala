@@ -97,6 +97,32 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
       .sum
   }
 
+  /**
+    * Removes all unused bits from a program
+    * @param functions functions to map into the op codes
+    * @return
+    */
+  def clean(implicit functions: Seq[Function[_]]): Program = {
+
+    val u = used
+
+    val cleaned = data
+      .zipWithIndex
+      .map { case (inst, index) =>
+        if( u( index + inputCount ) ) {
+          val func = functions( inst.instruction( instructionSize ) )
+          @tailrec def clean(argument: Int, i: Instruction): Instruction = if(argument > 0) {
+            val argStart = func.instructionSize + (func.argumentSize * (argument - 1))
+            clean( argument - 1, i.pointer( inst.pointer( argStart, func.argumentSize), argStart, func.argumentSize ) )
+          } else i
+          clean(func.arguments, Instruction(0).instruction( inst.instruction( instructionSize ), instructionSize ) )
+        } else {
+          Instruction(0)
+        }
+    }
+
+    this.copy( data = cleaned )
+  }
 
   private var used_memo: Map[(Seq[Function[_]]), Seq[Boolean]] = Map.empty
 
@@ -241,6 +267,45 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
   }
 
   /**
+    * Inserts a Nop instruction at the indicated instruction shifting all subsequent indexes to point 1 index to the
+    * right.
+    *
+    * @param index the instruction to add an Nop code after
+    */
+  def insertNop( index: Int )( implicit functions: Seq[Function[_]] ): Program = {
+    require( index >= 0 )
+    require( index <= data.length - outputCount, "cannot insert into output nodes" )
+
+    val nopF = functions.find( _.getLabel(Instruction(0)) == "Nop" ).getOrElse( functions.head)
+    val nop =
+      Instruction(0)
+        .instruction( functions.indexOf(nopF), instructionSize )
+        .pointer( index + inputCount, instructionSize, nopF.argumentSize )
+
+    val inserted: Seq[Instruction] =
+      (data.take(index + 1) :+ nop) ++
+        data.drop(index + 1)
+          .map( inst => {
+            val operator = inst.instruction(instructionSize)
+            val func = functions(operator)
+            @tailrec def remap(arguments: Int, i: Instruction): Instruction = if (arguments > 0) {
+              val argStart = func.instructionSize + (func.argumentSize * (arguments - 1))
+              val arg = inst.pointer(argStart, func.argumentSize)
+              val newArg = if( arg >= index + inputCount ) {
+                arg + 1
+              } else {
+                arg
+              }
+
+              remap(arguments - 1, i.pointer(newArg, argStart, func.argumentSize))
+            } else i
+            remap(func.arguments, inst)
+          })
+
+    copy( data = inserted )
+  }
+
+  /**
    * Ensures the program is atleast the requested length.
    * It does this by adding instructions before the existing program
    * @param size the desired minimum length of the program
@@ -294,8 +359,9 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
         val operator = data(read).instruction(instructionSize)
         val func = functions(operator)
         @tailrec def remap(arguments: Int, i: Instruction): Instruction = if(arguments > 0) {
-          val index = data(read).pointer(instructionSize + (func.argumentSize * (arguments - 1)), func.argumentSize)
-          remap(arguments - 1, i.pointer( indexes(index), func.instructionSize + (func.argumentSize * (arguments - 1)), func.argumentSize ) )
+          val argStart = func.instructionSize + (func.argumentSize * (arguments - 1))
+          val index = data(read).pointer(argStart, func.argumentSize)
+          remap(arguments - 1, i.pointer( indexes(index), argStart, func.argumentSize ) )
         } else i
         go( read + 1, write + 1, remap(func.arguments, data(read)) :: acc )
       } else {

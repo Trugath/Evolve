@@ -30,9 +30,6 @@
 
 package evolve
 
-import java.nio.charset.StandardCharsets
-import java.nio.file.{Files, Paths}
-
 import evolve.core._
 import evolve.util.ProgramUtil
 import org.scalacheck.Gen
@@ -262,6 +259,35 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
     }
   }
 
+  "Nop inserted into a single nop program" should "produce the correct program" in {
+    import functions.BooleanFunctions._
+    val a = Program(6,List(Instruction(0)),1,1)
+    val b = Program(6,List(Instruction(0), Instruction(8192)),1,1)
+    assert( a.insertNop(0) === b )
+  }
+
+  "Two Nop inserted into a single nop program" should "produce the correct program" in {
+    import functions.BooleanFunctions._
+    val a = Program(6,List(Instruction(0)),1,1)
+    val b = Program(6,List(Instruction(0), Instruction(8192), Instruction(16384)),1,1)
+    assert( a.insertNop(0).insertNop(1) === b )
+    assert( a.insertNop(0).insertNop(0) === b )
+  }
+
+  "A nop inserted in the data region in a clean nop program" should "create a program identical to a nop program of the new length" in {
+    import functions.BooleanFunctions._
+    forAll( Gen.choose(1, 256) ) { length =>
+      val a = ProgramUtil.nopProgramLong(length, 1, 1).clean
+      val b = ProgramUtil.nopProgramLong(length + 1, 1, 1).clean
+      assert( a( List(false) ).result(1) === b( List(false) ).result(1) )
+      assert( a( List(true)  ).result(1) === b( List(true) ).result(1) )
+
+      forAll( Gen.choose(0, a.data.length - 1 ) ) { index =>
+        assert( a.insertNop(index) === b )
+      }
+    }
+  }
+
   "A known 4 length pipeline three bit adder" should "show the correct information" in {
     import functions.BooleanFunctions._
     val testCases = TestCases(List(
@@ -275,7 +301,7 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
       TestCase(List(true, true, true), List(true, true))
     ))
 
-    val program = Program(6,Seq(Instruction(335552514), Instruction(134225922), Instruction(402685952), Instruction(402669572), Instruction(201359365), Instruction(35544), Instruction(268437419), Instruction(402669573), Instruction(201351174), Instruction(201359367), Instruction(201334786), Instruction(268536609), Instruction(201416715), Instruction(6700), Instruction(268550145), Instruction(134283274), Instruction(268542972), Instruction(201334801), Instruction(134324231), Instruction(402759685)),3,2)
+    val program = Program(6,List(Instruction(134225922), Instruction(402677760), Instruction(201351172), Instruction(201334786), Instruction(134266885), Instruction(402702340)),3,2)
     assert( testCases.score(program) === 0 )
     assert( program.cost === 14 )
     assert( program.maxPipelineLength === 4 )
@@ -294,9 +320,31 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
       TestCase(List(true, true, true), List(true, true))
     ))
 
-    val program = Program(6,Seq(Instruction(335560706), Instruction(469778432), Instruction(69206018), Instruction(201367557), Instruction(335577091), Instruction(201326593), Instruction(134217729), Instruction(335609859), Instruction(402653186), Instruction(402743306), Instruction(268486579), Instruction(201392132), Instruction(201400322), Instruction(37874), Instruction(201326601), Instruction(201392137), Instruction(402653193), Instruction(402792466), Instruction(201465866), Instruction(134275084), Instruction(402669579), Instruction(469934083), Instruction(90803981), Instruction(67223689), Instruction(402702356), Instruction(134340616), Instruction(402743297)),3,2)
+    val program = Program(6,Seq(Instruction(201326593), Instruction(134217729), Instruction(402653186), Instruction(201359362), Instruction(134266883), Instruction(402694145)),3,2)
     assert( testCases.score(program) === 0 )
     assert( program.cost === 14 )
     assert( program.maxPipelineLength === 3 )
+  }
+
+  it should "be able to have Nops inserted at any point and still function" in {
+    import functions.BooleanFunctions._
+    val testCases = TestCases(List(
+      TestCase(List(false, false, false), List(false, false)),
+      TestCase(List(false, false, true), List(false, true)),
+      TestCase(List(false, true, false), List(false, true)),
+      TestCase(List(false, true, true), List(true, false)),
+      TestCase(List(true, false, false), List(false, true)),
+      TestCase(List(true, false, true), List(true, false)),
+      TestCase(List(true, true, false), List(true, false)),
+      TestCase(List(true, true, true), List(true, true))
+    ))
+
+    val program = Program(6,Seq(Instruction(201326593), Instruction(134217729), Instruction(402653186), Instruction(201359362), Instruction(134266883), Instruction(402694145)),3,2)
+    forAll(Gen.choose(0, program.data.length-2)) { index => {
+      val inserted = program.insertNop(index)
+      assert( inserted.data.length === program.data.length + 1)
+      assert( inserted.cost === 15 )
+      assert( testCases.score(inserted) === 0 )
+    }}
   }
 }
