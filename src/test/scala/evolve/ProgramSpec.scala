@@ -30,6 +30,9 @@
 
 package evolve
 
+import java.nio.charset.StandardCharsets
+import java.nio.file.{Files, Paths}
+
 import evolve.core._
 import evolve.util.ProgramUtil
 import org.scalacheck.Gen
@@ -346,5 +349,11 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
       assert( inserted.cost === 15 )
       assert( testCases.score(inserted) === 0 )
     }}
+  }
+
+  it should "pipeline correctly" in {
+    import functions.BooleanFunctions._
+    val a = Program(6,Seq(Instruction(201326593), Instruction(134217729), Instruction(402653186), Instruction(201359362), Instruction(134266883), Instruction(402694145)),3,2)
+    assert( a.pipeline === Program(6,Seq(Instruction(0), Instruction(8192), Instruction(16384), Instruction(201351172), Instruction(134242308), Instruction(402677765), Instruction(40960), Instruction(201383945), Instruction(49152), Instruction(134299659), Instruction(32768), Instruction(402718733), Instruction(114688), Instruction(122880), Instruction(98304)),3,2))
   }
 }

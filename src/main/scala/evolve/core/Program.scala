@@ -35,6 +35,119 @@ import java.util.concurrent.ThreadLocalRandom
 
 import evolve.core.Memory.ZeroValueMemory
 
+object Program {
+
+  /**
+    * Actually do the pipeline operations here
+    * @see Program.pipeline
+    */
+  @tailrec private def pipelineImpl( program: Program )( implicit functions: Seq[Function[_]] ): Program = {
+    val u = program.used
+    val p = program.pipelineInfo
+    val nopF = functions.find( _.getLabel(Instruction(0)) == "Nop" ).getOrElse( functions.head)
+
+    // find first node that has inputs aren't pipelined correctly
+    program
+      .data
+      .zipWithIndex
+      .find {
+        case (inst, index) if u( index + program.inputCount ) =>
+          val func = functions( inst.instruction( program.instructionSize ) )
+          val pipeL = p( index + program.inputCount ) - 1
+          def inputsPipelined( arguments: Int ): Boolean = if( arguments > 0 ) {
+            val index = inst.pointer(program.instructionSize + (func.argumentSize * (arguments - 1)), func.argumentSize)
+            if( p( index ) == pipeL ) {
+              inputsPipelined( arguments - 1 )
+            } else true
+          } else false
+          inputsPipelined( func.arguments )
+        case _ => false
+      } match {
+
+      // pipeline an input to this node
+      case Some((inst, index)) =>
+        val func = functions( inst.instruction( program.instructionSize ) )
+        val pipeL = p( index + program.inputCount ) - 1
+        @tailrec def pipeline( arguments: Int ): Program = if( arguments > 0 ) {
+          val argStart = program.instructionSize + (func.argumentSize * (arguments - 1))
+          val input = inst.pointer(argStart, func.argumentSize)
+          if( p( input ) == pipeL ) {
+            pipeline( arguments - 1 )
+          } else {
+
+            // the instruction to insert
+            val nop =
+              Instruction(0)
+                .instruction( functions.indexOf(nopF), program.instructionSize )
+                .pointer( input, program.instructionSize, nopF.argumentSize )
+
+            // the pipelined instruction
+            val pipelined = inst.pointer( index + program.inputCount, argStart, func.argumentSize)
+
+            // do the actual insert then fix all the argument pointers of all subsequent instructions
+            val inserted: Seq[Instruction] =
+            (program.data.take(index) :+ nop :+ pipelined) ++
+              program.data.drop(index + 1)
+                .map( inst => {
+
+                  val operator = inst.instruction(program.instructionSize)
+                  val func = functions(operator)
+
+                  @tailrec def fixArguments(argument: Int, i: Instruction): Instruction = if (argument > 0) {
+                    val argStart = func.instructionSize + (func.argumentSize * (argument - 1))
+                    val arg = inst.pointer(argStart, func.argumentSize)
+                    val newArg = if( arg >= index + program.inputCount ) {
+                      arg + 1
+                    } else {
+                      arg
+                    }
+                    fixArguments(argument - 1, i.pointer(newArg, argStart, func.argumentSize))
+                  } else i
+
+                  fixArguments(func.arguments, inst)
+                })
+
+            assert( inserted.length == program.data.length + 1 )
+            program.copy( data = inserted )
+          }
+        } else throw new RuntimeException()
+        pipelineImpl( pipeline( func.arguments ) )
+
+      // instructions are pipelined to outputs
+      case None =>
+
+        //check outputs
+        val outputsP = p.takeRight( program.outputCount )
+        if( outputsP.foldLeft( true ) {
+          case (equal, p) => if( p == outputsP.head ) equal else false
+        } ) {
+          // all done
+          program
+        } else  {
+          // fix outputs
+          val shortOutputIndex = outputsP
+            .zipWithIndex
+            .reduce[(Long, Int)]( {
+              case (l, r) => if( l._1 < r._1 ) l else r
+            })._2
+
+          val shortOutput = program.data( program.data.length - program.outputCount + shortOutputIndex )
+
+          val insertIndex = program.inputCount + program.data.length - program.outputCount
+
+          // the instruction to insert
+          val nop =
+          Instruction(0)
+            .instruction( functions.indexOf(nopF), program.instructionSize )
+            .pointer( shortOutput.pointer( nopF.instructionSize, nopF.argumentSize ), program.instructionSize, nopF.argumentSize )
+
+          val outputs = program.data.takeRight( program.outputCount )
+          pipelineImpl( program.copy( data = ( program.data.dropRight(program.outputCount) :+ nop ) ++ outputs.updated(shortOutputIndex, shortOutput.pointer( insertIndex, nopF.instructionSize, nopF.argumentSize ) ) ) )
+        }
+    }
+  }
+}
+
 /**
  * A program is a list of instructions to execute
  */
@@ -205,12 +318,10 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
   }
 
   /**
-    * Walks all possible datapaths through this program and measures the maximum pipeline length.
-    * @param functions list of functions to map the opcodes to
-    * @return The longest possible pipeline through this program
+    * Returns the max distance from input at each node
+    * @return Vector of distances of all nodes in the program (including inputs)
     */
-  def maxPipelineLength( implicit functions: Seq[Function[_]] ): Long = {
-
+  def pipelineInfo( implicit functions: Seq[Function[_]] ): Seq[Long] = {
     val u = used
     val pipeline: Array[Long] = Array.ofDim(inputCount + data.length)
 
@@ -229,7 +340,35 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
         pipeline(index + inputCount) = pipelineLength( func.arguments - 1, inst, func, 0L )
       }
 
-    pipeline.max
+    pipeline
+  }
+
+  /**
+    * Walks all possible data paths through this program and measures the maximum pipeline length.
+    * @param functions list of functions to map the opcodes to
+    * @return The longest possible pipeline through this program
+    */
+  def maxPipelineLength( implicit functions: Seq[Function[_]] ): Long = {
+    pipelineInfo.max
+  }
+
+  /**
+    * Insert Nops into the program so that every stage is matched with its previous stages in pipeline delay
+    * @param functions the function list to use in pipelining
+    * @return newly pipelined function
+    */
+  def pipeline( implicit functions: Seq[Function[_]] ): Program = {
+
+    val nopF = functions.indexOf( functions.find( _.getLabel(Instruction(0)) == "Nop" ).getOrElse( functions.head ) )
+
+    val inputNopped = data.take( inputCount ).forall( _.instruction( instructionSize ) == nopF )
+    val outputNopped = data.takeRight( outputCount ).forall( _.instruction( instructionSize ) == nopF )
+
+    val a = if( inputNopped ) this else this.nopInputs
+    val b = if( outputNopped ) a else a.nopOutputs
+
+    // hand off to the implementation
+   Program.pipelineImpl( b )
   }
 
   /**
@@ -267,6 +406,50 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
   }
 
   /**
+    * Inserts Nop nodes for each input at the start of the program, rewires instructions to use these
+    *
+    * @param functions
+    * @return
+    */
+  def nopInputs( implicit functions: Seq[Function[_]] ): Program = {
+    val nopF = functions.find( _.getLabel(Instruction(0)) == "Nop" ).getOrElse( functions.head)
+
+    @tailrec def inputNops( inputs: Int, acc: List[Instruction] ): Seq[Instruction] = if(inputs > 0) {
+      inputNops( inputs - 1, Instruction(0)
+        .instruction( functions.indexOf(nopF), instructionSize )
+        .pointer( inputs - 1, instructionSize, nopF.argumentSize ) :: acc )
+    } else acc
+
+    copy( data = inputNops( inputCount, Nil ) ++ data.map( inst => {
+      val func = functions( inst.instruction(instructionSize) )
+      @tailrec def fixArguments(argument: Int, i: Instruction): Instruction = if (argument > 0) {
+        val argStart = func.instructionSize + (func.argumentSize * (argument - 1))
+        fixArguments(argument - 1, i.pointer(inst.pointer(argStart, func.argumentSize) + inputCount, argStart, func.argumentSize))
+      } else i
+      fixArguments(func.arguments, inst)
+    }) )
+  }
+
+  /**
+    * Inserts Nop nodes for each output at the end of the program wiring them into the existing outputs
+    *
+    * @param functions
+    * @return
+    */
+  def nopOutputs( implicit functions: Seq[Function[_]] ): Program = {
+    val nopF = functions.find( _.getLabel(Instruction(0)) == "Nop" ).getOrElse( functions.head)
+
+    @tailrec def outputNops( outputs: Int, acc: List[Instruction] ): Seq[Instruction] = if(outputs > 0) {
+      outputNops( outputs - 1,
+        Instruction(0)
+          .instruction( functions.indexOf(nopF), instructionSize )
+          .pointer( inputCount + data.length - outputCount + outputs - 1, instructionSize, nopF.argumentSize ) :: acc )
+    } else acc.reverse
+
+    this.copy( data = data ++ outputNops( outputCount, Nil ) )
+  }
+
+  /**
     * Inserts a Nop instruction at the indicated instruction shifting all subsequent indexes to point 1 index to the
     * right.
     *
@@ -276,30 +459,34 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
     require( index >= 0 )
     require( index <= data.length - outputCount, "cannot insert into output nodes" )
 
+    // the instruction to insert
     val nopF = functions.find( _.getLabel(Instruction(0)) == "Nop" ).getOrElse( functions.head)
     val nop =
       Instruction(0)
         .instruction( functions.indexOf(nopF), instructionSize )
         .pointer( index + inputCount, instructionSize, nopF.argumentSize )
 
+    // do the actual insert then fix all the argument pointers of all subsequent instructions
     val inserted: Seq[Instruction] =
       (data.take(index + 1) :+ nop) ++
         data.drop(index + 1)
           .map( inst => {
+
             val operator = inst.instruction(instructionSize)
             val func = functions(operator)
-            @tailrec def remap(arguments: Int, i: Instruction): Instruction = if (arguments > 0) {
-              val argStart = func.instructionSize + (func.argumentSize * (arguments - 1))
+
+            @tailrec def fixArguments(argument: Int, i: Instruction): Instruction = if (argument > 0) {
+              val argStart = func.instructionSize + (func.argumentSize * (argument - 1))
               val arg = inst.pointer(argStart, func.argumentSize)
               val newArg = if( arg >= index + inputCount ) {
                 arg + 1
               } else {
                 arg
               }
-
-              remap(arguments - 1, i.pointer(newArg, argStart, func.argumentSize))
+              fixArguments(argument - 1, i.pointer(newArg, argStart, func.argumentSize))
             } else i
-            remap(func.arguments, inst)
+
+            fixArguments(func.arguments, inst)
           })
 
     copy( data = inserted )
