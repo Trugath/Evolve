@@ -89,22 +89,11 @@ object Program {
             (program.data.take(index) :+ nop :+ pipelined) ++
               program.data.drop(index + 1)
                 .map( inst => {
-
-                  val operator = inst.instruction(program.instructionSize)
-                  val func = functions(operator)
-
-                  @tailrec def fixArguments(argument: Int, i: Instruction): Instruction = if (argument > 0) {
-                    val argStart = func.instructionSize + (func.argumentSize * (argument - 1))
-                    val arg = inst.pointer(argStart, func.argumentSize)
-                    val newArg = if( arg >= index + program.inputCount ) {
-                      arg + 1
-                    } else {
-                      arg
-                    }
-                    fixArguments(argument - 1, i.pointer(newArg, argStart, func.argumentSize))
-                  } else i
-
-                  fixArguments(func.arguments, inst)
+                  adjustArguments( inst, i => if( i >= index + program.inputCount ) {
+                    i + 1
+                  } else {
+                    i
+                  })
                 })
 
             assert( inserted.length == program.data.length + 1 )
@@ -145,6 +134,18 @@ object Program {
           pipelineImpl( program.copy( data = ( program.data.dropRight(program.outputCount) :+ nop ) ++ outputs.updated(shortOutputIndex, shortOutput.pointer( insertIndex, nopF.instructionSize, nopF.argumentSize ) ) ) )
         }
     }
+  }
+
+  private def adjustArguments( instruction: Instruction, f: (Int) => (Int) )( implicit functions: Seq[Function[_]] ): Instruction = {
+    val operator = instruction.instruction( functions.head.instructionSize )
+    val func = functions(operator)
+    @tailrec def remap(arguments: Int, i: Instruction): Instruction = if (arguments > 0) {
+      val argStart = func.instructionSize + (func.argumentSize * (arguments - 1))
+      val index = instruction.pointer(argStart, func.argumentSize)
+      remap(arguments - 1, i.pointer(f(index), argStart, func.argumentSize))
+    } else i
+
+    remap(func.arguments, instruction)
   }
 }
 
@@ -393,13 +394,7 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
       .zipWithIndex
       .filter( a => u( a._2 + inputCount ) )
       .map { case (inst, _) =>
-        val operator = inst.instruction(instructionSize)
-        val func = functions(operator)
-        @tailrec def rewire(arguments: Int, i: Instruction): Instruction = if(arguments > 0) {
-          val index = inst.pointer(instructionSize + (func.argumentSize * (arguments - 1)), func.argumentSize)
-          rewire(arguments - 1, i.pointer( indexMap(index), func.instructionSize + (func.argumentSize * (arguments - 1)), func.argumentSize ) )
-        } else i
-        rewire(func.arguments, inst)
+        Program.adjustArguments( inst, indexMap(_) )
       }
     assert( shrunkData.length == u.drop(inputCount).count( a => a ) )
     copy( data = shrunkData )
@@ -421,12 +416,7 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
     } else acc
 
     copy( data = inputNops( inputCount, Nil ) ++ data.map( inst => {
-      val func = functions( inst.instruction(instructionSize) )
-      @tailrec def fixArguments(argument: Int, i: Instruction): Instruction = if (argument > 0) {
-        val argStart = func.instructionSize + (func.argumentSize * (argument - 1))
-        fixArguments(argument - 1, i.pointer(inst.pointer(argStart, func.argumentSize) + inputCount, argStart, func.argumentSize))
-      } else i
-      fixArguments(func.arguments, inst)
+      Program.adjustArguments( inst, _ + inputCount )
     }) )
   }
 
@@ -471,22 +461,13 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
       (data.take(index + 1) :+ nop) ++
         data.drop(index + 1)
           .map( inst => {
-
-            val operator = inst.instruction(instructionSize)
-            val func = functions(operator)
-
-            @tailrec def fixArguments(argument: Int, i: Instruction): Instruction = if (argument > 0) {
-              val argStart = func.instructionSize + (func.argumentSize * (argument - 1))
-              val arg = inst.pointer(argStart, func.argumentSize)
-              val newArg = if( arg >= index + inputCount ) {
-                arg + 1
+            Program.adjustArguments( inst, i => {
+              if( i >= index + inputCount ) {
+                i + 1
               } else {
-                arg
+                i
               }
-              fixArguments(argument - 1, i.pointer(newArg, argStart, func.argumentSize))
-            } else i
-
-            fixArguments(func.arguments, inst)
+            } )
           })
 
     copy( data = inserted )
@@ -508,13 +489,7 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
       assert(indexSeq.length == inputCount + data.length)
 
       val remapped = data.map { inst => {
-        val operator = inst.instruction(instructionSize)
-        val func = functions(operator)
-        @tailrec def remap(arguments: Int, i: Instruction): Instruction = if(arguments > 0) {
-          val index = inst.pointer(instructionSize + (func.argumentSize * (arguments - 1)), func.argumentSize)
-          remap(arguments - 1, i.pointer( indexSeq(index), func.instructionSize + (func.argumentSize * (arguments - 1)), func.argumentSize ) )
-        } else i
-        remap(func.arguments, inst)
+        Program.adjustArguments( inst, indexSeq(_) )
       }}
 
       val grown = Seq.fill(growth)(Instruction(0)) ++ remapped
@@ -532,31 +507,24 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
     * @return The new program
     */
   def spread(multiplier: Int = 2)( implicit functions: Seq[Function[_]] ): Program = {
-    val indexes: Array[Int] = {
+    val indexes: Seq[Int] = {
       val b = inputCount + (data.length - outputCount) * multiplier
       val c = b + outputCount
-      ((0 until inputCount) ++
-      (inputCount until b by multiplier ) ++
-      (b until c)).toArray
+      (0 until inputCount) ++
+        (inputCount until b by multiplier) ++
+        (b until c)
     }
     assert(indexes.length == inputCount + data.length)
 
-    @tailrec def go(read: Int, write: Int, acc: List[Instruction]): List[Instruction] = if(read < data.length) {
+    @tailrec def generate(read: Int, write: Int, acc: List[Instruction]): List[Instruction] = if(read < data.length) {
       if(inputCount + write == indexes(inputCount + read)) {
-        val operator = data(read).instruction(instructionSize)
-        val func = functions(operator)
-        @tailrec def remap(arguments: Int, i: Instruction): Instruction = if(arguments > 0) {
-          val argStart = func.instructionSize + (func.argumentSize * (arguments - 1))
-          val index = data(read).pointer(argStart, func.argumentSize)
-          remap(arguments - 1, i.pointer( indexes(index), argStart, func.argumentSize ) )
-        } else i
-        go( read + 1, write + 1, remap(func.arguments, data(read)) :: acc )
+        generate( read + 1, write + 1, Program.adjustArguments( data(read), indexes(_) ) :: acc )
       } else {
-        go( read, write + 1, Instruction(ThreadLocalRandom.current().nextInt()) :: acc )
+        generate( read, write + 1, Instruction(ThreadLocalRandom.current().nextInt()) :: acc )
       }
     } else acc.reverse
 
     // fix any invalid instructions before returning the program
-    Generator.repair( copy( data = go( 0, 0, Nil ) ) )
+    Generator.repair( copy( data = generate( 0, 0, Nil ) ) )
   }
 }
