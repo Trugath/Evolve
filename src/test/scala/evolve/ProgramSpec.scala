@@ -354,6 +354,6 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
   it should "pipeline correctly" in {
     import functions.BooleanFunctions._
     val a = Program(6,Seq(Instruction(201326593), Instruction(134217729), Instruction(402653186), Instruction(201359362), Instruction(134266883), Instruction(402694145)),3,2)
-    assert( a.pipeline === Program(6,Seq(Instruction(0), Instruction(8192), Instruction(16384), Instruction(201351172), Instruction(134242308), Instruction(402677765), Instruction(40960), Instruction(201383945), Instruction(49152), Instruction(134299659), Instruction(32768), Instruction(402718733), Instruction(114688), Instruction(122880), Instruction(98304)),3,2))
+    assert( a.pipeline === Program(6,List(Instruction(201326593), Instruction(134217729), Instruction(402653186), Instruction(16384), Instruction(201359366), Instruction(24576), Instruction(134275080), Instruction(8192), Instruction(402694154), Instruction(90112), Instruction(98304), Instruction(73728)),3,2))
   }
 }

@@ -30,6 +30,8 @@
 
 package evolve.core
 
+import scala.annotation.tailrec
+
 object Instruction {
   def apply( inst: Int, bits: Int ): Instruction = Instruction(0).instruction(inst, bits)
   // def apply( bits: Int ): Instruction = new Instruction( bits )
@@ -133,5 +135,28 @@ case class Instruction( value: Int ) extends AnyVal {
         (value & ~mask) | (pointer << (32 - (start + length)))
       )
     }
+  }
+
+  /**
+    * Returns the function used by this instruction
+    * @param functions The list of functions to choose from
+    * @return The function that would be used
+    */
+  def function( implicit functions: Seq[Function[_]] ): Function[_] = {
+    functions( instruction( functions.head.instructionSize ) % functions.size )
+  }
+
+  /**
+    * Removes all unused bits from the Instruction
+    * @param functions list of functions to use for cleaning
+    * @return A clean version of this function
+    */
+  def clean( implicit functions: Seq[Function[_]] ): Instruction = {
+    val func = function
+    @tailrec def clean(argument: Int, i: Instruction): Instruction = if(argument > 0) {
+      val argStart = func.instructionSize + (func.argumentSize * (argument - 1))
+      clean( argument - 1, i.pointer( pointer( argStart, func.argumentSize ), argStart, func.argumentSize ) )
+    } else i
+    clean(func.arguments, Instruction(0).instruction( instruction( func.instructionSize ), func.instructionSize ) )
   }
 }

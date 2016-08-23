@@ -30,7 +30,7 @@
 
 package evolve
 
-import evolve.core.Instruction
+import evolve.core.{Function, Instruction}
 import org.scalacheck.Gen
 import org.scalatest.FlatSpec
 import org.scalatest.prop.{GeneratorDrivenPropertyChecks, PropertyChecks}
@@ -88,4 +88,39 @@ class InstructionSpec extends FlatSpec with PropertyChecks with GeneratorDrivenP
         assert(tvalue === inst.pointer(tvalue, start, length).pointer(start, length))
       }
     }
+
+  "Cleaning an instruction" should "not change any of its functional parts" in {
+
+    def checkFunctional( inst: Instruction )(implicit functions: Seq[Function[_]]): Boolean = {
+      val cleaned = inst.clean
+      val instructionSize = functions.head.instructionSize
+      assert( inst.instruction(instructionSize) === cleaned.instruction(instructionSize) )
+
+      val func = inst.function
+      val argumentSize = func.argumentSize
+
+      def checkArg( arg: Int ): Boolean = if( arg > 0) {
+        val argStart = instructionSize + (func.argumentSize * (arg - 1))
+        assert( inst.pointer( argStart, argumentSize ) === cleaned.pointer( argStart, argumentSize ) )
+        true
+      } else true
+
+      checkArg( func.arguments )
+    }
+
+    forAll (instructionRange) { inst =>
+    {
+      import functions.BooleanFunctions._
+      checkFunctional( inst )
+    }
+    {
+      import functions.DoubleFunctions._
+      checkFunctional( inst )
+    }
+    {
+      import functions.IntegerFunctions._
+      checkFunctional( inst )
+    }
+    }
+  }
 }

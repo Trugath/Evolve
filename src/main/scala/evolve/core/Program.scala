@@ -145,6 +145,8 @@ object Program {
     remap(func.arguments, instruction)
   }
 
+  private var nop_memo: Map[(Seq[Function[_]]), Function[_]] = Map.empty
+
   /**
     * Returns a new Nop instruction with the argument pointing at the source index
     * @param source The source node to Nop
@@ -152,8 +154,23 @@ object Program {
     * @return The new Nop instruction
     */
   private def getNop( source: Int )( implicit functions: Seq[Function[_]] ): Instruction = {
-    val nopF = functions.find( _.getLabel(Instruction(0)) == "Nop" ).getOrElse( functions.head)
+    val nopF = getNopF
     adjustArguments( Instruction(0).instruction( functions.indexOf(nopF), nopF.instructionSize ), _ => source )
+  }
+
+  /**
+    * Retrieves the current Nop instruction if it exists
+    * @param functions list of function to extract nop from
+    * @return the nop function
+    */
+  private def getNopF( implicit functions: Seq[Function[_]] ): Function[_] = {
+    if( nop_memo.contains( functions ) ) {
+      nop_memo( functions )
+    } else {
+      val nopF: Function[_] = functions.find( _.getLabel(Instruction(0)) == "Nop" ).getOrElse( functions.head )
+      nop_memo += (( functions, nopF ))
+      nopF
+    }
   }
 }
 
@@ -193,9 +210,8 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
     @tailrec def execute(index: Int, usage: Seq[Boolean], memory: Memory[A]): Memory[A] = if(index < data.length) {
       if(usage(index)) {
         val inst = data(index)
-        val func = functions( inst.instruction( instructionSize ) )
-        val args = arguments(func, inst, memory)
-        execute(index + 1, usage, memory.append( func( inst, args ) ) )
+        val func = functions( inst.instruction( instructionSize ) ) // should not require the modulus
+        execute(index + 1, usage, memory.append( func( inst, arguments(func, inst, memory) ) ) )
       } else {
         execute(index + 1, usage, memory.append( zero.value ))
       }
@@ -215,12 +231,12 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
     data
       .padTo(maxLength, Instruction(0))
       .zip(other.data.padTo(maxLength, Instruction(0)))
-      .map { case (a, b) =>  Integer.bitCount(a.value ^ b.value) }
+      .map { case (a, b) => Integer.bitCount(a.value ^ b.value) }
       .sum
   }
 
   /**
-    * Removes all unused bits from a program
+    * Sets all un-used bits in a program to zero
     * @param functions functions to map into the op codes
     * @return
     */
@@ -232,12 +248,7 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
       .zipWithIndex
       .map { case (inst, index) =>
         if( u( index + inputCount ) ) {
-          val func = functions( inst.instruction( instructionSize ) )
-          @tailrec def clean(argument: Int, i: Instruction): Instruction = if(argument > 0) {
-            val argStart = func.instructionSize + (func.argumentSize * (argument - 1))
-            clean( argument - 1, i.pointer( inst.pointer( argStart, func.argumentSize), argStart, func.argumentSize ) )
-          } else i
-          clean(func.arguments, Instruction(0).instruction( inst.instruction( instructionSize ), instructionSize ) )
+          inst.clean
         } else {
           Instruction(0)
         }
@@ -266,7 +277,7 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
 /*
       for {
         (inst, index) <- data.zipWithIndex.reverse
-        func = functions( inst.instruction( instructionSize ) )
+        func = inst.function
         input <- 0 until func.arguments
         pointer = inst.pointer( instructionSize + ( func.argumentSize * input ), func.argumentSize )
       } {
@@ -280,7 +291,7 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
       def stackBased( stack: List[Int] ): Unit = stack match {
         case head :: tail if head >= inputCount =>
           val inst = data( head - inputCount )
-          val func = functions( inst.instruction( instructionSize ) )
+          val func = inst.function
           val unique: Seq[Int] = for {
             input <- 0 until func.arguments
             pointer: Int = inst.pointer( instructionSize + ( func.argumentSize * input ), func.argumentSize )
@@ -377,7 +388,33 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
     val b = if( outputNopped ) a else a.nopOutputs
 
     // hand off to the implementation
-   Program.pipelineImpl( b )
+   Program.pipelineImpl( b ).unNopInputs
+  }
+
+  /**
+    * Collapses duplicate nodes into each other
+    * @param functions list of functions to use for comparasons
+    * @return deduplicated program
+    */
+  def deduplicate( implicit functions: Seq[Function[_]] ): Program = {
+    val u = used
+    val p = pipelineInfo
+
+    // rewire all duplcate outputs to the first output
+    val duplicates: Array[Int] = Array.ofDim(data.length + inputCount)
+    ( 0 until inputCount ).foreach( i => duplicates(i) = i )
+    ( inputCount until data.length + inputCount ).foreach { index =>
+      if( u( index ) && duplicates(index) == 0 ) {
+        duplicates(index) = index
+        ( index until data.length + inputCount ).foreach { inner =>
+          if( data( index - inputCount ).clean == data( inner - inputCount ).clean ) {
+            duplicates( inner ) = index
+          }
+        }
+      }
+    }
+
+    copy( data = data.map( Program.adjustArguments(_, duplicates(_) ) ) )
   }
 
   /**
@@ -391,10 +428,10 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
     val indexSeq =
       (0 until inputCount)
         .map( a => (a, a) ) ++
-      (inputCount until data.length + inputCount)
-        .filter( a => u( a ) )
-        .zipWithIndex
-        .map { case (oldIndex, newIndex) => (oldIndex, newIndex + inputCount) }
+        (inputCount until data.length + inputCount)
+          .filter( a => u( a ) )
+          .zipWithIndex
+          .map { case (oldIndex, newIndex) => (oldIndex, newIndex + inputCount) }
 
     val indexMap = indexSeq.toMap
 
@@ -405,6 +442,7 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
         Program.adjustArguments( inst, indexMap(_) )
       }
     assert( shrunkData.length == u.drop(inputCount).count( a => a ) )
+
     copy( data = shrunkData )
   }
 
@@ -423,6 +461,18 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
     copy( data = inputNops( inputCount, Nil ) ++ data.map( inst => {
       Program.adjustArguments( inst, _ + inputCount )
     }) )
+  }
+
+  def unNopInputs( implicit functions: Seq[Function[_]] ): Program = {
+    val nopped = (0 until inputCount).forall { index =>
+      data(index).clean == Program.getNop( index )
+    }
+
+    if(nopped) {
+      copy( data = data.drop(3).map( Program.adjustArguments(_, a => a - inputCount ) ) )
+    } else {
+      this
+    }
   }
 
   /**
