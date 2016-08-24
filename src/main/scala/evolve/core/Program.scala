@@ -177,7 +177,7 @@ object Program {
 /**
  * A program is a list of instructions to execute
  */
-case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: Int, outputCount: Int ) {
+final case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: Int, outputCount: Int ) {
   require( outputCount > 0, "A program must have an output" )
   require( data.size >= outputCount, "A program must be able to produce a result" )
 
@@ -388,7 +388,7 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
     val b = if( outputNopped ) a else a.nopOutputs
 
     // hand off to the implementation
-   Program.pipelineImpl( b ).unNopInputs
+   Program.pipelineImpl( b ).unNopInputs.unNopOutputs
   }
 
   /**
@@ -396,25 +396,32 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
     * @param functions list of functions to use for comparasons
     * @return deduplicated program
     */
+  @tailrec
   def deduplicate( implicit functions: Seq[Function[_]] ): Program = {
     val u = used
-    val p = pipelineInfo
 
     // rewire all duplcate outputs to the first output
+    var deduplicated = false
     val duplicates: Array[Int] = Array.ofDim(data.length + inputCount)
     ( 0 until inputCount ).foreach( i => duplicates(i) = i )
-    ( inputCount until data.length + inputCount ).foreach { index =>
+    ( inputCount until data.length + inputCount - outputCount ).foreach { index =>
       if( u( index ) && duplicates(index) == 0 ) {
         duplicates(index) = index
-        ( index until data.length + inputCount ).foreach { inner =>
-          if( data( index - inputCount ).clean == data( inner - inputCount ).clean ) {
+        ( index + 1 until data.length + inputCount - outputCount ).foreach { inner =>
+          if( u( inner ) && data( index - inputCount ).clean == data( inner - inputCount ).clean ) {
+            deduplicated = true
             duplicates( inner ) = index
           }
         }
       }
     }
 
-    copy( data = data.map( Program.adjustArguments(_, duplicates(_) ) ) )
+    val result = copy( data = data.map( Program.adjustArguments(_, duplicates(_) ) ) )
+    if( deduplicated ) {
+      result.deduplicate
+    } else {
+      result
+    }
   }
 
   /**
@@ -463,13 +470,14 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
     }) )
   }
 
+  @tailrec
   def unNopInputs( implicit functions: Seq[Function[_]] ): Program = {
     val nopped = (0 until inputCount).forall { index =>
       data(index).clean == Program.getNop( index )
     }
 
     if(nopped) {
-      copy( data = data.drop(3).map( Program.adjustArguments(_, a => a - inputCount ) ) )
+      copy( data = data.drop(3).map( Program.adjustArguments(_, a => a - inputCount ) ) ).unNopInputs
     } else {
       this
     }
@@ -487,6 +495,24 @@ case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: In
     } else acc.reverse
 
     this.copy( data = data ++ outputNops( outputCount, Nil ) )
+  }
+
+  /**
+    * If all three outputs are nops. Removes them from the data path by replacing them with their source nodes.
+    * Source nodes stay in place but will be removed by a shrink
+    * @param functions
+    * @return
+    */
+  def unNopOutputs( implicit functions: Seq[Function[_]] ): Program = {
+    val nopF = Program.getNopF
+    if( data.takeRight( outputCount ).forall( _.function == nopF ) ) {
+      val result = data.dropRight( outputCount ) ++ data.takeRight( outputCount ).map { inst =>
+        data( inst.pointer( nopF.instructionSize, nopF.argumentSize ) - inputCount )
+      }
+      copy( data = result ).unNopOutputs
+    } else {
+      this
+    }
   }
 
   /**

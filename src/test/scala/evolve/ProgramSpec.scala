@@ -353,7 +353,22 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
 
   it should "pipeline correctly" in {
     import functions.BooleanFunctions._
+
+    val testCases = TestCases(List(
+      TestCase(List(false, false, false), List(false, false)),
+      TestCase(List(false, false, true), List(false, true)),
+      TestCase(List(false, true, false), List(false, true)),
+      TestCase(List(false, true, true), List(true, false)),
+      TestCase(List(true, false, false), List(false, true)),
+      TestCase(List(true, false, true), List(true, false)),
+      TestCase(List(true, true, false), List(true, false)),
+      TestCase(List(true, true, true), List(true, true))
+    ))
+
     val a = Program(6,Seq(Instruction(201326593), Instruction(134217729), Instruction(402653186), Instruction(201359362), Instruction(134266883), Instruction(402694145)),3,2)
-    assert( a.pipeline === Program(6,List(Instruction(201326593), Instruction(134217729), Instruction(402653186), Instruction(16384), Instruction(201359366), Instruction(24576), Instruction(134275080), Instruction(8192), Instruction(402694154), Instruction(90112), Instruction(98304), Instruction(73728)),3,2))
+    val b = a.pipeline
+
+    assert( testCases.score( a ) === 0L )
+    assert( testCases.score( b ) === 0L )
   }
 }
