@@ -367,7 +367,7 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
 
     val a = Program(6,Seq(Instruction(201326593), Instruction(134217729), Instruction(402653186), Instruction(201359362), Instruction(134266883), Instruction(402694145)),3,2)
     val b = a.pipeline
-
+    assert( b === Program(6,Seq(Instruction(201326593), Instruction(134217729), Instruction(402653186), Instruction(16384), Instruction(201359366), Instruction(24576), Instruction(134275080), Instruction(8192), Instruction(402694154), Instruction(90112), Instruction(134275080), Instruction(90112)),3,2) )
     assert( testCases.score( a ) === 0L )
     assert( testCases.score( b ) === 0L )
   }
