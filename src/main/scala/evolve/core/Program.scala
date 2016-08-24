@@ -497,7 +497,7 @@ final case class Program( instructionSize: Int, data: Seq[Instruction], inputCou
   def nopOutputs( implicit functions: Seq[Function[_]] ): Program = {
     @tailrec def outputNops( outputs: Int, acc: List[Instruction] ): Seq[Instruction] = if(outputs > 0) {
       outputNops( outputs - 1, Program.getNop( inputCount + data.length - outputCount + outputs - 1 ) :: acc )
-    } else acc.reverse
+    } else acc
 
     this.copy( data = data ++ outputNops( outputCount, Nil ) )
   }
