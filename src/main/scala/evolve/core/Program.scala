@@ -120,8 +120,13 @@ object Program {
           // the instruction to insert
           val nop = Program.getNop( shortOutput.pointer( program.instructionSize, functions.head.argumentSize ) )
 
-          val outputs = program.data.takeRight( program.outputCount )
-          pipelineImpl( program.copy( data = ( program.data.dropRight(program.outputCount) :+ nop ) ++ outputs.updated(shortOutputIndex, shortOutput.pointer( insertIndex, program.instructionSize, functions.head.argumentSize ) ) ) )
+          val outputs =
+            program
+              .data
+              .takeRight( program.outputCount )
+              .updated( shortOutputIndex, shortOutput.pointer( insertIndex, program.instructionSize, functions.head.argumentSize ) )
+
+          pipelineImpl( program.copy( data = ( program.data.dropRight(program.outputCount) :+ nop ) ++ outputs ) )
         }
     }
   }
