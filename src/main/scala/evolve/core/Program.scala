@@ -438,29 +438,28 @@ final case class Program( instructionSize: Int, data: Seq[Instruction], inputCou
     val nopF = Program.getNopF
     val nopOp = functions.indexOf( nopF )
 
-    val remap = (0 until inputCount) ++ data
-      .zipWithIndex
-      .map {
-        case (inst: Instruction, index) =>
-            @tailrec def deref( arg: Int ): Int = {
-              val op = data( arg ).instruction( instructionSize )
-              if( op == nopOp ) {
-                val res = data( arg ).pointer( instructionSize, nopF.argumentSize )
-                if( res >= inputCount ) {
-                  deref(res - inputCount)
-                } else {
-                  res
-                }
-              } else {
-                arg + inputCount
-              }
-            }
-            deref(index)
+    // new nodes rewired to route data passed nops
+    val remapped: Seq[Instruction] = {
+      // given the index of a node, if the node is a NOP find the first non-NOP its data comes from and return its pointer
+      @tailrec def deref( arg: Int ): Int = {
+        val op = data( arg ).instruction( instructionSize )
+        if( op == nopOp ) {
+          val res = data( arg ).pointer( instructionSize, nopF.argumentSize )
+          if( res >= inputCount ) {
+            deref(res - inputCount)
+          } else {
+            res
+          }
+        } else {
+          arg + inputCount
+        }
       }
 
+      val remap = (0 until inputCount + data.length).map { deref }
+      data.map( Program.adjustArguments( _, remap(_) ) )
+    }
 
-    val remapped = data.map( Program.adjustArguments( _, remap(_) ) )
-
+    // as output nops cant be bypassed, replace them with their source node
     copy( data = remapped.dropRight( outputCount ) ++ remapped.takeRight( outputCount ).map { inst =>
       if( inst.instruction( instructionSize ) == nopOp ) {
         val p = inst.pointer( instructionSize, nopF.argumentSize )
