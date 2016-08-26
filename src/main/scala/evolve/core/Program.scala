@@ -405,7 +405,7 @@ final case class Program( instructionSize: Int, data: Seq[Instruction], inputCou
   def deduplicate( implicit functions: Seq[Function[_]] ): Program = {
     val u = used
 
-    // rewire all duplcate outputs to the first output
+    // rewire all duplcate nodes to the first duplicate node
     var deduplicated = false
     val duplicates: Array[Int] = Array.ofDim(data.length + inputCount)
     ( 0 until inputCount ).foreach( i => duplicates(i) = i )
@@ -427,6 +427,51 @@ final case class Program( instructionSize: Int, data: Seq[Instruction], inputCou
     } else {
       result
     }
+  }
+
+  /**
+    * Removes as many nops as possible from a program. Either rerouting data paths around them or overiding them with source
+    * @param functions list of functions to map the opcodes to
+    * @return denopped program
+    */
+  def denop( implicit functions: Seq[Function[_]] ): Program = {
+    val nopF = Program.getNopF
+    val nopOp = functions.indexOf( nopF )
+
+    val remap = (0 until inputCount) ++ data
+      .zipWithIndex
+      .map {
+        case (inst: Instruction, index) =>
+            @tailrec def deref( arg: Int ): Int = {
+              val op = data( arg ).instruction( instructionSize )
+              if( op == nopOp ) {
+                val res = data( arg ).pointer( instructionSize, nopF.argumentSize )
+                if( res >= inputCount ) {
+                  deref(res - inputCount)
+                } else {
+                  res
+                }
+              } else {
+                arg + inputCount
+              }
+            }
+            deref(index)
+      }
+
+
+    val remapped = data.map( Program.adjustArguments( _, remap(_) ) )
+
+    copy( data = remapped.dropRight( outputCount ) ++ remapped.takeRight( outputCount ).map { inst =>
+      if( inst.instruction( instructionSize ) == nopOp ) {
+        val p = inst.pointer( instructionSize, nopF.argumentSize )
+        if( p >= inputCount )
+          remapped( p - inputCount )
+        else
+          inst
+      } else {
+        inst
+      }
+    } )
   }
 
   /**

@@ -234,12 +234,28 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
     assert( program.maxPipelineLength === 1 )
   }
 
+  it should "not get smaller when denopped" in {
+    import functions.BooleanFunctions._
+    val program = ProgramUtil.nopProgramLong(1, 1, 1).denop
+    assert( program( List(false) ).result(1) === List( false ))
+    assert( program( List(true)  ).result(1) === List( true ) )
+    assert( program.maxPipelineLength === 1 )
+  }
+
   "A simple two NOP program" should "have a pipeline length of two" in {
     import functions.BooleanFunctions._
     val program = ProgramUtil.nopProgramLong(2, 1, 1)
     assert( program( List(false) ).result(1) === List( false ))
     assert( program( List(true)  ).result(1) === List( true ) )
     assert( program.maxPipelineLength === 2 )
+  }
+
+  it should "shrink into a single nop program when denopped" in {
+    import functions.BooleanFunctions._
+    val program = ProgramUtil.nopProgramLong(2, 1, 1).denop.shrink
+    assert( program( List(false) ).result(1) === List( false ))
+    assert( program( List(true)  ).result(1) === List( true ) )
+    assert( program.maxPipelineLength === 1 )
   }
 
   "Any length 'ShortNOP' program" should "have a pipeline length of one" in {
@@ -259,6 +275,16 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
       assert( program( List(false) ).result(1) === List( false ))
       assert( program( List(true)  ).result(1) === List( true ) )
       assert( program.maxPipelineLength === length )
+    }
+  }
+
+  it should "shrink into a single nop program when denopped" in {
+    import functions.BooleanFunctions._
+    forAll(Gen.choose[Int](1, 256)) { length =>
+      val program = ProgramUtil.nopProgramShort(length, 1, 1).denop
+      assert( program( List(false) ).result(1) === List( false ))
+      assert( program( List(true)  ).result(1) === List( true ) )
+      assert( program.maxPipelineLength === 1 )
     }
   }
 
@@ -351,6 +377,28 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
     }}
   }
 
+  it should "be able to have Nops inserted at any point then be denopped and shrunk then return to original and still function" in {
+    import functions.BooleanFunctions._
+    val testCases = TestCases(List(
+      TestCase(List(false, false, false), List(false, false)),
+      TestCase(List(false, false, true), List(false, true)),
+      TestCase(List(false, true, false), List(false, true)),
+      TestCase(List(false, true, true), List(true, false)),
+      TestCase(List(true, false, false), List(false, true)),
+      TestCase(List(true, false, true), List(true, false)),
+      TestCase(List(true, true, false), List(true, false)),
+      TestCase(List(true, true, true), List(true, true))
+    ))
+
+    val program = Program(6,Seq(Instruction(201326593), Instruction(134217729), Instruction(402653186), Instruction(201359362), Instruction(134266883), Instruction(402694145)),3,2)
+    forAll(Gen.choose(0, program.data.length-2)) { index => {
+      val after = program.insertNop(index).denop.shrink
+      assert( after.data.length === program.data.length)
+      assert( after.cost === 14 )
+      assert( testCases.score(after) === 0 )
+    }}
+  }
+
   it should "pipeline correctly" in {
     import functions.BooleanFunctions._
 
@@ -368,6 +416,31 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
     val a = Program(6,Seq(Instruction(201326593), Instruction(134217729), Instruction(402653186), Instruction(201359362), Instruction(134266883), Instruction(402694145)),3,2)
     val b = a.pipeline
     assert( b === Program(6,Seq(Instruction(201326593), Instruction(134217729), Instruction(402653186), Instruction(16384), Instruction(201359366), Instruction(24576), Instruction(134275080), Instruction(8192), Instruction(402694154), Instruction(90112), Instruction(134275080), Instruction(90112)),3,2) )
+    assert( testCases.score( a ) === 0L )
+    assert( testCases.score( b ) === 0L )
+  }
+
+  it should "return to original after pipelining if denopped and shrunk" in {
+    import functions.BooleanFunctions._
+
+    val testCases = TestCases(List(
+      TestCase(List(false, false, false), List(false, false)),
+      TestCase(List(false, false, true), List(false, true)),
+      TestCase(List(false, true, false), List(false, true)),
+      TestCase(List(false, true, true), List(true, false)),
+      TestCase(List(true, false, false), List(false, true)),
+      TestCase(List(true, false, true), List(true, false)),
+      TestCase(List(true, true, false), List(true, false)),
+      TestCase(List(true, true, true), List(true, true))
+    ))
+
+    val a = Program(6,Seq(Instruction(201326593), Instruction(134217729), Instruction(402653186), Instruction(201359362), Instruction(134266883), Instruction(402694145)),3,2)
+    val b = a.pipeline.denop.shrink
+
+    Files.write(Paths.get("solution.dot"), DotGraph(a).getBytes(StandardCharsets.UTF_8) )
+    Files.write(Paths.get("optimised.dot"), DotGraph(b).getBytes(StandardCharsets.UTF_8) )
+
+    assert( a === b )
     assert( testCases.score( a ) === 0L )
     assert( testCases.score( b ) === 0L )
   }
