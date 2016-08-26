@@ -30,9 +30,6 @@
 
 package evolve
 
-import java.nio.charset.StandardCharsets
-import java.nio.file.{Files, Paths}
-
 import evolve.core._
 import evolve.util.ProgramUtil
 import org.scalacheck.Gen
@@ -436,9 +433,6 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
 
     val a = Program(6,Seq(Instruction(201326593), Instruction(134217729), Instruction(402653186), Instruction(201359362), Instruction(134266883), Instruction(402694145)),3,2)
     val b = a.pipeline.denop.shrink
-
-    Files.write(Paths.get("solution.dot"), DotGraph(a).getBytes(StandardCharsets.UTF_8) )
-    Files.write(Paths.get("optimised.dot"), DotGraph(b).getBytes(StandardCharsets.UTF_8) )
 
     assert( a === b )
     assert( testCases.score( a ) === 0L )
