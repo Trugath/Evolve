@@ -455,7 +455,7 @@ final case class Program( instructionSize: Int, data: Seq[Instruction], inputCou
         }
       }
 
-      val remap = (0 until inputCount + data.length).map { deref }
+      val remap = (0 until inputCount) ++ data.indices.map { deref }
       data.map( Program.adjustArguments( _, remap(_) ) )
     }
 
