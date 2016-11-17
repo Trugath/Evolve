@@ -11,8 +11,10 @@ scalacOptions ++= Seq(
   "-feature",
   "-Xfatal-warnings")
 
-libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.12.6" % "test"
+// https://mvnrepository.com/artifact/org.scalacheck/scalacheck_2.12
+libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.13.4"
 
-libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.6" % "test"
+// https://mvnrepository.com/artifact/org.scalatest/scalatest_2.12
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1"
 
 coverageExcludedPackages := "<empty>;evolve.example.*"
