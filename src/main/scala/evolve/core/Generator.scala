@@ -33,7 +33,7 @@ package evolve.core
 import evolve.util.MersenneTwister
 
 import scala.annotation.tailrec
-import scala.concurrent.forkjoin.ThreadLocalRandom
+import java.util.concurrent.ThreadLocalRandom
 
 /**
  * Created by Elliot on 07/09/2015.
