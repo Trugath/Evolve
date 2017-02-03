@@ -76,9 +76,9 @@ object FourBitFullAdder {
       }
     }
 
-    val solution = function(Generator(Nop.instructionSize, 256, 8, 5), 0, 0)
+    val solution = function(Generator(Nop.instructionSize, 256, 8, 5), 0, 0).deduplicate.pipeline.shrink
     Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8) )
-    val optimised = EvolveUtil.counted(EvolveUtil.counted(solution, 20000, optimise = true, testCases).shrink, 20000, optimise = true, testCases)
+    val optimised = EvolveUtil.counted(EvolveUtil.counted(solution, 20000, optimise = true, testCases).shrink, 20000, optimise = true, testCases).deduplicate.pipeline.shrink
     Files.write(Paths.get("optimised.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8) )
   }
 }

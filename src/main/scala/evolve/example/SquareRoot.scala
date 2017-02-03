@@ -43,7 +43,16 @@ object SquareRoot {
 
     import evolve.functions.DoubleFunctions._
 
-    implicit val evolveStrategy = EvolverStrategy(32, 0.001)
+    implicit val evolveStrategy = EvolverStrategy(32, 0.0001)
+
+    implicit val functions = Seq[Function[Double]](
+      Nop,
+      ConstLarge, ConstSmall,
+      Add, Subtract, Multiply, Divide, Modulus, Increment, Decrement,
+      Min, Max,
+      GreaterThanZero, LessThanZero,
+      Signum
+    )
 
     val testCases = TestCases(
       (0 until 2147483647 by 65535000)
@@ -52,17 +61,9 @@ object SquareRoot {
         .toList
     )
 
-    // program can increase size if it improves accuracy, dark genome data is stripped out every 1000 generations
-    // and replaced with random junk instructions
-    def function(count: Int, program: Program): Program = if (count > 0) {
-      function( count - 1,
-        EvolveUtil.counted(EvolveUtil.counted(program.spread(10), 1000, optimise = false, testCases).shrink, 1000, optimise = true, testCases).shrink
-      )
-    } else program
-
-    val solution = function(10, Generator(Nop.instructionSize, 4, 1, 1))
+    val solution = EvolveUtil.fitness(Generator(Nop.instructionSize, 32, 1, 1), 100000L, 1000000, testCases)
     Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8) )
-    val optimised = EvolveUtil.counted(solution.shrink, 200000, optimise = true, testCases)
+    val optimised = EvolveUtil.counted(solution, 10000, optimise = true, testCases)
     Files.write(Paths.get("optimised.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8) )
   }
 }

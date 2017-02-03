@@ -129,9 +129,11 @@ object ThreeBitAdderNAND {
       }
     }
 
-    val solution = function(Generator(Nop.instructionSize, 32, 3, 2), 0, 0)
+    val solution = function(Generator(Nop.instructionSize, 32, 3, 2), 0, 0).denop
     Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8) )
-    val optimised = EvolveUtil.counted(solution.shrink.spread(4), 100000, optimise = true, testCases)
+    val optimised = EvolveUtil.counted(solution.nopInputs.nopOutputs.spread(3), 1000000, optimise = true, testCases).denop
     Files.write(Paths.get("optimised.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8) )
+    val pipelined = optimised.pipeline.deduplicate.pipeline.shrink
+    Files.write(Paths.get("pipelined.dot"), DotGraph(pipelined).getBytes(StandardCharsets.UTF_8) )
   }
 }
