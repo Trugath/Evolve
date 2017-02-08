@@ -74,7 +74,7 @@ class WorstSubGroupSpec extends FlatSpec with PropertyChecks with GeneratorDrive
     assert( worstCaseScore === 16000 )
 
     forAll( Gen.choose[Int](1, testCases.cases.length * 2) ) { groupSize =>
-      val evolved = EvolveUtil.worstSubGroup(worstCaseProgram, groupSize, 100, testCases, optimise = false )
+      val evolved = EvolveUtil.worstSubGroup(worstCaseProgram, groupSize, 100, testCases )
       val evolvedScore = testCases.score( evolved )
       assert( evolvedScore < worstCaseScore )
     }
