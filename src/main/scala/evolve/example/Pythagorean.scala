@@ -72,25 +72,10 @@ object Pythagorean {
       )
     )
 
-    @tailrec def function(program: Program, generation: Long, improvements: Long): Program = {
-      Evolver(program, testCases, optimise = false) match {
-        case Some(evolved) =>
-          val score = testCases.score(evolved)
-          if (score == 0) {
-            println( s"Solution found after $generation generations with $improvements mutations." )
-            evolved
-          } else {
-            function(evolved, generation + 1, improvements + 1)
-          }
 
-        case None =>
-          function(program, generation + 1, improvements)
-      }
-    }
-
-    val solution = function(Generator(Nop.instructionSize, 32, 2, 1), 0, 0)
+    val solution = EvolveUtil.fitness(Generator(Nop.instructionSize, 32, 2, 1), 0, 10000000, testCases)
     Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8) )
-    val optimised = EvolveUtil.counted(solution.nopInputs.nopOutputs.spread(2), 5000, optimise = true, testCases)
+    val optimised = EvolveUtil.counted(solution.nopInputs.nopOutputs.spread(2), 500000, optimise = true, testCases).denop.shrink.deduplicate
     Files.write(Paths.get("optimised.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8) )
     val pipelined = optimised.pipeline.deduplicate.pipeline.shrink
     Files.write(Paths.get("pipelined.dot"), DotGraph(pipelined).getBytes(StandardCharsets.UTF_8) )
