@@ -455,23 +455,28 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
 
     implicit val functions = evolve.functions.DoubleFunctions.functions.take(7) :+ SquareRoot
 
-    def answer( a: Double, b: Double ): Double = {
-      math.sqrt(a*a+b*b)
-    }
-
     val testCases = TestCases(
-      (for{
-        a <- 1.0 until 4.0  by 1.0
-        b <- a   until 5.0 by 1.0
-      } yield TestCase(List(a, b), List(answer(a, b)))).toList
+      List(
+        TestCase(List(3.0, 4.0), List(5.0)),
+        TestCase(List(5.0, 12.0), List(13.0)),
+        TestCase(List(8.0, 15.0), List(17.0)),
+        TestCase(List(7.0, 24.0), List(25.0)),
+        TestCase(List(20.0, 21.0), List(29.0)),
+        TestCase(List(12.0, 35.0), List(37.0)),
+        TestCase(List(9.0, 40.0), List(41.0)),
+        TestCase(List(28.0, 45.0), List(53.0))
+      )
     )
 
-    val a = Program(6,List(Instruction(335552513), Instruction(335544320), Instruction(201342979), Instruction(469800332)),2,1)
+    val a = Program(6,List(Instruction(335552513), Instruction(335544320), Instruction(201342979), Instruction(469794816)),2,1)
     assert( testCases.score( a ) === 0L )
 
     val b = a.nopInputs.nopOutputs.unNopOutputs.unNopInputs.shrink
     assert( testCases.score( b ) === 0L )
-
     assert( a === b )
+
+    val c = a.nopInputs.nopOutputs.denop.shrink
+    assert( testCases.score( c ) === 0L )
+    assert( a === c )
   }
 }

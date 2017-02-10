@@ -43,11 +43,7 @@ object Pythagorean {
 
   def main(args: Array[String]): Unit = {
 
-    import evolve.functions.DoubleFunctions.Nop
-
-    import evolve.functions.DoubleFunctions.scoreFunc
-
-    import evolve.functions.DoubleFunctions.zero
+    import evolve.functions.DoubleFunctions._
 
     object SquareRoot extends Function[Double] {
       override def arguments: Int = 1
@@ -63,15 +59,17 @@ object Pythagorean {
 
     implicit val evolveStrategy = EvolverStrategy(24, 0.005)
 
-    def answer( a: Double, b: Double ): Double = {
-      math.sqrt(a*a+b*b)
-    }
-
     val testCases = TestCases(
-      (for{
-        a <- 1.0 until 9.0  by 1.0
-        b <- a   until 10.0 by 1.0
-      } yield TestCase(List(a, b), List(answer(a, b)))).toList
+      List(
+        TestCase(List(3.0, 4.0), List(5.0)),
+        TestCase(List(5.0, 12.0), List(13.0)),
+        TestCase(List(8.0, 15.0), List(17.0)),
+        TestCase(List(7.0, 24.0), List(25.0)),
+        TestCase(List(20.0, 21.0), List(29.0)),
+        TestCase(List(12.0, 35.0), List(37.0)),
+        TestCase(List(9.0, 40.0), List(41.0)),
+        TestCase(List(28.0, 45.0), List(53.0))
+      )
     )
 
     @tailrec def function(program: Program, generation: Long, improvements: Long): Program = {
