@@ -464,7 +464,11 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
         TestCase(List(20.0, 21.0), List(29.0)),
         TestCase(List(12.0, 35.0), List(37.0)),
         TestCase(List(9.0, 40.0), List(41.0)),
-        TestCase(List(28.0, 45.0), List(53.0))
+        TestCase(List(28.0, 45.0), List(53.0)),
+        TestCase(List(11.0, 60.0), List(61.0)),
+        TestCase(List(16.0, 63.0), List(65.0)),
+        TestCase(List(48.0, 55.0), List(73.0)),
+        TestCase(List(13.0, 84.0), List(85.0))
       )
     )
 

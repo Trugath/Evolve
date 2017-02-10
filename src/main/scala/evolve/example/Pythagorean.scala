@@ -57,7 +57,7 @@ object Pythagorean {
 
     implicit val functions = evolve.functions.DoubleFunctions.functions.take(7) :+ SquareRoot
 
-    implicit val evolveStrategy = EvolverStrategy(24, 0.005)
+    implicit val evolveStrategy = EvolverStrategy(24, 0.0005)
 
     val testCases = TestCases(
       List(
@@ -68,14 +68,16 @@ object Pythagorean {
         TestCase(List(20.0, 21.0), List(29.0)),
         TestCase(List(12.0, 35.0), List(37.0)),
         TestCase(List(9.0, 40.0), List(41.0)),
-        TestCase(List(28.0, 45.0), List(53.0))
+        TestCase(List(28.0, 45.0), List(53.0)),
+        TestCase(List(11.0, 60.0), List(61.0)),
+        TestCase(List(16.0, 63.0), List(65.0)),
+        TestCase(List(48.0, 55.0), List(73.0)),
+        TestCase(List(13.0, 84.0), List(85.0))
       )
     )
-
-
-    val solution = EvolveUtil.fitness(Generator(Nop.instructionSize, 32, 2, 1), 0, 10000000, testCases)
+    val solution = EvolveUtil.fitness(Generator(Nop.instructionSize, 32, 2, 1), 0, 1000000, testCases)
     Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8) )
-    val optimised = EvolveUtil.counted(solution.nopInputs.nopOutputs.spread(2), 500000, optimise = true, testCases).denop.shrink.deduplicate
+    val optimised = EvolveUtil.counted(solution.nopInputs.nopOutputs.spread(4), 50000, optimise = true, testCases).denop.shrink.deduplicate
     Files.write(Paths.get("optimised.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8) )
     val pipelined = optimised.pipeline.deduplicate.pipeline.shrink
     Files.write(Paths.get("pipelined.dot"), DotGraph(pipelined).getBytes(StandardCharsets.UTF_8) )
