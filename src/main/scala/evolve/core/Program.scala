@@ -526,7 +526,7 @@ final case class Program( instructionSize: Int, data: Seq[Instruction], inputCou
     }
 
     if(nopped) {
-      copy( data = data.drop(3).map( Program.adjustArguments(_, a => a - inputCount ) ) ).unNopInputs
+      copy( data = data.drop(inputCount).map( Program.adjustArguments(_, a => a - inputCount ) ) ).unNopInputs
     } else {
       this
     }

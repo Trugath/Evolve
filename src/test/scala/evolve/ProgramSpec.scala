@@ -438,4 +438,40 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
     assert( testCases.score( a ) === 0L )
     assert( testCases.score( b ) === 0L )
   }
+
+
+  "A known pythagorean program" should "return to original after nopping if denopped" in {
+    import evolve.functions.DoubleFunctions._
+
+    object SquareRoot extends Function[Double] {
+      override def arguments: Int = 1
+      override def cost: Int = 10
+      override def getLabel(inst: Instruction): String = "SquareRoot"
+      override def apply(inst: Instruction, arguments: List[Double]): Double = {
+        val a = arguments.head
+        math.sqrt(a)
+      }
+    }
+
+    implicit val functions = evolve.functions.DoubleFunctions.functions.take(7) :+ SquareRoot
+
+    def answer( a: Double, b: Double ): Double = {
+      math.sqrt(a*a+b*b)
+    }
+
+    val testCases = TestCases(
+      (for{
+        a <- 1.0 until 4.0  by 1.0
+        b <- a   until 5.0 by 1.0
+      } yield TestCase(List(a, b), List(answer(a, b)))).toList
+    )
+
+    val a = Program(6,List(Instruction(335552513), Instruction(335544320), Instruction(201342979), Instruction(469800332)),2,1)
+    assert( testCases.score( a ) === 0L )
+
+    val b = a.nopInputs.nopOutputs.unNopOutputs.unNopInputs.shrink
+    assert( testCases.score( b ) === 0L )
+
+    assert( a === b )
+  }
 }
