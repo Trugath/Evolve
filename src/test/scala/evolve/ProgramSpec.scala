@@ -444,7 +444,7 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
     import evolve.functions.DoubleFunctions._
 
     object SquareRoot extends Function[Double] {
-      override def arguments: Int = 1
+      override val arguments: Int = 1
       override def cost: Int = 10
       override def getLabel(inst: Instruction): String = "SquareRoot"
       override def apply(inst: Instruction, arguments: List[Double]): Double = {
