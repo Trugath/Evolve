@@ -45,11 +45,15 @@ final class Memory[A] private (private [this] val memory: mutable.ArraySeq[A], p
     new Memory(memory, length + 1)
   }
 
-  def skip(): Memory [A]= {
-    new Memory(memory, length + 1)
+  def skip(amount: Int = 1): Memory[A] = {
+    require( amount >= 0 )
+    if(amount == 0)
+      this
+    else
+      new Memory(memory, length + amount)
   }
 
-  def result(count: Int): List[A] = memory.drop(length - count).toList
+  def result(count: Int): List[A] = memory.takeRight(count).toList
 
   override def toString: String = memory.toString
 }

@@ -210,17 +210,17 @@ final case class Program( instructionSize: Int, data: Seq[Instruction], inputCou
         }
     }
 
-    @tailrec def execute(index: Int, usage: Seq[Boolean], memory: Memory[A]): Memory[A] = if(index < data.length) {
+    @tailrec def execute(index: Int, skip: Int, usage: Seq[Boolean], memory: Memory[A]): Memory[A] = if(index < data.length) {
       if(usage(index+inputCount)) {
         val inst = data(index)
         val func = functions( inst.instruction( instructionSize ) )
-        execute(index + 1, usage, memory.append( func( inst, arguments(func, inst, memory) ) ) )
+        execute(index + 1, 0, usage, memory.skip(skip).append( func( inst, arguments(func, inst, memory) ) ) )
       } else {
-        execute(index + 1, usage, memory.skip())
+        execute(index + 1, skip + 1, usage, memory)
       }
     } else memory
 
-    execute(0, used, Memory(inputs, data.length))
+    execute(0, 0, used, Memory(inputs, data.length))
   }
 
   /**
