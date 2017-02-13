@@ -57,7 +57,7 @@ object Pythagorean {
 
     implicit val functions = evolve.functions.DoubleFunctions.functions.take(7) :+ SquareRoot
 
-    implicit val evolveStrategy = EvolverStrategy(24, 0.0005)
+    implicit val evolveStrategy = EvolverStrategy(24, 0.0005, optimiseForPipeline = true)
 
     val testCases = TestCases(
       List(

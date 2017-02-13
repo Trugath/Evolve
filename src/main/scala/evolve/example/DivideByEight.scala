@@ -43,7 +43,7 @@ object DivideByEight {
 
     import evolve.functions.IntegerFunctions._
 
-    implicit val evolveStrategy = EvolverStrategy(32, 0.01)
+    implicit val evolveStrategy = EvolverStrategy(32, 0.01, optimiseForPipeline = false)
 
     val testCases = TestCases(
       (0 until 2147483647 by 65535000)

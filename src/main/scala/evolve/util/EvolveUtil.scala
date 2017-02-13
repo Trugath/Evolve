@@ -56,7 +56,7 @@ object EvolveUtil {
       }
     }
 
-    evolve(program, 100, EvolverStrategy(256, 1.0))
+    evolve(program, 100, EvolverStrategy(256, 1.0, optimiseForPipeline = false))
   }
 
   /**

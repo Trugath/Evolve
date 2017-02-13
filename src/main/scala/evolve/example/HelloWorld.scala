@@ -550,7 +550,7 @@ object HelloWorld {
 
     import StringIntFunctions._
 
-    implicit val evolveStatagy = EvolverStrategy(32, 0.01)
+    implicit val evolveStatagy = EvolverStrategy(32, 0.01, optimiseForPipeline = false)
 
     val testCases = TestCases(List(
       TestCase(List(("abcdefghijklmnopqrstuvwxyz", 26), ("123456789", 9)), List(("Abcdefghijklmnopqrstuvwxyz 123456789!",27))),

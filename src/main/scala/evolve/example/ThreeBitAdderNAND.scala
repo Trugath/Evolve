@@ -99,7 +99,7 @@ object ThreeBitAdderNAND {
       Nop, NAnd1, NAnd2, NAnd3
     )
 
-    implicit val evolveStrategy = EvolverStrategy(12, 0.005)
+    implicit val evolveStrategy = EvolverStrategy(12, 0.005, optimiseForPipeline = true)
 
     val testCases = TestCases(List(
       TestCase(List(false, false, false), List(false, false)),

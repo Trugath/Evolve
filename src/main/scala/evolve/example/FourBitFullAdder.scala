@@ -45,7 +45,7 @@ object FourBitFullAdder {
 
     import evolve.functions.BooleanFunctions._
 
-    implicit val evolverStrategy = EvolverStrategy(32, 0.003)
+    implicit val evolverStrategy = EvolverStrategy(32, 0.003, optimiseForPipeline = false)
 
     def bitsToBools(value: Int, bits: Int): List[Boolean] = {
       require(value >= 0 && value <= math.pow(2, bits))

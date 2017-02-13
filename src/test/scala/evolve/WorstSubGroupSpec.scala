@@ -13,7 +13,7 @@ import org.scalatest.prop.{GeneratorDrivenPropertyChecks, PropertyChecks}
   */
 class WorstSubGroupSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPropertyChecks {
 
-  private implicit val evolveStrategy = EvolverStrategy( children = Math.max(4, Runtime.getRuntime.availableProcessors()), factor = 0.005 )
+  private implicit val evolveStrategy = EvolverStrategy( children = Math.max(4, Runtime.getRuntime.availableProcessors()), factor = 0.005, optimiseForPipeline = false )
 
   "The worstSubGroup utility function" should "evolve normally when subgroup is equal or larger the test case list size" in {
 
@@ -34,7 +34,7 @@ class WorstSubGroupSpec extends FlatSpec with PropertyChecks with GeneratorDrive
       val initial = Generator( Nop.instructionSize, size = 16, inputCount = 3, outputCount = 2, seed )
       val initialScore = testCases.score( initial )
 
-      val evolved = EvolveUtil.worstSubGroup(initial, groupSize = 8, 100, testCases, optimise = false )
+      val evolved = EvolveUtil.worstSubGroup(initial, groupSize = 8, 100, testCases)
       val evolvedScore = testCases.score( evolved )
 
       assert( evolvedScore <= initialScore )

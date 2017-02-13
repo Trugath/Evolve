@@ -32,7 +32,7 @@ package evolve.core
 
 object Evolver {
 
-  case class EvolverStrategy( children: Int, factor: Double )
+  case class EvolverStrategy( children: Int, factor: Double, optimiseForPipeline: Boolean )
 
   /**
    * Given a program, test cases and a scoring function will attempt to evolve a passed program
@@ -70,13 +70,21 @@ object Evolver {
         .filter(_._2 <= programScore)
     }
 
+    val optimiseForPipeline = strategy.optimiseForPipeline
+
     // returns the best child not worse than the parent
     if(optimise) {
       (( program, programScore ) +: childResults)
-        .map( a => a.copy( _2 = a._2 + a._1.cost ) )
+        .map( a => a.copy( _2 = (a._2 + a._1.cost) * ( if( optimiseForPipeline ) 1 else a._1.maxPipelineLength ) ) )
         .reduceOption[(Program, Long)] {
         case (a, b) => if( a._2 < b._2 ) a else b
       }.map( _._1 ).filterNot( _ == program )
+    } else if(optimiseForPipeline) {
+      childResults
+        .map( a => a.copy( _2 = a._2 * a._1.maxPipelineLength ) )
+        .reduceOption[(Program, Long)] {
+        case (a, b) => if( a._2 < b._2 ) a else b
+      }.map( _._1 )
     } else {
       childResults
         .reduceOption[(Program, Long)] {

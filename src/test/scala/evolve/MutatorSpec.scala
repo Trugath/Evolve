@@ -32,7 +32,6 @@ package evolve
 
 import evolve.core.{Instruction, Mutator, Program}
 import org.scalatest.FlatSpec
-import org.scalatest.prop.{GeneratorDrivenPropertyChecks, PropertyChecks}
 
 class MutatorSpec extends FlatSpec {
   "The mutator" should "mutate a program" in {

@@ -43,7 +43,7 @@ object SquareRoot {
 
     import evolve.functions.DoubleFunctions._
 
-    implicit val evolveStrategy = EvolverStrategy(32, 0.0001)
+    implicit val evolveStrategy = EvolverStrategy(32, 0.0001, optimiseForPipeline = false)
 
     implicit val functions = Seq[Function[Double]](
       Nop,

@@ -39,6 +39,8 @@ import evolve.core._
 import evolve.util.EvolveUtil
 
 import scala.annotation.tailrec
+import scala.concurrent.duration.Duration.Inf
+import scala.concurrent.{Await, ExecutionContext, Future, blocking}
 
 object FourBitFullAdderNAND {
 
@@ -100,7 +102,7 @@ object FourBitFullAdderNAND {
       Nop, NAnd1, NAnd2, NAnd3
     )
 
-    implicit val evolveStrategy = EvolverStrategy(24, 0.00025)
+    implicit val evolveStrategy = EvolverStrategy(24, 0.00025, optimiseForPipeline = true)
 
     def bitsToBools(value: Int, bits: Int): List[Boolean] = {
       require(value >= 0 && value <= math.pow(2, bits))
@@ -131,11 +133,26 @@ object FourBitFullAdderNAND {
       val result =  EvolveUtil.fitness(partial, 0, 900, testCases, optimise)
       val score = testCases.score(result)
       if (score == 0) {
-        println( s"Solution found after $generation generations." )
+        println( s"Solution found after $generation-${generation+1000} generations." )
         result
       } else {
         val usage = program.used.count( _ == true ).toDouble / (program.data.length + program.inputCount).toDouble
-        println( s"Processed $generation generations. Current score: $score. Current size: ${program.data.length}. Used genes ${NumberFormat.getPercentInstance.format(usage)}" )
+
+        import ExecutionContext.Implicits.global
+
+        // create mutant children and score them
+        val popF: Future[Seq[Long]] = Future.sequence( Seq.fill(evolveStrategy.children)( Future {
+          val child = Generator.repair( Mutator( program, evolveStrategy.factor ) )
+          testCases.score( child )( scoreFunc, functions )
+        } ) )
+
+        // score the population
+        val populationScore =
+          Await
+            .result(popF, Inf)
+            .sum / evolveStrategy.children
+
+        println( s"Processed ${generation+1000} generations. Current generation score: $populationScore. Current parent score: $score. Current size: ${program.data.length}. Used genes ${NumberFormat.getPercentInstance.format(usage)}" )
         if( generation % 10000 == 0 ) {
           function(result, generation + 1000, !optimise)
         } else {
@@ -144,13 +161,13 @@ object FourBitFullAdderNAND {
       }
     }
 
-    val solution = function(EvolveUtil.startup(Generator(Nop.instructionSize, 504, 8, 5), testCases), 0).shrink
+    val solution = function(EvolveUtil.startup(Generator(Nop.instructionSize, 504, 8, 5), testCases), 0).denop.deduplicate.shrink
     Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8) )
 
     // three rounds of optimisation and shrinking
-    val optimised1 = EvolveUtil.counted(solution, 100000, optimise = true, testCases).denop.pipeline.shrink
-    val optimised2 = EvolveUtil.counted(optimised1, 100000, optimise = true, testCases).denop.pipeline.shrink
-    val optimised3 = EvolveUtil.counted(optimised2, 100000, optimise = true, testCases).denop.shrink
+    val optimised1 = EvolveUtil.counted(solution, 10000, optimise = true, testCases).denop.deduplicate.shrink
+    val optimised2 = EvolveUtil.counted(optimised1, 10000, optimise = true, testCases).denop.deduplicate.shrink
+    val optimised3 = EvolveUtil.counted(optimised2, 10000, optimise = true, testCases).denop.deduplicate.shrink
     Files.write(Paths.get("optimised.dot"), DotGraph(optimised3).getBytes(StandardCharsets.UTF_8) )
 
     val pipelined = optimised3.pipeline.deduplicate.pipeline.shrink

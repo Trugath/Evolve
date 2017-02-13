@@ -13,7 +13,7 @@ class EvolveFuncSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPr
 
   import evolve.functions.BooleanFunctions._
 
-  private implicit val evolveStrategy = EvolverStrategy( children = Math.max(4, Runtime.getRuntime.availableProcessors()), factor = 0.005 )
+  private implicit val evolveStrategy = EvolverStrategy( children = Math.max(4, Runtime.getRuntime.availableProcessors()), factor = 0.005, optimiseForPipeline = false )
 
   "The Evolve system" should "evolve a basic program (Output True)" in {
     val testCases = TestCases(List(
