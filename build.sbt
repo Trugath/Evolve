@@ -20,8 +20,6 @@ libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test"
 
 libraryDependencies += "com.storm-enroute" %% "scalameter" % "0.8.2" % "test"
 
-coverageExcludedPackages := "<empty>;evolve.example.*"
+coverageExcludedPackages := "<empty>;evolve.example.*;evolve.benchmark.*"
 
 parallelExecution in Test := false
-
-testFrameworks += new TestFramework("org.scalameter.ScalaMeterFramework")
