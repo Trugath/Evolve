@@ -30,8 +30,6 @@
 
 package evolve.core
 
-import evolve.core.Memory.ZeroValueMemory
-
 object Evolver {
 
   case class EvolverStrategy( children: Int, factor: Double )
@@ -47,7 +45,7 @@ object Evolver {
    * @tparam A the data type we work against
    * @return A new program that is not worse than the parent
    */
-  def apply[A]( program: Program, testCases: TestCases[A], optimise: Boolean )( implicit strategy: EvolverStrategy, score: (Option[A], Option[A]) => Long, functions: Seq[Function[A]], zero: ZeroValueMemory[A] ): Option[Program] = {
+  def apply[A]( program: Program, testCases: TestCases[A], optimise: Boolean )( implicit strategy: EvolverStrategy, score: (Option[A], Option[A]) => Long, functions: Seq[Function[A]] ): Option[Program] = {
     import scala.concurrent._
     import scala.concurrent.duration.Duration._
     import scala.language.postfixOps
@@ -57,12 +55,12 @@ object Evolver {
     require( testCases.cases.forall( _.inputs.length == inputCount ) )
 
     // score the parent
-    val programScore = testCases.score( program )( score, functions, zero )
+    val programScore = testCases.score( program )( score, functions )
 
     // create mutant children
     val popF: Future[Seq[(Program, Long)]] = Future.sequence( Seq.fill(strategy.children)( Future {
       val child = Generator.repair( Mutator( program, strategy.factor ) )
-      (child, testCases.score( child )( score, functions, zero ))
+      (child, testCases.score( child )( score, functions ))
     } ) )
 
     // get children not worse than the parent

@@ -33,8 +33,6 @@ package evolve.core
 import scala.annotation.{switch, tailrec}
 import java.util.concurrent.ThreadLocalRandom
 
-import evolve.core.Memory.ZeroValueMemory
-
 object Program {
 
   /**
@@ -193,7 +191,7 @@ final case class Program( instructionSize: Int, data: Seq[Instruction], inputCou
    * @tparam A The data type to manipulate
    * @return the final memory state of the program
    */
-  def apply[A]( inputs: List[A] )( implicit functions: Seq[Function[A]], zero: ZeroValueMemory[A] ): Memory[A] = {
+  def apply[A]( inputs: List[A] )( implicit functions: Seq[Function[A]] ): Memory[A] = {
     require( inputs.length == inputCount )
 
     // extracts arguments from memory
@@ -203,7 +201,7 @@ final case class Program( instructionSize: Int, data: Seq[Instruction], inputCou
         extract( index - 1, memory(inst.pointer(instructionSize + func.argumentSize * index, func.argumentSize)) :: acc )
       } else acc
 
-      (func.arguments: @switch) match {
+      func.arguments match {
           case 0 => Nil
           case 1 => memory(inst.pointer(instructionSize, func.argumentSize)) :: Nil
           case 2 => memory(inst.pointer(instructionSize, func.argumentSize)) ::
@@ -213,16 +211,16 @@ final case class Program( instructionSize: Int, data: Seq[Instruction], inputCou
     }
 
     @tailrec def execute(index: Int, usage: Seq[Boolean], memory: Memory[A]): Memory[A] = if(index < data.length) {
-      if(usage(index)) {
+      if(usage(index+inputCount)) {
         val inst = data(index)
-        val func = functions( inst.instruction( instructionSize ) ) // should not require the modulus
+        val func = functions( inst.instruction( instructionSize ) )
         execute(index + 1, usage, memory.append( func( inst, arguments(func, inst, memory) ) ) )
       } else {
-        execute(index + 1, usage, memory.append( zero.value ))
+        execute(index + 1, usage, memory.skip())
       }
     } else memory
 
-    execute(0, used.drop(inputCount), Memory(inputs, data.length))
+    execute(0, used, Memory(inputs, data.length))
   }
 
   /**
@@ -279,39 +277,32 @@ final case class Program( instructionSize: Int, data: Seq[Instruction], inputCou
       for( i <- used.length - outputCount until used.length ) {
         used( i ) = true
       }
-/*
-      for {
-        (inst, index) <- data.zipWithIndex.reverse
-        func = inst.function
-        input <- 0 until func.arguments
-        pointer = inst.pointer( instructionSize + ( func.argumentSize * input ), func.argumentSize )
-      } {
-        if( used( index + inputCount ) ) {
-          used( pointer ) = true
-        }
-      }
-*/
 
       // mark used instructions, only check known used instructions for its arguments
-      def stackBased( stack: List[Int] ): Unit = stack match {
-        case head :: tail if head >= inputCount =>
-          val inst = data( head - inputCount )
-          val func = inst.function
-          val unique: Seq[Int] = for {
-            input <- 0 until func.arguments
-            pointer: Int = inst.pointer( instructionSize + ( func.argumentSize * input ), func.argumentSize )
-            if !used( pointer )
-          } yield {
-            used(pointer) = true
-            pointer
+      @tailrec def stackBased( stack: List[Int] ): Unit = {
+        if(stack.nonEmpty) {
+          val head = stack.head
+          if (head >= inputCount) {
+            val inst = data( head - inputCount )
+            val func = inst.function
+
+            @tailrec def inner( arg: Int, tail: List[Int] ): List[Int] = if( arg < func.arguments) {
+              val pointer = inst.pointer( instructionSize + ( func.argumentSize * arg ), func.argumentSize )
+              if(!used( pointer )) {
+                used(pointer) = true
+                inner( arg + 1, pointer :: tail )
+              } else {
+                inner( arg + 1, tail )
+              }
+            } else tail
+
+            stackBased( inner(0, stack.tail) )
+          } else {
+            stackBased( stack.tail )
           }
-          stackBased( unique.toList ::: tail )
-
-        case head :: tail    =>
-          stackBased( tail )
-
-        case Nil          =>
+        }
       }
+
       stackBased( (used.length - outputCount until used.length).toList )
 
       val res = used.toSeq
@@ -430,7 +421,7 @@ final case class Program( instructionSize: Int, data: Seq[Instruction], inputCou
   }
 
   /**
-    * Removes as many nops as possible from a program. Either rerouting data paths around them or overiding them with source
+    * Removes as many nops as possible from a programs data path. Either rerouting data paths around them or overiding them with source
     * @param functions list of functions to map the opcodes to
     * @return denopped program
     */
@@ -552,6 +543,7 @@ final case class Program( instructionSize: Int, data: Seq[Instruction], inputCou
     * @param functions
     * @return
     */
+  @tailrec
   def unNopOutputs( implicit functions: Seq[Function[_]] ): Program = {
     val nopF = Program.getNopF
     if( data.takeRight( outputCount ).forall( _.function == nopF ) ) {

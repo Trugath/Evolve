@@ -37,13 +37,13 @@ trait Function[A] {
   require( instructionSize + argumentSize * arguments <= 32, "Instruction must fit into 32 bits" )
 
   // bits used by the opcode
-  def instructionSize: Int = 6
+  val instructionSize: Int = 6
 
   // number of arguments
-  def arguments: Int = 2
+  val arguments: Int = 2
 
   // bits per argument
-  def argumentSize: Int = 13
+  val argumentSize: Int = 13
 
   // execution cost
   def cost: Int

@@ -30,33 +30,33 @@
 
 package evolve.core
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable
 
 /**
  * Memory is a write only expanding data structure
  * Currently implemented with a mutable array buffer backing
  */
-class Memory[A] private ( private val memory: ArrayBuffer[A], private val length: Int ) {
+final class Memory[A] private (private [this] val memory: mutable.ArraySeq[A], private [this] val length: Int ) {
 
   def apply(index: Int): A = memory( index )
 
   def append(data: A): Memory[A] = {
-    memory.append(data)
+    memory(length) = data
+    new Memory(memory, length + 1)
+  }
+
+  def skip(): Memory [A]= {
     new Memory(memory, length + 1)
   }
 
   def result(count: Int): List[A] = memory.drop(length - count).toList
 
-  override def toString: String = memory.toString()
+  override def toString: String = memory.toString
 }
 
 object Memory {
 
-  case class ZeroValueMemory[A]( value: A ) extends AnyVal
-
-  def apply[A](inputs: List[A], expected: Int = 256): Memory[A] = {
-    val memory = new ArrayBuffer[A]( inputs.size + expected )
-    memory.appendAll( inputs )
-    new Memory[A]( memory, inputs.length )
+  def apply[A](inputs: List[A], expected: Int): Memory[A] = {
+    new Memory[A]( inputs.to[mutable.ArraySeq] ++ new mutable.ArraySeq[A]( expected ), inputs.length )
   }
 }

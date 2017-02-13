@@ -43,13 +43,12 @@ object ThreeBitAdderNAND {
 
   def main(args: Array[String]): Unit = {
 
-    import evolve.functions.BooleanFunctions.zero
     import evolve.functions.BooleanFunctions.scoreFunc
 
     object Nop extends Function[Boolean]  {
-      override def instructionSize: Int = 3
-      override def argumentSize: Int = 9
-      override def arguments: Int = 1
+      override val instructionSize: Int = 3
+      override val argumentSize: Int = 9
+      override val arguments: Int = 1
       override def cost: Int = 1
       override def getLabel(inst: Instruction): String = "Nop"
 
@@ -59,10 +58,10 @@ object ThreeBitAdderNAND {
     }
 
     object NAnd1 extends Function[Boolean]  {
-      override def instructionSize: Int = 3
-      override def argumentSize: Int = 9
+      override val instructionSize: Int = 3
+      override val argumentSize: Int = 9
       override def cost: Int = 5
-      override def arguments: Int = 1
+      override val arguments: Int = 1
       override def getLabel(inst: Instruction): String = "!&"
       override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
         !arguments.head
@@ -70,10 +69,10 @@ object ThreeBitAdderNAND {
     }
 
     object NAnd2 extends Function[Boolean]  {
-      override def instructionSize: Int = 3
-      override def argumentSize: Int = 9
+      override val instructionSize: Int = 3
+      override val argumentSize: Int = 9
       override def cost: Int = 6
-      override def arguments: Int = 2
+      override val arguments: Int = 2
       override def getLabel(inst: Instruction): String = "!&"
       override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
         val a = arguments.head
@@ -83,10 +82,10 @@ object ThreeBitAdderNAND {
     }
 
     object NAnd3 extends Function[Boolean]  {
-      override def instructionSize: Int = 3
-      override def argumentSize: Int = 9
+      override val instructionSize: Int = 3
+      override val argumentSize: Int = 9
       override def cost: Int = 7
-      override def arguments: Int = 3
+      override val arguments: Int = 3
       override def getLabel(inst: Instruction): String = "!&"
       override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
         val a = arguments.head

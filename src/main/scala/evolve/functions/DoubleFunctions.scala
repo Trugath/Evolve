@@ -30,12 +30,9 @@
 
 package evolve.functions
 
-import evolve.core.Memory.ZeroValueMemory
 import evolve.core.{Function, Instruction}
 
 object DoubleFunctions {
-
-  implicit val zero = ZeroValueMemory[Double]( 0.0 )
 
   implicit val functions = Seq[Function[Double]](
     Nop,
@@ -63,7 +60,7 @@ object DoubleFunctions {
   }
 
   object Nop extends Function[Double]  {
-    override def arguments: Int = 1
+    override val arguments: Int = 1
     override def cost: Int = 2
     override def getLabel(inst: Instruction): String = "Nop"
     override def apply(inst: Instruction, arguments: List[Double]): Double = {
@@ -72,7 +69,7 @@ object DoubleFunctions {
   }
 
   object ConstLarge extends Function[Double]  {
-    override def arguments: Int = 0
+    override val arguments: Int = 0
     override def cost: Int = 2
     override def getLabel(inst: Instruction): String = {
       val value = inst.const(instructionSize, 32 - instructionSize)
@@ -85,7 +82,7 @@ object DoubleFunctions {
 
   object ConstSmall extends Function[Double]  {
     private val scale = math.pow(2.0, 32 - instructionSize)
-    override def arguments: Int = 0
+    override val arguments: Int = 0
     override def cost: Int = 2
     override def getLabel(inst: Instruction): String = {
       val value = inst.const(instructionSize, 32 - instructionSize) / scale
@@ -158,7 +155,7 @@ object DoubleFunctions {
   }
 
   object Increment extends Function[Double]  {
-    override def arguments: Int = 1
+    override val arguments: Int = 1
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = "Increment"
     override def apply(inst: Instruction, arguments: List[Double]): Double = {
@@ -167,7 +164,7 @@ object DoubleFunctions {
   }
 
   object Decrement extends Function[Double]  {
-    override def arguments: Int = 1
+    override val arguments: Int = 1
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = "Decrement"
     override def apply(inst: Instruction, arguments: List[Double]): Double = {
@@ -227,7 +224,7 @@ object DoubleFunctions {
 
 
   object Sigmoid extends Function[Double] {
-    override def arguments: Int = 1
+    override val arguments: Int = 1
     override def cost: Int = 5
     override def getLabel(inst: Instruction): String = "Sigmoid"
     override def apply(inst: Instruction, arguments: List[Double]): Double = {
@@ -237,7 +234,7 @@ object DoubleFunctions {
   }
 
   object NaturalExp extends Function[Double] {
-    override def arguments: Int = 1
+    override val arguments: Int = 1
     override def cost: Int = 5
     override def getLabel(inst: Instruction): String = "NaturalExp"
     override def apply(inst: Instruction, arguments: List[Double]): Double = {
@@ -247,7 +244,7 @@ object DoubleFunctions {
   }
 
   object NaturalLog extends Function[Double] {
-    override def arguments: Int = 1
+    override val arguments: Int = 1
     override def cost: Int = 5
     override def getLabel(inst: Instruction): String = "NaturalLog"
     override def apply(inst: Instruction, arguments: List[Double]): Double = {
@@ -257,7 +254,7 @@ object DoubleFunctions {
   }
 
   object Signum extends Function[Double] {
-    override def arguments: Int = 1
+    override val arguments: Int = 1
     override def cost: Int = 2
     override def getLabel(inst: Instruction): String = "Signum"
     override def apply(inst: Instruction, arguments: List[Double]): Double = {

@@ -32,6 +32,7 @@ package evolve.example
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Paths}
+import java.text.NumberFormat
 
 import evolve.core.Evolver.EvolverStrategy
 import evolve.core._
@@ -43,13 +44,12 @@ object FourBitFullAdderNAND {
 
   def main(args: Array[String]): Unit = {
 
-    import evolve.functions.BooleanFunctions.zero
     import evolve.functions.BooleanFunctions.scoreFunc
 
     object Nop extends Function[Boolean]  {
-      override def instructionSize: Int = 3
-      override def argumentSize: Int = 9
-      override def arguments: Int = 1
+      override val instructionSize: Int = 3
+      override val argumentSize: Int = 9
+      override val arguments: Int = 1
       override def cost: Int = 1
       override def getLabel(inst: Instruction): String = "Nop"
 
@@ -59,10 +59,10 @@ object FourBitFullAdderNAND {
     }
 
     object NAnd1 extends Function[Boolean]  {
-      override def instructionSize: Int = 3
-      override def argumentSize: Int = 9
+      override val instructionSize: Int = 3
+      override val argumentSize: Int = 9
       override def cost: Int = 5
-      override def arguments: Int = 1
+      override val arguments: Int = 1
       override def getLabel(inst: Instruction): String = "!&"
       override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
         !arguments.head
@@ -70,10 +70,10 @@ object FourBitFullAdderNAND {
     }
 
     object NAnd2 extends Function[Boolean]  {
-      override def instructionSize: Int = 3
-      override def argumentSize: Int = 9
+      override val instructionSize: Int = 3
+      override val argumentSize: Int = 9
       override def cost: Int = 6
-      override def arguments: Int = 2
+      override val arguments: Int = 2
       override def getLabel(inst: Instruction): String = "!&"
       override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
         val a = arguments.head
@@ -83,10 +83,10 @@ object FourBitFullAdderNAND {
     }
 
     object NAnd3 extends Function[Boolean]  {
-      override def instructionSize: Int = 3
-      override def argumentSize: Int = 9
+      override val instructionSize: Int = 3
+      override val argumentSize: Int = 9
       override def cost: Int = 7
-      override def arguments: Int = 3
+      override val arguments: Int = 3
       override def getLabel(inst: Instruction): String = "!&"
       override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
         val a = arguments.head
@@ -126,7 +126,7 @@ object FourBitFullAdderNAND {
        * cases at the expense of others. CGP lends itself towards this as 'unused-genes' persist between generations.
        * Result: Once implemented this evolve function regularly solves in under 200k generations.
        */
-      val partial =  EvolveUtil.worstSubGroup(program, 64, 100, testCases, optimise = false)
+      val partial =  EvolveUtil.worstSubGroup(program, 64, 100, testCases)
 
       val result =  EvolveUtil.fitness(partial, 0, 900, testCases, optimise)
       val score = testCases.score(result)
@@ -134,7 +134,8 @@ object FourBitFullAdderNAND {
         println( s"Solution found after $generation generations." )
         result
       } else {
-        println( s"Processed $generation generations. Current score: $score. Current size: ${program.data.length}" )
+        val usage = program.used.count( _ == true ).toDouble / (program.data.length + program.inputCount).toDouble
+        println( s"Processed $generation generations. Current score: $score. Current size: ${program.data.length}. Used genes ${NumberFormat.getPercentInstance.format(usage)}" )
         if( generation % 10000 == 0 ) {
           function(result, generation + 1000, !optimise)
         } else {
@@ -143,13 +144,16 @@ object FourBitFullAdderNAND {
       }
     }
 
-    val solution = function(EvolveUtil.startup(Generator(Nop.instructionSize, 504, 8, 5), testCases), 0)
+    val solution = function(EvolveUtil.startup(Generator(Nop.instructionSize, 504, 8, 5), testCases), 0).shrink
     Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8) )
 
     // three rounds of optimisation and shrinking
-    val optimised1 = EvolveUtil.counted(solution, 100000, optimise = true, testCases).shrink
-    val optimised2 = EvolveUtil.counted(optimised1, 100000, optimise = true, testCases).shrink
-    val optimised3 = EvolveUtil.counted(optimised2, 100000, optimise = true, testCases).shrink
+    val optimised1 = EvolveUtil.counted(solution, 100000, optimise = true, testCases).denop.pipeline.shrink
+    val optimised2 = EvolveUtil.counted(optimised1, 100000, optimise = true, testCases).denop.pipeline.shrink
+    val optimised3 = EvolveUtil.counted(optimised2, 100000, optimise = true, testCases).denop.shrink
     Files.write(Paths.get("optimised.dot"), DotGraph(optimised3).getBytes(StandardCharsets.UTF_8) )
+
+    val pipelined = optimised3.pipeline.deduplicate.pipeline.shrink
+    Files.write(Paths.get("pipelined.dot"), DotGraph(pipelined).getBytes(StandardCharsets.UTF_8) )
   }
 }

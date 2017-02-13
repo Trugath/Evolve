@@ -34,7 +34,6 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Paths}
 
 import evolve.core.Evolver.EvolverStrategy
-import evolve.core.Memory.ZeroValueMemory
 import evolve.core._
 import evolve.util.EvolveUtil
 
@@ -55,8 +54,6 @@ object StringIntFunctions {
 
     dist(s2.length)(s1.length)
   }
-
-  implicit val zero = ZeroValueMemory[(String, Int)]( ("", 0) )
 
   implicit val functions = Seq[Function[(String, Int)]](
     Nop,
@@ -97,7 +94,7 @@ object StringIntFunctions {
   }
 
   object Nop extends Function[(String, Int)] {
-    override def arguments: Int = 1
+    override val arguments: Int = 1
 
     override def cost: Int = 1
 
@@ -111,7 +108,7 @@ object StringIntFunctions {
   }
 
   object ConstChar extends Function[(String, Int)]  {
-    override def arguments: Int = 0
+    override val arguments: Int = 0
     override def cost: Int = 2
     override def getLabel(inst: Instruction): String = {
       val value = inst.const(instructionSize, 32 - instructionSize).toChar.toString
@@ -123,7 +120,7 @@ object StringIntFunctions {
   }
 
   object ConstInt extends Function[(String, Int)]  {
-    override def arguments: Int = 0
+    override val arguments: Int = 0
     override def cost: Int = 2
     override def getLabel(inst: Instruction): String = {
       val value = inst.const(instructionSize, 32 - instructionSize)
@@ -170,7 +167,7 @@ object StringIntFunctions {
 
   object Token extends Function[(String, Int)] {
 
-    override def arguments: Int = 1
+    override val arguments: Int = 1
 
     override def cost: Int = 10
 
@@ -190,7 +187,7 @@ object StringIntFunctions {
 
   object CharAt extends Function[(String, Int)] {
 
-    override def arguments: Int = 1
+    override val arguments: Int = 1
 
     override def cost: Int = 10
 
@@ -253,7 +250,7 @@ object StringIntFunctions {
   }
 
   object Length extends Function[(String, Int)] {
-    override def arguments: Int = 1
+    override val arguments: Int = 1
 
     override def cost: Int = 10
 
@@ -267,7 +264,7 @@ object StringIntFunctions {
   }
 
   object Hash extends Function[(String, Int)] {
-    override def arguments: Int = 1
+    override val arguments: Int = 1
 
     override def cost: Int = 10
 
@@ -324,7 +321,7 @@ object StringIntFunctions {
   }
 
   object Start extends Function[(String, Int)] {
-    override def arguments: Int = 1
+    override val arguments: Int = 1
 
     override def cost: Int = 10
 
@@ -338,7 +335,7 @@ object StringIntFunctions {
   }
 
   object End extends Function[(String, Int)] {
-    override def arguments: Int = 1
+    override val arguments: Int = 1
 
     override def cost: Int = 10
 
@@ -367,7 +364,7 @@ object StringIntFunctions {
   }
 
   object Head extends Function[(String, Int)] {
-    override def arguments: Int = 1
+    override val arguments: Int = 1
 
     override def cost: Int = 10
 
@@ -381,7 +378,7 @@ object StringIntFunctions {
   }
 
   object Tail extends Function[(String, Int)] {
-    override def arguments: Int = 1
+    override val arguments: Int = 1
 
     override def cost: Int = 10
 
@@ -399,7 +396,7 @@ object StringIntFunctions {
   }
 
   object Capitalise extends Function[(String, Int)] {
-    override def arguments: Int = 1
+    override val arguments: Int = 1
 
     override def cost: Int = 10
 
@@ -413,7 +410,7 @@ object StringIntFunctions {
   }
 
   object UpperCase extends Function[(String, Int)] {
-    override def arguments: Int = 1
+    override val arguments: Int = 1
 
     override def cost: Int = 10
 
@@ -427,7 +424,7 @@ object StringIntFunctions {
   }
 
   object LowerCase extends Function[(String, Int)] {
-    override def arguments: Int = 1
+    override val arguments: Int = 1
 
     override def cost: Int = 10
 
@@ -441,7 +438,7 @@ object StringIntFunctions {
   }
 
   object Reverse extends Function[(String, Int)] {
-    override def arguments: Int = 1
+    override val arguments: Int = 1
 
     override def cost: Int = 10
 
@@ -517,7 +514,7 @@ object StringIntFunctions {
   }
 
   object Increment extends Function[(String, Int)]  {
-    override def arguments: Int = 1
+    override val arguments: Int = 1
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = "Increment"
     override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
@@ -527,7 +524,7 @@ object StringIntFunctions {
   }
 
   object Decrement extends Function[(String, Int)]  {
-    override def arguments: Int = 1
+    override val arguments: Int = 1
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = "Decrement"
     override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {

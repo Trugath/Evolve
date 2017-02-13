@@ -30,8 +30,6 @@
 
 package evolve.core
 
-import evolve.core.Memory.ZeroValueMemory
-
 /**
  * a set of testcases used in evolving/testing a program
  * @param cases the test cases to use
@@ -46,7 +44,7 @@ case class TestCases[A](cases: List[TestCase[A]]) {
    * @param functions The functions to map to the programs operators
    * @return the summed score
    */
-  def score( program: Program )( implicit scoreFunc: (Option[A], Option[A]) => Long, functions: Seq[Function[A]], zero: ZeroValueMemory[A] ): Long = {
+  def score( program: Program )( implicit scoreFunc: (Option[A], Option[A]) => Long, functions: Seq[Function[A]] ): Long = {
       val total =
         cases.map( testCase =>
           testCase.score( program(testCase.inputs).result( program.outputCount ) )

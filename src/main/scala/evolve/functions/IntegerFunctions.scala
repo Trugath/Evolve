@@ -30,12 +30,9 @@
 
 package evolve.functions
 
-import evolve.core.Memory.ZeroValueMemory
 import evolve.core.{Function, Instruction}
 
 object IntegerFunctions {
-
-  implicit val zero = ZeroValueMemory[Int]( 0 )
 
   implicit val functions = Seq[Function[Int]](
     Nop,
@@ -61,7 +58,7 @@ object IntegerFunctions {
   }
 
   object Nop extends Function[Int]  {
-    override def arguments: Int = 1
+    override val arguments: Int = 1
     override def cost: Int = 2
     override def getLabel(inst: Instruction): String = "Nop"
     override def apply(inst: Instruction, arguments: List[Int]): Int = {
@@ -70,7 +67,7 @@ object IntegerFunctions {
   }
 
   object Const extends Function[Int]  {
-    override def arguments: Int = 0
+    override val arguments: Int = 0
     override def cost: Int = 2
     override def getLabel(inst: Instruction): String = {
       val value = inst.const(instructionSize, 32 - instructionSize)
@@ -143,7 +140,7 @@ object IntegerFunctions {
   }
 
   object Increment extends Function[Int]  {
-    override def arguments: Int = 1
+    override val arguments: Int = 1
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = "Increment"
     override def apply(inst: Instruction, arguments: List[Int]): Int = {
@@ -152,7 +149,7 @@ object IntegerFunctions {
   }
 
   object Decrement extends Function[Int]  {
-    override def arguments: Int = 1
+    override val arguments: Int = 1
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = "Decrement"
     override def apply(inst: Instruction, arguments: List[Int]): Int = {
@@ -191,7 +188,7 @@ object IntegerFunctions {
   }
 
   object Not extends Function[Int]  {
-    override def arguments: Int = 1
+    override val arguments: Int = 1
     override def cost: Int = 3
     override def getLabel(inst: Instruction): String = "~"
     override def apply(inst: Instruction, arguments: List[Int]): Int = {

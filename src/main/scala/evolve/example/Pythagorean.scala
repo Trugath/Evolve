@@ -46,7 +46,7 @@ object Pythagorean {
     import evolve.functions.DoubleFunctions._
 
     object SquareRoot extends Function[Double] {
-      override def arguments: Int = 1
+      override val arguments: Int = 1
       override def cost: Int = 10
       override def getLabel(inst: Instruction): String = "SquareRoot"
       override def apply(inst: Instruction, arguments: List[Double]): Double = {
@@ -75,7 +75,7 @@ object Pythagorean {
         TestCase(List(13.0, 84.0), List(85.0))
       )
     )
-    val solution = EvolveUtil.fitness(Generator(Nop.instructionSize, 32, 2, 1), 0, 1000000, testCases)
+    val solution = EvolveUtil.fitness(Generator(Nop.instructionSize, 16, 2, 1), 0, 1000000, testCases)
     Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8) )
     val optimised = EvolveUtil.counted(solution.nopInputs.nopOutputs.spread(4), 50000, optimise = true, testCases).denop.shrink.deduplicate
     Files.write(Paths.get("optimised.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8) )

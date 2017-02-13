@@ -40,7 +40,7 @@ object Instruction {
 /**
  * 32 bit value containing the function index and argument indexes
  */
-case class Instruction( value: Int ) extends AnyVal {
+final case class Instruction( value: Int ) extends AnyVal {
 
   // extracts the instruction
   def instruction(bits: Int): Int = {
