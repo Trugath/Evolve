@@ -30,6 +30,8 @@
 
 package evolve.core
 
+import scala.concurrent.ExecutionContext
+
 object Evolver {
 
   case class EvolverStrategy( children: Int, factor: Double, optimiseForPipeline: Boolean )
@@ -45,11 +47,10 @@ object Evolver {
    * @tparam A the data type we work against
    * @return A new program that is not worse than the parent
    */
-  def apply[A]( program: Program, testCases: TestCases[A], optimise: Boolean )( implicit strategy: EvolverStrategy, score: (Option[A], Option[A]) => Long, functions: Seq[Function[A]] ): Option[Program] = {
+  def apply[A]( program: Program, testCases: TestCases[A], optimise: Boolean )( implicit strategy: EvolverStrategy, score: (A, A) => Long, functions: Seq[Function[A]], ec: ExecutionContext ): Option[Program] = {
     import scala.concurrent._
     import scala.concurrent.duration.Duration._
     import scala.language.postfixOps
-    import ExecutionContext.Implicits.global
 
     val inputCount = testCases.cases.head.inputs.length
     require( testCases.cases.forall( _.inputs.length == inputCount ) )
@@ -65,9 +66,7 @@ object Evolver {
 
     // get children not worse than the parent
     val childResults = blocking {
-      Await
-        .result(popF, Inf)
-        .filter(_._2 <= programScore)
+      Await.result(popF.map( _.filter(_._2 <= programScore) ), Inf)
     }
 
     val optimiseForPipeline = strategy.optimiseForPipeline

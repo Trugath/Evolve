@@ -1,10 +1,14 @@
 package evolve
 
+import java.util.concurrent.Executors
+
 import evolve.core.Evolver.EvolverStrategy
 import evolve.core._
 import evolve.util.EvolveUtil
 import org.scalatest.FlatSpec
 import org.scalatest.prop.{GeneratorDrivenPropertyChecks, PropertyChecks}
+
+import scala.concurrent.ExecutionContext
 
 /**
   * Created by Elliot on 09/08/2016.
@@ -14,6 +18,7 @@ class EvolveFuncSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPr
   import evolve.functions.BooleanFunctions._
 
   private implicit val evolveStrategy = EvolverStrategy( children = Math.max(4, Runtime.getRuntime.availableProcessors()), factor = 0.005, optimiseForPipeline = false )
+  private implicit val ec = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
 
   "The Evolve system" should "evolve a basic program (Output True)" in {
     val testCases = TestCases(List(
@@ -24,11 +29,11 @@ class EvolveFuncSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPr
 
     val solution = EvolveUtil.fitness( startup, fitness = 0, limit = Long.MaxValue, testCases )
     assert( testCases.score( solution ) === 0L )
-    assert( solution(Nil).result(1) === List( true ) )
+    assert( solution(List.empty[Boolean]).result(1) === List( true ) )
 
     val optimised = EvolveUtil.counted(solution.shrink.spread(2), 100, optimise = true, testCases)
     assert( testCases.score( optimised ) === 0L )
-    assert( optimised(Nil).result(1) === List( true ) )
+    assert( optimised(List.empty[Boolean]).result(1) === List( true ) )
 
     assert( solution.cost >= optimised.cost )
   }
@@ -42,11 +47,11 @@ class EvolveFuncSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPr
 
     val solution = EvolveUtil.fitness( startup, fitness = 0, limit = Long.MaxValue, testCases )
     assert( testCases.score( solution ) === 0L )
-    assert( solution(Nil).result(1) === List( false ) )
+    assert( solution(List.empty[Boolean]).result(1) === List( false ) )
 
     val optimised = EvolveUtil.counted(solution.shrink.spread(2), 100, optimise = true, testCases)
     assert( testCases.score( optimised ) === 0L )
-    assert( optimised(Nil).result(1) === List( false ) )
+    assert( optimised(List.empty[Boolean]).result(1) === List( false ) )
 
     assert( solution.cost >= optimised.cost )
   }

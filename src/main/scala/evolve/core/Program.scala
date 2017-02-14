@@ -30,8 +30,9 @@
 
 package evolve.core
 
-import scala.annotation.{switch, tailrec}
 import java.util.concurrent.ThreadLocalRandom
+
+import scala.annotation.tailrec
 
 object Program {
 
@@ -191,11 +192,11 @@ final case class Program( instructionSize: Int, data: Seq[Instruction], inputCou
    * @tparam A The data type to manipulate
    * @return the final memory state of the program
    */
-  def apply[A]( inputs: List[A] )( implicit functions: Seq[Function[A]] ): Memory[A] = {
+  def apply[A:Manifest]( inputs: List[A] )( implicit functions: Seq[Function[A]] ): Memory[A] = {
     require( inputs.length == inputCount )
 
     // extracts arguments from memory
-    def arguments(func: Function[A], inst: Instruction, memory: Memory[A]): List[A] = {
+    def arguments( func: Function[A], inst: Instruction, memory: Memory[A] ): List[A] = {
 
       @tailrec def extract( index: Int, acc: List[A] ): List[A] = if (index >= 0) {
         extract( index - 1, memory(inst.pointer(instructionSize + func.argumentSize * index, func.argumentSize)) :: acc )
@@ -203,9 +204,9 @@ final case class Program( instructionSize: Int, data: Seq[Instruction], inputCou
 
       func.arguments match {
           case 0 => Nil
-          case 1 => memory(inst.pointer(instructionSize, func.argumentSize)) :: Nil
-          case 2 => memory(inst.pointer(instructionSize, func.argumentSize)) ::
-                    memory(inst.pointer(instructionSize + func.argumentSize, func.argumentSize)) :: Nil
+          case 1 => memory( inst.pointer(instructionSize, func.argumentSize) ) :: Nil
+          case 2 => memory( inst.pointer(instructionSize, func.argumentSize) ) ::
+                    memory( inst.pointer(instructionSize + func.argumentSize, func.argumentSize) ) :: Nil
           case _ => extract( func.arguments - 1, Nil )
         }
     }

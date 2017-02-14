@@ -30,13 +30,19 @@
 
 package evolve
 
+import java.util.concurrent.Executors
+
 import evolve.core._
 import evolve.util.ProgramUtil
 import org.scalacheck.Gen
 import org.scalatest.FlatSpec
 import org.scalatest.prop.{GeneratorDrivenPropertyChecks, PropertyChecks}
 
+import scala.concurrent.ExecutionContext
+
 class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenPropertyChecks {
+
+  private [this] implicit val ec = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
 
   "Any grown program" should "function the same" in {
     forAll(Gen.choose[Int](1, 64), Gen.choose[Int](1, 64), Gen.choose[Int](Int.MinValue, Int.MaxValue)) {

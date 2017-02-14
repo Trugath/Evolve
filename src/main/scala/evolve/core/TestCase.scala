@@ -30,12 +30,15 @@
 
 package evolve.core
 
+import scala.annotation.tailrec
+
 /**
  * a set of testcases used in evolving/testing a program
- * @param cases the test cases to use
+  *
+  * @param cases the test cases to use
  * @tparam A the datatype used
  */
-case class TestCases[A](cases: List[TestCase[A]]) {
+case class TestCases[A:Manifest](cases: List[TestCase[A]]) {
 
   /**
    * Given a program score it against the test cases
@@ -44,11 +47,14 @@ case class TestCases[A](cases: List[TestCase[A]]) {
    * @param functions The functions to map to the programs operators
    * @return the summed score
    */
-  def score( program: Program )( implicit scoreFunc: (Option[A], Option[A]) => Long, functions: Seq[Function[A]] ): Long = {
+  def score( program: Program )( implicit scoreFunc: (A, A) => Long, functions: Seq[Function[A]] ): Long = {
       val total =
-        cases.map( testCase =>
-          testCase.score( program(testCase.inputs).result( program.outputCount ) )
-        )
+        cases.map( testCase => {
+          val exec = program(testCase.inputs)
+          val result = testCase.score(exec.result(program.outputCount))
+          exec.release()
+          result
+        } )
         .sum
 
       assert( total >= 0 )
@@ -64,28 +70,22 @@ case class TestCases[A](cases: List[TestCase[A]]) {
  */
 case class TestCase[A](inputs: List[A], outputs: List[A]) {
 
+  private [this] val outputsLength = outputs.length
+
   /**
    * Given a result from a program, score the rest
    * @param results the results from the program
    * @param scoreFunc the scoring function to use
    * @return the final score
    */
-  def score( results: List[A] )( implicit scoreFunc: (Option[A], Option[A]) => Long ): Long = {
-    val maxLength = math.max( results.length, outputs.length )
-    val resultCompare =
-      results
-        .map( Option(_) )
-        .padTo(maxLength, None)
-        .zip(
-          outputs
-            .map( Option(_) )
-            .padTo(maxLength, None)
-        )
+  def score( results: Seq[A] )( implicit scoreFunc: (A, A) => Long ): Long = {
 
-    val totals = resultCompare
-      .map( a => scoreFunc( a._1, a._2 ) )
-    assert( totals.sum >= 0 )
-    val total = totals.sum
+    @tailrec
+    def score( index: Int, acc: Long ): Long = if( index < outputsLength ) {
+      score( index + 1, acc + scoreFunc( results(index), outputs(index) ) )
+    } else acc
+
+    val total = score( 0, 0 )
     if(total < 0) {
       Long.MaxValue
     } else total

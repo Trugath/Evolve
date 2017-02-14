@@ -32,12 +32,13 @@ package evolve.example
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Paths}
+import java.util.concurrent.Executors
 
 import evolve.core.Evolver.EvolverStrategy
 import evolve.core._
 import evolve.util.EvolveUtil
 
-import scala.annotation.tailrec
+import scala.concurrent.ExecutionContext
 
 object Pythagorean {
 
@@ -58,6 +59,8 @@ object Pythagorean {
     implicit val functions = evolve.functions.DoubleFunctions.functions.take(7) :+ SquareRoot
 
     implicit val evolveStrategy = EvolverStrategy(24, 0.0005, optimiseForPipeline = true)
+
+    implicit val ec = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
 
     val testCases = TestCases(
       List(

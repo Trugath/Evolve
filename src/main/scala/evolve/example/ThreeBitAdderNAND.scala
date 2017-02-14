@@ -32,12 +32,14 @@ package evolve.example
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Paths}
+import java.util.concurrent.Executors
 
 import evolve.core.Evolver.EvolverStrategy
 import evolve.core._
 import evolve.util.EvolveUtil
 
 import scala.annotation.tailrec
+import scala.concurrent.ExecutionContext
 
 object ThreeBitAdderNAND {
 
@@ -100,6 +102,7 @@ object ThreeBitAdderNAND {
     )
 
     implicit val evolveStrategy = EvolverStrategy(12, 0.005, optimiseForPipeline = true)
+    implicit val ec = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
 
     val testCases = TestCases(List(
       TestCase(List(false, false, false), List(false, false)),

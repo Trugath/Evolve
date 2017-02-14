@@ -31,11 +31,14 @@
 package evolve.example
 
 import java.nio.charset.StandardCharsets
-import java.nio.file.{Paths, Files}
+import java.nio.file.{Files, Paths}
+import java.util.concurrent.Executors
 
 import evolve.core.Evolver.EvolverStrategy
 import evolve.core._
 import evolve.util.EvolveUtil
+
+import scala.concurrent.ExecutionContext
 
 object DivideByEight {
 
@@ -44,6 +47,7 @@ object DivideByEight {
     import evolve.functions.IntegerFunctions._
 
     implicit val evolveStrategy = EvolverStrategy(32, 0.01, optimiseForPipeline = false)
+    implicit val ec = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
 
     val testCases = TestCases(
       (0 until 2147483647 by 65535000)

@@ -32,12 +32,14 @@ package evolve.example
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Paths}
+import java.util.concurrent.Executors
 
 import evolve.core.Evolver.EvolverStrategy
 import evolve.core._
 import evolve.util.EvolveUtil
 
 import scala.annotation.tailrec
+import scala.concurrent.ExecutionContext
 
 object FourBitFullAdder {
 
@@ -46,6 +48,7 @@ object FourBitFullAdder {
     import evolve.functions.BooleanFunctions._
 
     implicit val evolverStrategy = EvolverStrategy(32, 0.003, optimiseForPipeline = false)
+    implicit val ec = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
 
     def bitsToBools(value: Int, bits: Int): List[Boolean] = {
       require(value >= 0 && value <= math.pow(2, bits))
@@ -76,9 +79,9 @@ object FourBitFullAdder {
       }
     }
 
-    val solution = function(Generator(Nop.instructionSize, 256, 8, 5), 0, 0).deduplicate.pipeline.shrink
+    val solution = function(Generator(Nop.instructionSize, 256, 8, 5), 0, 0).denop.deduplicate.shrink
     Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8) )
-    val optimised = EvolveUtil.counted(EvolveUtil.counted(solution, 20000, optimise = true, testCases).shrink, 20000, optimise = true, testCases).deduplicate.pipeline.shrink
+    val optimised = EvolveUtil.counted(EvolveUtil.counted(solution, 20000, optimise = true, testCases).shrink, 20000, optimise = true, testCases).denop.deduplicate.shrink
     Files.write(Paths.get("optimised.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8) )
   }
 }

@@ -1,12 +1,15 @@
 package evolve
 
+import java.util.concurrent.Executors
+
 import evolve.core.Evolver.EvolverStrategy
-import evolve.core.{Generator, Program, TestCase, TestCases}
-import evolve.functions.BooleanFunctions.Nop
+import evolve.core.{Generator, TestCase, TestCases}
 import evolve.util.EvolveUtil
 import org.scalacheck.Gen
 import org.scalatest.FlatSpec
 import org.scalatest.prop.{GeneratorDrivenPropertyChecks, PropertyChecks}
+
+import scala.concurrent.ExecutionContext
 
 /**
   * Created by Elliot on 17/08/2016.
@@ -14,6 +17,7 @@ import org.scalatest.prop.{GeneratorDrivenPropertyChecks, PropertyChecks}
 class WorstSubGroupSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPropertyChecks {
 
   private implicit val evolveStrategy = EvolverStrategy( children = Math.max(4, Runtime.getRuntime.availableProcessors()), factor = 0.005, optimiseForPipeline = false )
+  private implicit val ec = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
 
   "The worstSubGroup utility function" should "evolve normally when subgroup is equal or larger the test case list size" in {
 

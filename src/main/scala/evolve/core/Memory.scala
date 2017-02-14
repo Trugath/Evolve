@@ -30,13 +30,11 @@
 
 package evolve.core
 
-import scala.collection.mutable
-
 /**
  * Memory is a write only expanding data structure
  * Currently implemented with a mutable array buffer backing
  */
-final class Memory[A] private (private [this] val memory: mutable.ArraySeq[A], private [this] val length: Int ) {
+final class Memory[A:Manifest] private (private [this] val memory: Array[A], private [this] val length: Int ) {
 
   def apply(index: Int): A = memory( index )
 
@@ -53,14 +51,19 @@ final class Memory[A] private (private [this] val memory: mutable.ArraySeq[A], p
       new Memory(memory, length + amount)
   }
 
-  def result(count: Int): List[A] = memory.takeRight(count).toList
+  def result(count: Int): Seq[A] = memory.takeRight(count).toSeq
+
+  def release(): Unit = {
+  }
 
   override def toString: String = memory.toString
 }
 
 object Memory {
 
-  def apply[A](inputs: List[A], expected: Int): Memory[A] = {
-    new Memory[A]( inputs.to[mutable.ArraySeq] ++ new mutable.ArraySeq[A]( expected ), inputs.length )
+  def apply[A:Manifest](inputs: List[A], expected: Int): Memory[A] = {
+    val array = new Array[A]( expected + inputs.length )
+    System.arraycopy(inputs.toArray, 0, array, 0, inputs.length)
+    new Memory[A]( array, inputs.length )
   }
 }

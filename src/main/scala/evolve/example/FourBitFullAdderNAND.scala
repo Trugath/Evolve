@@ -33,6 +33,7 @@ package evolve.example
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Paths}
 import java.text.NumberFormat
+import java.util.concurrent.Executors
 
 import evolve.core.Evolver.EvolverStrategy
 import evolve.core._
@@ -40,7 +41,7 @@ import evolve.util.EvolveUtil
 
 import scala.annotation.tailrec
 import scala.concurrent.duration.Duration.Inf
-import scala.concurrent.{Await, ExecutionContext, Future, blocking}
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 object FourBitFullAdderNAND {
 
@@ -103,6 +104,7 @@ object FourBitFullAdderNAND {
     )
 
     implicit val evolveStrategy = EvolverStrategy(24, 0.00025, optimiseForPipeline = true)
+    implicit val ec = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
 
     def bitsToBools(value: Int, bits: Int): List[Boolean] = {
       require(value >= 0 && value <= math.pow(2, bits))
@@ -137,8 +139,6 @@ object FourBitFullAdderNAND {
         result
       } else {
         val usage = program.used.count( _ == true ).toDouble / (program.data.length + program.inputCount).toDouble
-
-        import ExecutionContext.Implicits.global
 
         // create mutant children and score them
         val popF: Future[Seq[Long]] = Future.sequence( Seq.fill(evolveStrategy.children)( Future {

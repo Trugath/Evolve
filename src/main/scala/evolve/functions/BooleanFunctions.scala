@@ -40,13 +40,8 @@ object BooleanFunctions {
     Implication, XOr, Equal
   )
 
-  implicit def scoreFunc: (Option[Boolean], Option[Boolean]) => Long = (a, b) => {
-    val result = (a, b) match {
-      case (Some(left), Some(right)) => if (left == right) 0 else 10
-      case (Some(left), None) => 15
-      case (None, Some(right)) => 15
-      case (None, None) => 0
-    }
+  implicit def scoreFunc: (Boolean, Boolean) => Long = (a, b) => {
+    val result = if (a == b) 0 else 10
     assert(result >= 0)
     result * 100
   }

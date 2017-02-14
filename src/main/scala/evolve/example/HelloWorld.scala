@@ -32,12 +32,14 @@ package evolve.example
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Paths}
+import java.util.concurrent.Executors
 
 import evolve.core.Evolver.EvolverStrategy
 import evolve.core._
 import evolve.util.EvolveUtil
 
 import scala.annotation.tailrec
+import scala.concurrent.ExecutionContext
 
 
 object StringIntFunctions {
@@ -79,15 +81,12 @@ object StringIntFunctions {
     Add, Subtract, Multiply, Divide, Modulus, Increment, Decrement, Average
   )
 
-  implicit def scoreFunc: (Option[(String, Int)], Option[(String, Int)]) => Long = (a, b) => {
+  implicit def scoreFunc: ((String, Int), (String, Int)) => Long = (a, b) => {
 
     def nabs(i: Long): Long = if( i < 0 ) -i else i
 
     val result = (a, b) match {
-      case (Some((leftS, leftI)), Some((rightS, rightI))) => nabs(distance(leftS, rightS) * 100) + nabs(leftS.compareTo(rightS)) + nabs(leftI - rightI)
-      case (Some((leftS, leftI)), None) => nabs(distance(leftS, "")) + nabs(leftI)
-      case (None, Some((rightS, rightI))) => nabs(distance(rightS, "")) + nabs(rightI)
-      case (None, None) => 0
+      case ((leftS, leftI), (rightS, rightI)) => nabs(distance(leftS, rightS) * 100) + nabs(leftS.compareTo(rightS)) + nabs(leftI - rightI)
     }
     assert(result >= 0)
     result * 100
@@ -550,7 +549,8 @@ object HelloWorld {
 
     import StringIntFunctions._
 
-    implicit val evolveStatagy = EvolverStrategy(32, 0.01, optimiseForPipeline = false)
+    implicit val evolveStrategy = EvolverStrategy(32, 0.01, optimiseForPipeline = false)
+    implicit val ec = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
 
     val testCases = TestCases(List(
       TestCase(List(("abcdefghijklmnopqrstuvwxyz", 26), ("123456789", 9)), List(("Abcdefghijklmnopqrstuvwxyz 123456789!",27))),
@@ -586,7 +586,7 @@ object HelloWorld {
       // fps tracker
 
       if (now > speedMarkTime + oneSecond) {
-        println(s"score: $bestScore generations: $generations (${generations * evolveStatagy.children} evaluated children)")
+        println(s"score: $bestScore generations: $generations (${generations * evolveStrategy.children} evaluated children)")
         speedMarkTime += oneSecond
         generations = 100
       } else {

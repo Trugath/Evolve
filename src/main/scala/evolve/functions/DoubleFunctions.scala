@@ -44,16 +44,13 @@ object DoubleFunctions {
     Signum
   )
 
-  implicit def scoreFunc: (Option[Double], Option[Double]) => Long = (a, b) => {
+  implicit def scoreFunc: (Double, Double) => Long = (a, b) => {
 
     def nabs(i: Double): Double = if( i < 0 ) -i else i
 
     val result: Double = (a, b) match {
-      case (Some(left), Some(right)) if left.isNaN || right.isNaN => Int.MaxValue
-      case (Some(left), Some(right)) => nabs(left - right).abs
-      case (Some(left), _) => left.abs
-      case (_, Some(right)) => right.abs
-      case (_, _) => 0
+      case (left, right) if left.isNaN || right.isNaN => Int.MaxValue
+      case (left, right)                              => nabs(left - right).abs
     }
     assert(result >= -0.00001)
     math.min(result * Int.MaxValue, Long.MaxValue / 256L).toLong

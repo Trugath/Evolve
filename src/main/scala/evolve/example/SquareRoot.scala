@@ -32,10 +32,13 @@ package evolve.example
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Paths}
+import java.util.concurrent.Executors
 
 import evolve.core.Evolver.EvolverStrategy
 import evolve.core._
 import evolve.util.EvolveUtil
+
+import scala.concurrent.ExecutionContext
 
 object SquareRoot {
 
@@ -44,6 +47,8 @@ object SquareRoot {
     import evolve.functions.DoubleFunctions._
 
     implicit val evolveStrategy = EvolverStrategy(32, 0.0001, optimiseForPipeline = false)
+
+    implicit val ec = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
 
     implicit val functions = Seq[Function[Double]](
       Nop,
