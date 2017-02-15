@@ -51,9 +51,7 @@ case class TestCases[A:Manifest](cases: List[TestCase[A]]) {
       val total =
         cases.map( testCase => {
           val exec = program(testCase.inputs)
-          val result = testCase.score(exec.result(program.outputCount))
-          exec.release()
-          result
+          testCase.score(exec.result(program.outputCount))
         } )
         .sum
 

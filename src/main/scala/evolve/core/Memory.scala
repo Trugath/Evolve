@@ -31,29 +31,29 @@
 package evolve.core
 
 /**
- * Memory is a write only expanding data structure
- * Currently implemented with a mutable array buffer backing
+ * Memory is a write only data structure
+ * Currently implemented with an array
  */
-final class Memory[A:Manifest] private (private [this] val memory: Array[A], private [this] val length: Int ) {
+final class Memory[A:Manifest] private (private [this] val memory: Array[A], private [this] var length: Int ) {
 
   def apply(index: Int): A = memory( index )
 
   def append(data: A): Memory[A] = {
     memory(length) = data
-    new Memory(memory, length + 1)
+    length += 1
+    this
   }
 
   def skip(amount: Int = 1): Memory[A] = {
     require( amount >= 0 )
-    if(amount == 0)
-      this
-    else
-      new Memory(memory, length + amount)
+    length += amount
+    this
   }
 
-  def result(count: Int): Seq[A] = memory.takeRight(count).toSeq
-
-  def release(): Unit = {
+  def result(count: Int): Array[A] = {
+    val array = new Array[A]( count )
+    System.arraycopy(memory, length - count, array, 0, count)
+    array
   }
 
   override def toString: String = memory.toString

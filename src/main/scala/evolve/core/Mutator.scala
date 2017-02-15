@@ -30,8 +30,9 @@
 
 package evolve.core
 
-import scala.annotation.{switch, tailrec}
 import java.util.concurrent.ThreadLocalRandom
+
+import scala.annotation.{switch, tailrec}
 
 object Mutator {
 

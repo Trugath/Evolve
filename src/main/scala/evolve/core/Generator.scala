@@ -30,10 +30,11 @@
 
 package evolve.core
 
+import java.util.concurrent.ThreadLocalRandom
+
 import evolve.util.MersenneTwister
 
 import scala.annotation.tailrec
-import java.util.concurrent.ThreadLocalRandom
 
 /**
  * Created by Elliot on 07/09/2015.

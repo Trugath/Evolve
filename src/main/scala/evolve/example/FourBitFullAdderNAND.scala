@@ -103,7 +103,7 @@ object FourBitFullAdderNAND {
       Nop, NAnd1, NAnd2, NAnd3
     )
 
-    implicit val evolveStrategy = EvolverStrategy(24, 0.00025, optimiseForPipeline = true)
+    implicit val evolveStrategy = EvolverStrategy(48, 0.00025, optimiseForPipeline = true)
     implicit val ec = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
 
     def bitsToBools(value: Int, bits: Int): List[Boolean] = {
