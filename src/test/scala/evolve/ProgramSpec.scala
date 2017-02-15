@@ -32,6 +32,7 @@ package evolve
 
 import java.util.concurrent.Executors
 
+import evolve.core.Evolver.EvolverStrategy
 import evolve.core._
 import evolve.util.ProgramUtil
 import org.scalacheck.Gen
@@ -443,6 +444,33 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
     assert( a === b )
     assert( testCases.score( a ) === 0L )
     assert( testCases.score( b ) === 0L )
+  }
+
+  "A problematic 4 bit full adder" should "deduplicate correctly" in {
+
+    import functions.BooleanFunctions._
+
+    implicit val evolverStrategy = EvolverStrategy(24, 0.0015, optimiseForPipeline = false)
+    implicit val ec = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
+
+    def bitsToBools(value: Int, bits: Int): List[Boolean] = {
+      require(value >= 0 && value <= math.pow(2, bits))
+      (0 until bits)
+        .map(i => ((0x1 << i) & value) != 0x0)
+        .reverse
+        .toList
+    }
+
+    val testCases = TestCases((for {
+      l <- 0 until 16
+      r <- 0 until 16
+    } yield TestCase[Boolean](bitsToBools(l, 4) ::: bitsToBools(r, 4), bitsToBools(l + r, 5))).toList)
+
+    val a = Program(6,Seq(Instruction(469811202), Instruction(68778787), Instruction(134159985), Instruction(469762048), Instruction(133937857), Instruction(201342978), Instruction(335601672), Instruction(134332422), Instruction(402694153), Instruction(402694145), Instruction(134316036), Instruction(335609861), Instruction(335618055), Instruction(132243848), Instruction(469794818), Instruction(134340616), Instruction(268596694), Instruction(102689986), Instruction(268582921), Instruction(335593490), Instruction(201383939), Instruction(84197863), Instruction(469950481), Instruction(402677781), Instruction(54561), Instruction(469843977), Instruction(134216720), Instruction(163918), Instruction(402792470), Instruction(335568910), Instruction(174743), Instruction(268686661), Instruction(470065153), Instruction(201564186), Instruction(201654302), Instruction(470073359), Instruction(101455), Instruction(268653532), Instruction(134496289), Instruction(469934122), Instruction(335593502), Instruction(402898983), Instruction(402759710), Instruction(469762074), Instruction(335642647), Instruction(402710559), Instruction(335700000), Instruction(402776116), Instruction(201637917), Instruction(470196227), Instruction(201457716), Instruction(402653225), Instruction(470032421), Instruction(335970321), Instruction(32798), Instruction(335912990), Instruction(469819413), Instruction(335896630), Instruction(134643732), Instruction(134438915), Instruction(469852174), Instruction(172074), Instruction(268688997), Instruction(335618065), Instruction(470204480), Instruction(201703483), Instruction(268812476), Instruction(146756), Instruction(70620657), Instruction(335904819), Instruction(201695251), Instruction(201482282), Instruction(470106170), Instruction(134193197), Instruction(484552), Instruction(201998416), Instruction(134307865), Instruction(201924616), Instruction(335749122), Instruction(201326669), Instruction(470376494), Instruction(201777208), Instruction(268873432), Instruction(469844049), Instruction(268959781), Instruction(335913043), Instruction(268756594), Instruction(269008399), Instruction(101171233), Instruction(269096352), Instruction(133292034), Instruction(469835861), Instruction(131108941), Instruction(269036356), Instruction(402792480), Instruction(470556723), Instruction(470286342), Instruction(336248856), Instruction(335634466), Instruction(403324940), Instruction(269086813), Instruction(403431475), Instruction(269090853), Instruction(73697812), Instruction(202129427), Instruction(91962624), Instruction(402800743), Instruction(202244103), Instruction(201826336), Instruction(403464192), Instruction(201949214), Instruction(402972768), Instruction(336388124), Instruction(201859131), Instruction(202047508), Instruction(268773705), Instruction(268612379), Instruction(135151719), Instruction(134422605), Instruction(336543755), Instruction(134742119), Instruction(121732455), Instruction(261563), Instruction(201752576), Instruction(336232462), Instruction(470417486), Instruction(134512721), Instruction(134570061), Instruction(67773450), Instruction(201498684), Instruction(269301552), Instruction(470302854), Instruction(202195020), Instruction(336183376), Instruction(1066935), Instruction(201637980), Instruction(403415137), Instruction(403152952), Instruction(85544713), Instruction(269534619), Instruction(1044489), Instruction(469999670), Instruction(202268748), Instruction(268873114), Instruction(134938746), Instruction(336068759), Instruction(269426735), Instruction(134946949), Instruction(469860500), Instruction(403906568), Instruction(434312), Instruction(680887), Instruction(269541501), Instruction(134930515), Instruction(470098034), Instruction(470253598), Instruction(134381725), Instruction(741016)),8,5)
+    val b = a.deduplicate
+
+    assert( testCases.score( a ) === 0L )
+    // assert( testCases.score( b ) === 0L )
   }
 
 

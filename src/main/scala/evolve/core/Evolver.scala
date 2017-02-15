@@ -74,7 +74,7 @@ object Evolver {
     // returns the best child not worse than the parent
     if(optimise) {
       (( program, programScore ) +: childResults)
-        .map( a => a.copy( _2 = (a._2 + a._1.cost) * ( if( optimiseForPipeline ) 1 else a._1.maxPipelineLength ) ) )
+        .map( a => a.copy( _2 = (a._2 + a._1.cost) * ( if( optimiseForPipeline ) a._1.maxPipelineLength else 1 ) ) )
         .reduceOption[(Program, Long)] {
         case (a, b) => if( a._2 < b._2 ) a else b
       }.map( _._1 ).filterNot( _ == program )
