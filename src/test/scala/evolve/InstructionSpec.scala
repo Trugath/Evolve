@@ -110,9 +110,11 @@ class InstructionSpec extends FlatSpec with PropertyChecks with GeneratorDrivenP
 
     forAll (instructionRange) { inst =>
     {
+      import functions.BooleanFunctions._
       checkFunctional( inst )
     }
     {
+      import functions.DoubleFunctions._
       checkFunctional( inst )
     }
     {
@@ -136,9 +138,11 @@ class InstructionSpec extends FlatSpec with PropertyChecks with GeneratorDrivenP
 
     forAll (instructionRange) { inst =>
     {
+      import functions.BooleanFunctions._
       checkConstant( inst )
     }
     {
+      import functions.DoubleFunctions._
       checkConstant( inst )
     }
     {
