@@ -48,7 +48,7 @@ object BooleanFunctions {
 
   object Nop extends Function[Boolean]  {
     override val arguments: Int = 1
-    override def cost: Int = 1
+    override val cost: Int = 1
     override def getLabel(inst: Instruction): String = "Nop"
 
     override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
@@ -58,18 +58,19 @@ object BooleanFunctions {
 
   object Const extends Function[Boolean]  {
     override val arguments: Int = 0
-    override def cost: Int = 1
+    override val constantRegionSize = 1
+    override val cost: Int = 1
     override def getLabel(inst: Instruction): String = {
       val value = inst.const(instructionSize, 1) == -1
       s"Const ($value)"
     }
     override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
-      inst.const(instructionSize, 1) == -1
+      inst.const(constantRegionStart, constantRegionSize) == -1
     }
   }
 
   object And extends Function[Boolean]  {
-    override def cost: Int = 2
+    override val cost: Int = 2
     override def getLabel(inst: Instruction): String = "&"
     override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
       val a = arguments.head
@@ -79,7 +80,7 @@ object BooleanFunctions {
   }
 
   object Or extends Function[Boolean]  {
-    override def cost: Int = 2
+    override val cost: Int = 2
     override def getLabel(inst: Instruction): String = "|"
     override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
       val a = arguments.head
@@ -90,7 +91,7 @@ object BooleanFunctions {
 
   object Not extends Function[Boolean]  {
     override val arguments: Int = 1
-    override def cost: Int = 2
+    override val cost: Int = 2
     override def getLabel(inst: Instruction): String = "~"
     override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
       val a = arguments.head
@@ -99,7 +100,7 @@ object BooleanFunctions {
   }
 
   object Implication extends Function[Boolean]  {
-    override def cost: Int = 7 // we want (!a | b) to be cheaper
+    override val cost: Int = 7 // we want (!a | b) to be cheaper
     override def getLabel(inst: Instruction): String = "->"
     override def ordered: Boolean = true
     override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
@@ -110,7 +111,7 @@ object BooleanFunctions {
   }
 
   object XOr extends Function[Boolean]  {
-    override def cost: Int = 3 // we want to be cheaper than the equivalent basic gate setup
+    override val cost: Int = 3 // we want to be cheaper than the equivalent basic gate setup
     override def getLabel(inst: Instruction): String = "^"
     override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
       val a = arguments.head
@@ -120,7 +121,7 @@ object BooleanFunctions {
   }
 
   object Equal extends Function[Boolean]  {
-    override def cost: Int = 10 // we want XOR -> NOT to be cheaper
+    override val cost: Int = 10 // we want XOR -> NOT to be cheaper
     override def getLabel(inst: Instruction): String = "=="
     override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
       val a = arguments.head

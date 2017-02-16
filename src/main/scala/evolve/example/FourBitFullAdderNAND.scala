@@ -53,7 +53,7 @@ object FourBitFullAdderNAND {
       override val instructionSize: Int = 3
       override val argumentSize: Int = 9
       override val arguments: Int = 1
-      override def cost: Int = 1
+      override val cost: Int = 1
       override def getLabel(inst: Instruction): String = "Nop"
 
       override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
@@ -64,7 +64,7 @@ object FourBitFullAdderNAND {
     object NAnd1 extends Function[Boolean]  {
       override val instructionSize: Int = 3
       override val argumentSize: Int = 9
-      override def cost: Int = 5
+      override val cost: Int = 5
       override val arguments: Int = 1
       override def getLabel(inst: Instruction): String = "!&"
       override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
@@ -75,7 +75,7 @@ object FourBitFullAdderNAND {
     object NAnd2 extends Function[Boolean]  {
       override val instructionSize: Int = 3
       override val argumentSize: Int = 9
-      override def cost: Int = 6
+      override val cost: Int = 6
       override val arguments: Int = 2
       override def getLabel(inst: Instruction): String = "!&"
       override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {
@@ -88,7 +88,7 @@ object FourBitFullAdderNAND {
     object NAnd3 extends Function[Boolean]  {
       override val instructionSize: Int = 3
       override val argumentSize: Int = 9
-      override def cost: Int = 7
+      override val cost: Int = 7
       override val arguments: Int = 3
       override def getLabel(inst: Instruction): String = "!&"
       override def apply(inst: Instruction, arguments: List[Boolean]): Boolean = {

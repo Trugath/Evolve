@@ -48,7 +48,7 @@ object Pythagorean {
 
     object SquareRoot extends Function[Double] {
       override val arguments: Int = 1
-      override def cost: Int = 10
+      override val cost: Int = 10
       override def getLabel(inst: Instruction): String = "SquareRoot"
       override def apply(inst: Instruction, arguments: List[Double]): Double = {
         val a = arguments.head

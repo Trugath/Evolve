@@ -54,7 +54,7 @@ object IntegerFunctions {
 
   object Nop extends Function[Int]  {
     override val arguments: Int = 1
-    override def cost: Int = 2
+    override val cost: Int = 2
     override def getLabel(inst: Instruction): String = "Nop"
     override def apply(inst: Instruction, arguments: List[Int]): Int = {
       arguments.head
@@ -63,18 +63,19 @@ object IntegerFunctions {
 
   object Const extends Function[Int]  {
     override val arguments: Int = 0
-    override def cost: Int = 2
+    override val constantRegionSize: Int = 32 - constantRegionStart
+    override val cost: Int = 2
     override def getLabel(inst: Instruction): String = {
-      val value = inst.const(instructionSize, 32 - instructionSize)
+      val value = inst.const(constantRegionStart, constantRegionSize)
       s"Const ($value)"
     }
     override def apply(inst: Instruction, arguments: List[Int]): Int = {
-      inst.const(instructionSize, 32 - instructionSize)
+      inst.const(constantRegionStart, constantRegionSize)
     }
   }
 
   object Add extends Function[Int]  {
-    override def cost: Int = 4
+    override val cost: Int = 4
     override def getLabel(inst: Instruction): String = "Add"
     override def apply(inst: Instruction, arguments: List[Int]): Int = {
       val a = arguments.head
@@ -84,7 +85,7 @@ object IntegerFunctions {
   }
 
   object Subtract extends Function[Int]  {
-    override def cost: Int = 4
+    override val cost: Int = 4
     override def getLabel(inst: Instruction): String = "Subtract"
     override def ordered: Boolean = true
     override def apply(inst: Instruction, arguments: List[Int]): Int = {
@@ -95,7 +96,7 @@ object IntegerFunctions {
   }
 
   object Multiply extends Function[Int]  {
-    override def cost: Int = 5
+    override val cost: Int = 5
     override def getLabel(inst: Instruction): String = "Multiply"
     override def apply(inst: Instruction, arguments: List[Int]): Int = {
       val a = arguments.head
@@ -105,7 +106,7 @@ object IntegerFunctions {
   }
 
   object Divide extends Function[Int]  {
-    override def cost: Int = 10
+    override val cost: Int = 10
     override def getLabel(inst: Instruction): String = "Divide"
     override def ordered: Boolean = true
     override def apply(inst: Instruction, arguments: List[Int]): Int = {
@@ -120,7 +121,7 @@ object IntegerFunctions {
   }
 
   object Modulus extends Function[Int]  {
-    override def cost: Int = 10
+    override val cost: Int = 10
     override def getLabel(inst: Instruction): String = "Modulus"
     override def ordered: Boolean = true
     override def apply(inst: Instruction, arguments: List[Int]): Int = {
@@ -136,7 +137,7 @@ object IntegerFunctions {
 
   object Increment extends Function[Int]  {
     override val arguments: Int = 1
-    override def cost: Int = 3
+    override val cost: Int = 3
     override def getLabel(inst: Instruction): String = "Increment"
     override def apply(inst: Instruction, arguments: List[Int]): Int = {
       arguments.head + 1
@@ -145,7 +146,7 @@ object IntegerFunctions {
 
   object Decrement extends Function[Int]  {
     override val arguments: Int = 1
-    override def cost: Int = 3
+    override val cost: Int = 3
     override def getLabel(inst: Instruction): String = "Decrement"
     override def apply(inst: Instruction, arguments: List[Int]): Int = {
       arguments.head - 1
@@ -153,7 +154,7 @@ object IntegerFunctions {
   }
 
   object And extends Function[Int]  {
-    override def cost: Int = 3
+    override val cost: Int = 3
     override def getLabel(inst: Instruction): String = "&"
     override def apply(inst: Instruction, arguments: List[Int]): Int = {
       val a = arguments.head
@@ -163,7 +164,7 @@ object IntegerFunctions {
   }
 
   object Or extends Function[Int]  {
-    override def cost: Int = 3
+    override val cost: Int = 3
     override def getLabel(inst: Instruction): String = "|"
     override def apply(inst: Instruction, arguments: List[Int]): Int = {
       val a = arguments.head
@@ -173,7 +174,7 @@ object IntegerFunctions {
   }
 
   object XOr extends Function[Int]  {
-    override def cost: Int = 3
+    override val cost: Int = 3
     override def getLabel(inst: Instruction): String = "^"
     override def apply(inst: Instruction, arguments: List[Int]): Int = {
       val a = arguments.head
@@ -184,7 +185,7 @@ object IntegerFunctions {
 
   object Not extends Function[Int]  {
     override val arguments: Int = 1
-    override def cost: Int = 3
+    override val cost: Int = 3
     override def getLabel(inst: Instruction): String = "~"
     override def apply(inst: Instruction, arguments: List[Int]): Int = {
       ~arguments.head
@@ -192,7 +193,7 @@ object IntegerFunctions {
   }
 
   object ShiftLeft extends Function[Int]  {
-    override def cost: Int = 3
+    override val cost: Int = 3
     override def getLabel(inst: Instruction): String = "<<"
     override def ordered: Boolean = true
     override def apply(inst: Instruction, arguments: List[Int]): Int = {
@@ -203,7 +204,7 @@ object IntegerFunctions {
   }
 
   object ShiftUnsignedRight extends Function[Int]  {
-    override def cost: Int = 3
+    override val cost: Int = 3
     override def getLabel(inst: Instruction): String = ">>>"
     override def ordered: Boolean = true
     override def apply(inst: Instruction, arguments: List[Int]): Int = {
@@ -214,7 +215,7 @@ object IntegerFunctions {
   }
 
   object ShiftSignedRight extends Function[Int]  {
-    override def cost: Int = 3
+    override val cost: Int = 3
     override def getLabel(inst: Instruction): String = ">>"
     override def ordered: Boolean = true
     override def apply(inst: Instruction, arguments: List[Int]): Int = {
@@ -226,7 +227,7 @@ object IntegerFunctions {
 
 
   object Max extends Function[Int] {
-    override def cost: Int = 3
+    override val cost: Int = 3
     override def getLabel(inst: Instruction): String = "Max"
     override def apply(inst: Instruction, arguments: List[Int]): Int = {
       val a = arguments.head
@@ -236,7 +237,7 @@ object IntegerFunctions {
   }
 
   object Min extends Function[Int] {
-    override def cost: Int = 3
+    override val cost: Int = 3
     override def getLabel(inst: Instruction): String = "Min"
     override def apply(inst: Instruction, arguments: List[Int]): Int = {
       val a = arguments.head

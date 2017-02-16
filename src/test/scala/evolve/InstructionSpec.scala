@@ -110,16 +110,40 @@ class InstructionSpec extends FlatSpec with PropertyChecks with GeneratorDrivenP
 
     forAll (instructionRange) { inst =>
     {
-      import functions.BooleanFunctions._
       checkFunctional( inst )
     }
     {
-      import functions.DoubleFunctions._
       checkFunctional( inst )
     }
     {
       import functions.IntegerFunctions._
       checkFunctional( inst )
+    }
+    }
+  }
+
+  it should "not clean stored constant values" in {
+
+    def checkConstant( inst: Instruction )(implicit functions: Seq[Function[_]]): Boolean = {
+      val func = inst.function
+
+      val cleaned = inst.clean
+      assert(cleaned.function === func)
+
+      assert( inst.const(func.constantRegionStart, func.constantRegionSize) === cleaned.const(func.constantRegionStart, func.constantRegionSize))
+      true
+    }
+
+    forAll (instructionRange) { inst =>
+    {
+      checkConstant( inst )
+    }
+    {
+      checkConstant( inst )
+    }
+    {
+      import functions.IntegerFunctions._
+      checkConstant( inst )
     }
     }
   }

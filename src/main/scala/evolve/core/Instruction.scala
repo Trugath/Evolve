@@ -153,10 +153,14 @@ final case class Instruction( value: Int ) extends AnyVal {
     */
   def clean( implicit functions: Seq[Function[_]] ): Instruction = {
     val func = function
-    @tailrec def clean(argument: Int, i: Instruction): Instruction = if(argument > 0) {
+    @tailrec def cleanArgs(argument: Int, i: Instruction): Instruction = if(argument > 0) {
       val argStart = func.instructionSize + (func.argumentSize * (argument - 1))
-      clean( argument - 1, i.pointer( pointer( argStart, func.argumentSize ), argStart, func.argumentSize ) )
+      cleanArgs( argument - 1, i.pointer( pointer( argStart, func.argumentSize ), argStart, func.argumentSize ) )
     } else i
-    clean(func.arguments, Instruction(0).instruction( instruction( func.instructionSize ), func.instructionSize ) )
+    val inst =
+      Instruction(0)
+        .instruction( instruction( func.instructionSize ), func.instructionSize )
+        .const( const( func.constantRegionStart, func.constantRegionSize ), func.constantRegionStart, func.constantRegionSize )
+    cleanArgs(func.arguments, inst )
   }
 }

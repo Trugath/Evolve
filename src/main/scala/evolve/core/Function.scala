@@ -45,8 +45,14 @@ trait Function[A] {
   // bits per argument
   val argumentSize: Int = 13
 
+  // If this instruction stores a constant this is its bit location
+  val constantRegionStart: Int = instructionSize
+
+  // bits allocated to the constant
+  val constantRegionSize: Int = 0
+
   // execution cost
-  def cost: Int
+  val cost: Int
 
   // label for printing/graphing
   def getLabel(inst: Instruction): String
