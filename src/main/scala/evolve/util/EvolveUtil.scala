@@ -88,7 +88,8 @@ object EvolveUtil {
    */
   def fitness[A](program: Program, fitness: Long, limit: Long, testCases: TestCases[A], optimise: Boolean = false)( implicit strategy: EvolverStrategy, score: (A, A) => Long, functions: Seq[Function[A]], ec: ExecutionContext ): Program = {
 
-    @tailrec def evolve(program: Program, generation: Long): Program = {
+    @tailrec
+    def evolve(program: Program, generation: Long): Program = {
       if(generation >= limit || testCases.score( program ) <= fitness) {
         program
       } else {
