@@ -172,5 +172,7 @@ object FourBitFullAdderNAND {
 
     val pipelined = optimised3.pipeline.deduplicate.pipeline.shrink
     Files.write(Paths.get("pipelined.dot"), DotGraph(pipelined).getBytes(StandardCharsets.UTF_8) )
+
+    System.exit(0)
   }
 }

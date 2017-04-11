@@ -81,26 +81,26 @@ class DoubleProgramSpec extends FlatSpec with PropertyChecks with GeneratorDrive
     val signum = Program( instructionSize, Seq( ins( functions.indexOf(Signum), 0, 1 ) ), 1, 1 )
 
     forAll { (a: Double, b: Double ) =>
-      assert( nopL(List(a)).result(1).head === a )
-      assert( add(List(a, b)).result(1).head === a + b )
-      assert( sub(List(a, b)).result(1).head === a - b )
-      assert( mul(List(a, b)).result(1).head === a * b )
-      assert( div(List(a, b)).result(1).head === failSafe(a / b) )
-      assert( mod(List(a, b)).result(1).head === failSafe(a % b) )
-      assert( inc(List(a, b)).result(1).head === a+1 )
-      assert( dec(List(a, b)).result(1).head === a-1 )
-      assert( max(List(a, b)).result(1).head === math.max(a, b) )
-      assert( min(List(a, b)).result(1).head === math.min(a, b) )
-      assert( gtz(List(a, b)).result(1).head === (if( a > 0 ) b else 0.0) )
-      assert( ltz(List(a, b)).result(1).head === (if( a < 0 ) b else 0.0) )
-      assert( sig(List(a)).result(1).head === 1.0 / (1.0 + math.exp(-a)) )
-      assert( natexp(List(a)).result(1).head === math.exp(a) )
+      assert( nopL(List(a), List(0.0))._1.result(1).head === a )
+      assert( add(List(a, b), List(0.0))._1.result(1).head === a + b )
+      assert( sub(List(a, b), List(0.0))._1.result(1).head === a - b )
+      assert( mul(List(a, b), List(0.0))._1.result(1).head === a * b )
+      assert( div(List(a, b), List(0.0))._1.result(1).head === failSafe(a / b) )
+      assert( mod(List(a, b), List(0.0))._1.result(1).head === failSafe(a % b) )
+      assert( inc(List(a, b), List(0.0))._1.result(1).head === a+1 )
+      assert( dec(List(a, b), List(0.0))._1.result(1).head === a-1 )
+      assert( max(List(a, b), List(0.0))._1.result(1).head === math.max(a, b) )
+      assert( min(List(a, b), List(0.0))._1.result(1).head === math.min(a, b) )
+      assert( gtz(List(a, b), List(0.0))._1.result(1).head === (if( a > 0 ) b else 0.0) )
+      assert( ltz(List(a, b), List(0.0))._1.result(1).head === (if( a < 0 ) b else 0.0) )
+      assert( sig(List(a), List(0.0))._1.result(1).head === 1.0 / (1.0 + math.exp(-a)) )
+      assert( natexp(List(a), List(0.0))._1.result(1).head === math.exp(a) )
       if( !math.log(a).isNaN ){
-        assert( natlog(List(a)).result(1).head === math.log(a) )
+        assert( natlog(List(a), List(0.0))._1.result(1).head === math.log(a) )
       } else {
-        assert( natlog(List(a)).result(1).head.isNaN )
+        assert( natlog(List(a), List(0.0))._1.result(1).head.isNaN )
       }
-      assert( signum(List(a)).result(1).head === math.signum(a) )
+      assert( signum(List(a), List(0.0))._1.result(1).head === math.signum(a) )
     }
   }
 }

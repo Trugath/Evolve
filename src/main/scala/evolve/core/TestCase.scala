@@ -32,6 +32,15 @@ package evolve.core
 
 import scala.annotation.tailrec
 
+object TestCases {
+
+  import scala.language.implicitConversions
+
+  implicit def testCasesToScore[A]( testCases: TestCases[A] )(implicit scoreFunc: (A, A) => Long, functions: Seq[Function[A]]): Program => Double = {
+    (p: Program) => testCases.score(p)
+  }
+}
+
 /**
  * a set of testcases used in evolving/testing a program
   *
@@ -47,16 +56,16 @@ case class TestCases[A:Manifest](cases: List[TestCase[A]]) {
    * @param functions The functions to map to the programs operators
    * @return the summed score
    */
-  def score( program: Program )( implicit scoreFunc: (A, A) => Long, functions: Seq[Function[A]] ): Long = {
-      val total =
-        cases.map( testCase => {
-          val exec = program(testCase.inputs)
-          testCase.score(exec.result(program.outputCount))
-        } )
-        .sum
+  def score[S]( program: Program )( implicit scoreFunc: (A, A) => Long, functions: Seq[Function[A]] ): Long = {
 
-      assert( total >= 0 )
-      total
+      val total =
+        cases.foldLeft((new Array[A](program.data.length).toList, 0L)){ case ((state, score), testCase) =>
+          val exec = program(testCase.inputs, state)
+          (exec._2, score + testCase.score(exec._1.result(program.outputCount)))
+        }
+
+      assert( total._2 >= 0 )
+      total._2
   }
 }
 

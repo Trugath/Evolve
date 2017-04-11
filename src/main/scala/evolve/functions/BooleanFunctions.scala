@@ -31,7 +31,6 @@
 package evolve.functions
 
 import evolve.core.{Function, Instruction}
-
 object BooleanFunctions {
 
   implicit val functions = Seq[Function[Boolean]](
@@ -40,10 +39,14 @@ object BooleanFunctions {
     Implication, XOr, Equal
   )
 
-  implicit def scoreFunc: (Boolean, Boolean) => Long = (a, b) => {
+  implicit val scoreFunc: (Boolean, Boolean) => Long = (a, b) => {
     val result = if (a == b) 0 else 10
     assert(result >= 0)
     result * 100
+  }
+
+  implicit val createConstant: (Boolean) => Instruction = { value: Boolean =>
+    Instruction(0).const( if(value) -1 else 0, Const.constantRegionStart, Const.constantRegionSize)
   }
 
   object Nop extends Function[Boolean]  {

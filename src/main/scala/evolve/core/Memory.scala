@@ -31,7 +31,7 @@
 package evolve.core
 
 /**
- * Memory is a write only data structure
+ * Memory is a write only data structure for propegating information through the program
  * Currently implemented with an array
  */
 final class Memory[A:Manifest] private (private [this] val memory: Array[A], private [this] var length: Int ) {

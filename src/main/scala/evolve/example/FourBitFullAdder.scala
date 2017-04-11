@@ -46,6 +46,7 @@ object FourBitFullAdder {
   def main(args: Array[String]): Unit = {
 
     import evolve.functions.BooleanFunctions._
+    import TestCases.testCasesToScore
 
     implicit val evolverStrategy = EvolverStrategy(32, 0.003, optimiseForPipeline = false)
     implicit val ec = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
@@ -83,5 +84,7 @@ object FourBitFullAdder {
     Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8) )
     val optimised = EvolveUtil.counted(EvolveUtil.counted(solution, 20000, optimise = true, testCases).shrink, 20000, optimise = true, testCases).denop.deduplicate.shrink
     Files.write(Paths.get("optimised.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8) )
+
+    System.exit(0)
   }
 }

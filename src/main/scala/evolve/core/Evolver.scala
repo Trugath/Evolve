@@ -40,32 +40,43 @@ object Evolver {
    * Given a program, test cases and a scoring function will attempt to evolve a passed program
    *
    * @param program the program to evolve
-   * @param testCases the test cases to run against
+   * @param score the scoring function to check progress
    * @param optimise whether we use the execution cost in the evolution
-   * @param score the scoring function to check for success
    * @param functions list of functions to map to the program opcodes
    * @tparam A the data type we work against
    * @return A new program that is not worse than the parent
    */
-  def apply[A]( program: Program, testCases: TestCases[A], optimise: Boolean )( implicit strategy: EvolverStrategy, score: (A, A) => Long, functions: Seq[Function[A]], ec: ExecutionContext ): Option[Program] = {
+  def apply[A]( program: Program, score: Program => Double, optimise: Boolean )( implicit strategy: EvolverStrategy, functions: Seq[Function[A]], ec: ExecutionContext ): Option[Program] = {
+    apply(program, _ => true, score, optimise)
+  }
+
+  /**
+    * Given a program, test cases and a scoring function will attempt to evolve a passed program
+    *
+    * @param program the program to evolve
+    * @param instFilter be specific about which instructions to evolve
+    * @param score the scoring function to check progress
+    * @param optimise whether we use the execution cost in the evolution
+    * @param functions list of functions to map to the program opcodes
+    * @tparam A the data type we work against
+    * @return A new program that is not worse than the parent
+    */
+  def apply[A]( program: Program, instFilter: Instruction => Boolean, score: Program => Double, optimise: Boolean )( implicit strategy: EvolverStrategy, functions: Seq[Function[A]], ec: ExecutionContext ): Option[Program] = {
     import scala.concurrent._
     import scala.concurrent.duration.Duration._
     import scala.language.postfixOps
 
-    val inputCount = testCases.cases.head.inputs.length
-    require( testCases.cases.forall( _.inputs.length == inputCount ) )
-
     // score the parent
-    val programScore = testCases.score( program )( score, functions )
+    val programScore: Double = score(program)
 
     // create mutant children
-    val popF: Future[Seq[(Program, Long)]] = Future.sequence( Seq.fill(strategy.children)( Future {
+    val popF: Future[Seq[(Program, Double)]] = Future.sequence( Seq.fill(strategy.children)( Future {
       val child = Generator.repair( Mutator( program, strategy.factor ) )
-      (child, testCases.score( child )( score, functions ))
+      (child, score(child))
     } ) )
 
     // get children not worse than the parent
-    val childResults = blocking {
+    val childResults: Seq[(Program, Double)] = blocking {
       Await.result(popF.map( _.filter(_._2 <= programScore) ), Inf)
     }
 
@@ -74,19 +85,19 @@ object Evolver {
     // returns the best child not worse than the parent
     if(optimise) {
       (( program, programScore ) +: childResults)
-        .map( a => a.copy( _2 = (a._2 + a._1.cost) * ( if( optimiseForPipeline ) a._1.maxPipelineLength else 1 ) ) )
-        .reduceOption[(Program, Long)] {
+        .map( a => a.copy( _2 = (a._2 + a._1.cost) * ( if( optimiseForPipeline ) a._1.maxPipelineLength else 1.0 ) ) )
+        .reduceOption[(Program, Double)] {
         case (a, b) => if( a._2 < b._2 ) a else b
       }.map( _._1 ).filterNot( _ == program )
     } else if(optimiseForPipeline) {
       childResults
         .map( a => a.copy( _2 = a._2 * a._1.maxPipelineLength ) )
-        .reduceOption[(Program, Long)] {
+        .reduceOption[(Program, Double)] {
         case (a, b) => if( a._2 < b._2 ) a else b
       }.map( _._1 )
     } else {
       childResults
-        .reduceOption[(Program, Long)] {
+        .reduceOption[(Program, Double)] {
         case (a, b) => if( a._2 < b._2 ) a else b
       }.map( _._1 )
     }

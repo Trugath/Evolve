@@ -83,5 +83,7 @@ object ThreeBitAdder {
     Files.write(Paths.get("optimised.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8) )
     val pipelined = optimised.pipeline.deduplicate.pipeline.shrink
     Files.write(Paths.get("pipelined.dot"), DotGraph(pipelined).getBytes(StandardCharsets.UTF_8) )
+
+    System.exit(0)
   }
 }

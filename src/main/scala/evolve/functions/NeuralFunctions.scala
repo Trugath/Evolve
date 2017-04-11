@@ -31,17 +31,20 @@
 package evolve.functions
 
 import evolve.core.{Function, Instruction}
+import evolve.functions.NeuralFunctions.ConstSmall.constantRegionSize
 
-object DoubleFunctions {
+object NeuralFunctions {
 
-  implicit val functions = Seq[Function[Double]](
+  implicit val functions: Seq[Function[Double]] = Seq[Function[Double]](
     Nop,
     ConstLarge, ConstSmall,
     Add, Subtract, Multiply, Divide, Modulus, Increment, Decrement,
     Min, Max,
     GreaterThanZero, LessThanZero,
-    Sigmoid, NaturalExp, NaturalLog,
-    Signum
+    Sigmoid, NaturalExp, NaturalLog, TanH,
+    Signum,
+    Delay, Increasing, Decreasing, Steady,
+    Cell
   )
 
   implicit val scoreFunc: (Double, Double) => Long = (a, b) => {
@@ -56,14 +59,19 @@ object DoubleFunctions {
     math.min(result * Int.MaxValue, Long.MaxValue / 256L).toLong
   }
 
-  implicit val createConstant: (Double) => Instruction = { value: Double =>
-    val constLargeValue: Int = math.min(math.max(value.toInt, Int.MinValue >> (32 - ConstLarge.constantRegionSize)), Int.MaxValue >>> (32 - ConstLarge.constantRegionSize))
-    val constLarge = Instruction(0).const(constLargeValue, ConstLarge.constantRegionStart, ConstLarge.constantRegionSize)
+  implicit def createConstant(implicit functions: Seq[Function[Double]]): (Double) => Instruction = { value: Double =>
+    val constLargeScale = math.pow(2.0, math.min(constantRegionSize, 4))
+    val constLargeValue: Int = math.min(math.max((value * constLargeScale).toInt, Int.MinValue >> (32 - ConstLarge.constantRegionSize)), Int.MaxValue >>> (32 - ConstLarge.constantRegionSize))
+    val constLarge = Instruction(0)
+      .instruction(functions.indexOf(ConstLarge), ConstLarge.instructionSize)
+      .const(constLargeValue, ConstLarge.constantRegionStart, ConstLarge.constantRegionSize)
     val constLargeError: Double = (ConstLarge(constLarge, Nil) - value).abs
 
-    val scale = math.pow(2.0, ConstSmall.constantRegionSize)
-    val constSmallValue = math.min(math.max((value * scale).toInt, Int.MinValue >> (32 - ConstLarge.constantRegionSize)), Int.MaxValue >>> (32 - ConstLarge.constantRegionSize))
-    val constSmall = Instruction(0).const(constSmallValue, ConstSmall.constantRegionStart, ConstSmall.constantRegionSize)
+    val constSmallScale = math.pow(2.0, ConstSmall.constantRegionSize)
+    val constSmallValue = math.min(math.max((value * constSmallScale).toInt, Int.MinValue >> (32 - ConstSmall.constantRegionSize)), Int.MaxValue >>> (32 - ConstSmall.constantRegionSize))
+    val constSmall = Instruction(0)
+      .instruction(functions.indexOf(ConstSmall), ConstSmall.instructionSize)
+      .const(constSmallValue, ConstSmall.constantRegionStart, ConstSmall.constantRegionSize)
     val constSmallError: Double = (ConstSmall(constSmall, Nil) - value).abs
 
     if( constLargeError < constSmallError) {
@@ -86,15 +94,18 @@ object DoubleFunctions {
     override val arguments: Int = 0
     override val constantRegionSize: Int = 32 - constantRegionStart
     override val cost: Int = 2
+
+    private [this] val scale = math.pow(2.0, math.min(constantRegionSize, 4))
+
     override def getLabel(inst: Instruction): String = {
-      val value = inst.const(constantRegionStart, constantRegionSize)
+      val value = inst.const(constantRegionStart, constantRegionSize) / scale
       s"Const ($value)"
     }
     override def apply(inst: Instruction, arguments: List[Double]): Double = {
-      inst.const(constantRegionStart, constantRegionSize)
+      inst.const(constantRegionStart, constantRegionSize) / scale
     }
+  }
 
-}
   object ConstSmall extends Function[Double]  {
     override val arguments: Int = 0
     override val constantRegionSize: Int = 32 - constantRegionStart
@@ -112,7 +123,7 @@ object DoubleFunctions {
   }
 
   object Add extends Function[Double]  {
-    override val cost: Int = 4
+    override val cost: Int = 2
     override def getLabel(inst: Instruction): String = "Add"
     override def apply(inst: Instruction, arguments: List[Double]): Double = {
       val a = arguments.head
@@ -122,7 +133,7 @@ object DoubleFunctions {
   }
 
   object Subtract extends Function[Double]  {
-    override val cost: Int = 4
+    override val cost: Int = 2
     override def getLabel(inst: Instruction): String = "Subtract"
     override def ordered: Boolean = true
     override def apply(inst: Instruction, arguments: List[Double]): Double = {
@@ -133,7 +144,7 @@ object DoubleFunctions {
   }
 
   object Multiply extends Function[Double]  {
-    override val cost: Int = 5
+    override val cost: Int = 2
     override def getLabel(inst: Instruction): String = "Multiply"
     override def apply(inst: Instruction, arguments: List[Double]): Double = {
       val a = arguments.head
@@ -143,7 +154,7 @@ object DoubleFunctions {
   }
 
   object Divide extends Function[Double]  {
-    override val cost: Int = 10
+    override val cost: Int = 5
     override def getLabel(inst: Instruction): String = "Divide"
     override def ordered: Boolean = true
     override def apply(inst: Instruction, arguments: List[Double]): Double = {
@@ -158,7 +169,7 @@ object DoubleFunctions {
   }
 
   object Modulus extends Function[Double]  {
-    override val cost: Int = 10
+    override val cost: Int = 5
     override def getLabel(inst: Instruction): String = "Modulus"
     override def ordered: Boolean = true
     override def apply(inst: Instruction, arguments: List[Double]): Double = {
@@ -271,6 +282,16 @@ object DoubleFunctions {
     }
   }
 
+  object TanH extends Function[Double] {
+    override val arguments: Int = 1
+    override val cost: Int = 5
+    override def getLabel(inst: Instruction): String = "TanH"
+    override def apply(inst: Instruction, arguments: List[Double]): Double = {
+      val a = arguments.head
+      math.tanh(a)
+    }
+  }
+
   object Signum extends Function[Double] {
     override val arguments: Int = 1
     override val cost: Int = 2
@@ -278,6 +299,77 @@ object DoubleFunctions {
     override def apply(inst: Instruction, arguments: List[Double]): Double = {
       val a = arguments.head
       math.signum(a)
+    }
+  }
+
+  object Delay extends Function[Double] {
+    override val arguments: Int = 1
+    override val cost: Int = 2
+    override val usesState = true
+    override def getLabel(inst: Instruction): String = "Delay"
+    override def apply(inst: Instruction, state: Double, arguments: List[Double]): (Double, Double) = {
+      (arguments.head, state)
+    }
+    override def apply(inst: Instruction, arguments: List[Double]): Double = {
+      throw new RuntimeException("Function with state called as stateless")
+    }
+  }
+
+  object Increasing extends Function[Double] {
+    override val arguments: Int = 1
+    override val cost: Int = 2
+    override val usesState = true
+    override def getLabel(inst: Instruction): String = "Increasing"
+    override def apply(inst: Instruction, state: Double, arguments: List[Double]): (Double, Double) = {
+      (arguments.head, if( state < arguments.head ) 1.0 else 0.0 )
+    }
+    override def apply(inst: Instruction, arguments: List[Double]): Double = {
+      throw new RuntimeException("Function with state called as stateless")
+    }
+  }
+
+  object Decreasing extends Function[Double] {
+    override val arguments: Int = 1
+    override val cost: Int = 2
+    override val usesState = true
+    override def getLabel(inst: Instruction): String = "Decreasing"
+    override def apply(inst: Instruction, state: Double, arguments: List[Double]): (Double, Double) = {
+      (arguments.head, if( state > arguments.head ) 1.0 else 0.0 )
+    }
+    override def apply(inst: Instruction, arguments: List[Double]): Double = {
+      throw new RuntimeException("Function with state called as stateless")
+    }
+  }
+
+
+  object Steady extends Function[Double] {
+    override val arguments: Int = 1
+    override val cost: Int = 2
+    override val usesState = true
+    override def getLabel(inst: Instruction): String = "Decreasing"
+    override def apply(inst: Instruction, state: Double, arguments: List[Double]): (Double, Double) = {
+      (arguments.head, if( state == arguments.head ) 1.0 else 0.0 )
+    }
+    override def apply(inst: Instruction, arguments: List[Double]): Double = {
+      throw new RuntimeException("Function with state called as stateless")
+    }
+  }
+
+  object Cell extends Function[Double] {
+    override val arguments: Int = 2
+    override val cost: Int = 2
+    override val usesState = true
+    override def getLabel(inst: Instruction): String = "Cell"
+    override def ordered: Boolean = true
+    override def apply(inst: Instruction, state: Double, arguments: List[Double]): (Double, Double) = {
+      val i = arguments.head
+      val f = arguments(1)
+
+      val c = i + state * f
+      (c, c)
+    }
+    override def apply(inst: Instruction, arguments: List[Double]): Double = {
+      throw new RuntimeException("Function with state called as stateless")
     }
   }
 }

@@ -53,7 +53,7 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
           val program = Generator(Nop.instructionSize, startSize, 1, 1, seed)
           val grown = program.grow(grownSize)
           forAll { a: Boolean =>
-            assert( program( List(a) ).result(1) === grown( List(a) ).result(1) )
+            assert( program( List(a), List.fill(program.data.length)(false) )._1.result(1) === grown( List(a), List.fill(grown.data.length)(false) )._1.result(1) )
           }
         }
         {
@@ -61,7 +61,7 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
           val program = Generator(Nop.instructionSize, startSize, 1, 1, seed)
           val grown = program.grow(grownSize)
           forAll { a: Int =>
-            assert( program( List(a) ).result(1) === grown( List(a) ).result(1) )
+            assert( program( List(a), List.fill(program.data.length)(0) )._1.result(1) === grown( List(a), List.fill(grown.data.length)(0) )._1.result(1) )
           }
         }
       }
@@ -125,7 +125,7 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
       assert( bShrunk.used === List(true, true, true) )
 
       forAll { a: Boolean =>
-        assert( b( List(a) ).result(0) === bShrunk( List(a) ).result(0) )
+        assert( b( List(a), false )._1.result(0) === bShrunk( List(a), false )._1.result(0) )
       }
     }
 
@@ -136,7 +136,7 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
           val program = Generator(Nop.instructionSize, size, 1, 1, seed)
           val shrunk = program.shrink
           forAll { a: Boolean =>
-            assert( program( List(a) ).result(1) === shrunk( List(a) ).result(1) )
+            assert( program( List(a), false )._1.result(1) === shrunk( List(a), false )._1.result(1) )
           }
         }
         {
@@ -144,7 +144,7 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
           val program = Generator(Nop.instructionSize, size, 1, 1, seed)
           val shrunk = program.shrink
           forAll { a: Int =>
-            assert( program( List(a) ).result(1) === shrunk( List(a) ).result(1) )
+            assert( program( List(a), 0 )._1.result(1) === shrunk( List(a), 0 )._1.result(1) )
           }
         }
       }
@@ -233,32 +233,32 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
   "A simple NOP program" should "have a pipeline length of one" in {
     import functions.BooleanFunctions._
     val program = ProgramUtil.nopProgramLong(1, 1, 1)
-    assert( program( List(false) ).result(1) === List( false ))
-    assert( program( List(true)  ).result(1) === List( true ) )
+    assert( program( List(false), List(false) )._1.result(1) === List( false ))
+    assert( program( List(true), List(false)  )._1.result(1) === List( true ) )
     assert( program.maxPipelineLength === 1 )
   }
 
   it should "not get smaller when denopped" in {
     import functions.BooleanFunctions._
     val program = ProgramUtil.nopProgramLong(1, 1, 1).denop
-    assert( program( List(false) ).result(1) === List( false ))
-    assert( program( List(true)  ).result(1) === List( true ) )
+    assert( program( List(false), false )._1.result(1) === List( false ))
+    assert( program( List(true), false  )._1.result(1) === List( true ) )
     assert( program.maxPipelineLength === 1 )
   }
 
   "A simple two NOP program" should "have a pipeline length of two" in {
     import functions.BooleanFunctions._
     val program = ProgramUtil.nopProgramLong(2, 1, 1)
-    assert( program( List(false) ).result(1) === List( false ))
-    assert( program( List(true)  ).result(1) === List( true ) )
+    assert( program( List(false), false )._1.result(1) === List( false ))
+    assert( program( List(true), false  )._1.result(1) === List( true ) )
     assert( program.maxPipelineLength === 2 )
   }
 
   it should "shrink into a single nop program when denopped" in {
     import functions.BooleanFunctions._
     val program = ProgramUtil.nopProgramLong(2, 1, 1).denop.shrink
-    assert( program( List(false) ).result(1) === List( false ))
-    assert( program( List(true)  ).result(1) === List( true ) )
+    assert( program( List(false), false )._1.result(1) === List( false ))
+    assert( program( List(true), false  )._1.result(1) === List( true ) )
     assert( program.maxPipelineLength === 1 )
   }
 
@@ -266,8 +266,8 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
     import functions.BooleanFunctions._
     forAll(Gen.choose[Int](1, 256)) { length =>
       val program = ProgramUtil.nopProgramShort(length, 1, 1)
-      assert( program( List(false) ).result(1) === List( false ))
-      assert( program( List(true)  ).result(1) === List( true ) )
+      assert( program( List(false), false )._1.result(1) === List( false ))
+      assert( program( List(true), false  )._1.result(1) === List( true ) )
       assert( program.maxPipelineLength === 1 )
     }
   }
@@ -276,8 +276,8 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
     import functions.BooleanFunctions._
     forAll(Gen.choose[Int](1, 256)) { length =>
       val program = ProgramUtil.nopProgramLong(length, 1, 1)
-      assert( program( List(false) ).result(1) === List( false ))
-      assert( program( List(true)  ).result(1) === List( true ) )
+      assert( program( List(false), false )._1.result(1) === List( false ))
+      assert( program( List(true), false )._1.result(1) === List( true ) )
       assert( program.maxPipelineLength === length )
     }
   }
@@ -286,8 +286,8 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
     import functions.BooleanFunctions._
     forAll(Gen.choose[Int](1, 256)) { length =>
       val program = ProgramUtil.nopProgramShort(length, 1, 1).denop
-      assert( program( List(false) ).result(1) === List( false ))
-      assert( program( List(true)  ).result(1) === List( true ) )
+      assert( program( List(false), false )._1.result(1) === List( false ))
+      assert( program( List(true), false  )._1.result(1) === List( true ) )
       assert( program.maxPipelineLength === 1 )
     }
   }
@@ -312,8 +312,8 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
     forAll( Gen.choose(1, 256) ) { length =>
       val a = ProgramUtil.nopProgramLong(length, 1, 1).clean
       val b = ProgramUtil.nopProgramLong(length + 1, 1, 1).clean
-      assert( a( List(false) ).result(1) === b( List(false) ).result(1) )
-      assert( a( List(true)  ).result(1) === b( List(true) ).result(1) )
+      assert( a( List(false), false )._1.result(1) === b( List(false), false )._1.result(1) )
+      assert( a( List(true), false  )._1.result(1) === b( List(true), false )._1.result(1) )
 
       forAll( Gen.choose(0, a.data.length - 1 ) ) { index =>
         assert( a.insertNop(index) === b )

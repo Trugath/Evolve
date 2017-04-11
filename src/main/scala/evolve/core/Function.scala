@@ -31,7 +31,7 @@
 package evolve.core
 
 /**
- * Function takes instruction and memory and returns the new memory
+ * Function takes instruction, state and arguments and returns the new state and the result
  */
 trait Function[A] {
   require( instructionSize + argumentSize * arguments <= 32, "Instruction must fit into 32 bits" )
@@ -51,6 +51,9 @@ trait Function[A] {
   // bits allocated to the constant
   val constantRegionSize: Int = 0
 
+  // does this function use its state memory
+  val usesState = false
+
   // execution cost
   val cost: Int
 
@@ -59,6 +62,11 @@ trait Function[A] {
 
   // are the inputs order dependant
   def ordered: Boolean = false
+
+  // the function itself
+  def apply(inst: Instruction, state: A, arguments: List[A]): (A, A) = {
+    (state, apply(inst, arguments))
+  }
 
   // the function itself
   def apply(inst: Instruction, arguments: List[A]): A

@@ -36,6 +36,20 @@ import scala.annotation.{switch, tailrec}
 
 object Mutator {
 
+  /**
+    * Given a program and a mutation factor this function mutates the function by the set amount
+    * the factor 'should' be between 0.0 and 1.0 non-inclusive
+    *
+    * random bits mutated = number of program bits * 0.75 * factor
+    * random instructions mutated = number of program instructions * 0.25 * factor
+    *
+    * @param program the program to mutate
+    * @param factor the amount of bits to mutate
+    * @return the newly mutated program
+    */
+  def apply( program: Program, factor: Double ): Program = {
+    apply( program, _ => true, factor )
+  }
 
   /**
    * Given a program and a mutation factor this function mutates the function by the set amount
@@ -45,26 +59,29 @@ object Mutator {
    * random instructions mutated = number of program instructions * 0.25 * factor
    *
    * @param program the program to mutate
+   * @param instFilter be specific about which instructions to mutate
    * @param factor the amount of bits to mutate
    * @return the newly mutated program
    */
-  def apply( program: Program, factor: Double ): Program = {
+  def apply( program: Program, instFilter: Instruction => Boolean, factor: Double ): Program = {
 
     /**
      * flips, 'adds' or 'subtracts' a specified bit in the instruction
      */
     def mutateBit(bit: Int, instr: Array[Instruction]): Unit = {
       val index = bit / 32
-      val old = instr(index).value
-      val mask = 0x80000000 >>> (bit % 32)
-      (ThreadLocalRandom.current().nextInt(3): @switch) match {
-        case 0 => instr(index) = Instruction(old ^ mask)
-        case 1 => instr(index) = Instruction(old + mask)
-        case 2 => instr(index) = Instruction(old - mask)
+      if(instFilter(instr(index))) {
+        val old = instr(index).value
+        val mask = 0x80000000 >>> (bit % 32)
+        (ThreadLocalRandom.current().nextInt(3): @switch) match {
+          case 0 => instr(index) = Instruction(old ^ mask)
+          case 1 => instr(index) = Instruction(old + mask)
+          case 2 => instr(index) = Instruction(old - mask)
+        }
       }
     }
 
-    def mutateInstr(index: Int, instr: Array[Instruction]): Unit = {
+    def mutateInstr(index: Int, instr: Array[Instruction]): Unit = if (instFilter(instr(index))) {
       instr(index) = Instruction( ThreadLocalRandom.current().nextInt() )
     }
 

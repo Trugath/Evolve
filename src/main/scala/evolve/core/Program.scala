@@ -186,14 +186,26 @@ final case class Program( instructionSize: Int, data: Seq[Instruction], inputCou
   require( data.size >= outputCount, "A program must be able to produce a result" )
 
   /**
+    * Execute this program
+    * @param inputs parameter list
+    * @param functions functions to map into the op codes
+    * @tparam A The data type to manipulate
+    * @return the final memory state of the program
+    */
+  def apply[A:Manifest]( inputs: List[A], default: A )( implicit functions: Seq[Function[A]] ): (Memory[A], List[A]) = {
+    apply( inputs, List.fill(data.length)(default) )
+  }
+
+  /**
    * Execute this program
    * @param inputs parameter list
    * @param functions functions to map into the op codes
    * @tparam A The data type to manipulate
    * @return the final memory state of the program
    */
-  def apply[A:Manifest]( inputs: List[A] )( implicit functions: Seq[Function[A]] ): Memory[A] = {
+  def apply[A:Manifest]( inputs: List[A], state: List[A] )( implicit functions: Seq[Function[A]] ): (Memory[A], List[A]) = {
     require( inputs.length == inputCount )
+    require( state.length == data.length )
 
     // extracts arguments from memory
     def arguments( func: Function[A], inst: Instruction, memory: Memory[A] ): List[A] = {
@@ -211,17 +223,18 @@ final case class Program( instructionSize: Int, data: Seq[Instruction], inputCou
         }
     }
 
-    @tailrec def execute(index: Int, skip: Int, usage: Seq[Boolean], memory: Memory[A]): Memory[A] = if(index < data.length) {
+    @tailrec def execute(index: Int, skip: Int, states: List[A], usage: Seq[Boolean], memory: Memory[A], acc: List[A]): (Memory[A], List[A]) = if(index < data.length) {
       if(usage(index+inputCount)) {
         val inst = data(index)
         val func = functions( inst.instruction( instructionSize ) )
-        execute(index + 1, 0, usage, memory.skip(skip).append( func( inst, arguments(func, inst, memory) ) ) )
+        val res = func( inst, states.head, arguments(func, inst, memory) )
+        execute(index + 1, 0, states.tail, usage, memory.skip(skip).append( res._2 ), res._1 :: acc )
       } else {
-        execute(index + 1, skip + 1, usage, memory)
+        execute(index + 1, skip + 1, states.tail, usage, memory, states.head :: acc)
       }
-    } else memory
+    } else (memory, acc.reverse)
 
-    execute(0, 0, used, Memory(inputs, data.length))
+    execute(0, 0, state, used, Memory(inputs, data.length), Nil)
   }
 
   /**

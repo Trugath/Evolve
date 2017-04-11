@@ -43,13 +43,17 @@ object IntegerFunctions {
     Min, Max
   )
 
-  implicit def scoreFunc: (Int, Int) => Long = (a, b) => {
+  implicit val scoreFunc: (Int, Int) => Long = (a, b) => {
 
     def nabs(i: Long): Long = if( i < 0 ) -i else i
 
     val result = nabs(a - b)
     assert(result >= 0)
     result * 10
+  }
+
+  implicit val createConstant: (Int) => Instruction = { value: Int =>
+    Instruction(0).const(value & ( Int.MinValue >> (32 - Const.constantRegionSize) ), Const.constantRegionStart, Const.constantRegionSize)
   }
 
   object Nop extends Function[Int]  {

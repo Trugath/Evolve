@@ -36,581 +36,92 @@ import java.util.concurrent.Executors
 
 import evolve.core.Evolver.EvolverStrategy
 import evolve.core._
-import evolve.util.EvolveUtil
 
-import scala.annotation.tailrec
-import scala.concurrent.ExecutionContext
+import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.{Await, ExecutionContext, Future, blocking}
 
-
-object StringIntFunctions {
-
-  private def distance(s1: String, s2: String): Int = {
-
-    def minimum(i1: Int, i2: Int, i3: Int) = math.min(math.min(i1, i2), i3)
-
-    val dist = Array.tabulate(s2.length + 1, s1.length + 1) { (j, i) => if (j == 0) i else if (i == 0) j else 0 }
-
-    for (j <- 1 to s2.length; i <- 1 to s1.length)
-      dist(j)(i) = if (s2(j - 1) == s1(i - 1)) dist(j - 1)(i - 1)
-      else minimum(dist(j - 1)(i) + 1, dist(j)(i - 1) + 1, dist(j - 1)(i - 1) + 1)
-
-    dist(s2.length)(s1.length)
-  }
-
-  implicit val functions = Seq[Function[(String, Int)]](
-    Nop,
-
-    ConstChar, ConstInt,
-
-    // choice
-    Min, Max, Token, CharAt, TakeString, TakeInt, OrElse,
-
-    // string to int
-    Length, Hash, Distance, Compare, Contains,
-
-    // int to string
-    Start, End,
-
-    // string
-    Concatenate,
-    Head, Tail,
-    Capitalise, UpperCase, LowerCase,
-    Reverse,
-
-    // int
-    Add, Subtract, Multiply, Divide, Modulus, Increment, Decrement, Average
-  )
-
-  implicit def scoreFunc: ((String, Int), (String, Int)) => Long = (a, b) => {
-
-    def nabs(i: Long): Long = if( i < 0 ) -i else i
-
-    val result = (a, b) match {
-      case ((leftS, leftI), (rightS, rightI)) => nabs(distance(leftS, rightS) * 100) + nabs(leftS.compareTo(rightS)) + nabs(leftI - rightI)
-    }
-    assert(result >= 0)
-    result * 100
-  }
-
-  object Nop extends Function[(String, Int)] {
-    override val arguments: Int = 1
-
-    override val cost: Int = 1
-
-    override def getLabel(inst: Instruction): String = "Nop"
-
-
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      a
-    }
-  }
-
-  object ConstChar extends Function[(String, Int)]  {
-    override val arguments: Int = 0
-    override val cost: Int = 2
-    override def getLabel(inst: Instruction): String = {
-      val value = inst.const(instructionSize, 32 - instructionSize).toChar.toString
-      s"Const ($value)"
-    }
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      (inst.const(instructionSize, 32 - instructionSize).toChar.toString, 0)
-    }
-  }
-
-  object ConstInt extends Function[(String, Int)]  {
-    override val arguments: Int = 0
-    override val cost: Int = 2
-    override def getLabel(inst: Instruction): String = {
-      val value = inst.const(instructionSize, 32 - instructionSize)
-      s"Const ($value)"
-    }
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      ("", inst.const(instructionSize, 32 - instructionSize))
-    }
-  }
-
-  object Min extends Function[(String, Int)] {
-
-    override val cost: Int = 10
-
-    override def getLabel(inst: Instruction): String = "Min"
-
-
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      val b = arguments(1)
-      if(a._2 <= b._2)
-        a
-      else
-        b
-    }
-  }
-
-  object Max extends Function[(String, Int)] {
-
-    override val cost: Int = 10
-
-    override def getLabel(inst: Instruction): String = "Max"
-
-
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      val b = arguments(1)
-      if(a._2 >= b._2)
-        a
-      else
-        b
-    }
-  }
-
-  object Token extends Function[(String, Int)] {
-
-    override val arguments: Int = 1
-
-    override val cost: Int = 10
-
-    override def getLabel(inst: Instruction): String = "Token"
-
-
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      val tokens = a._1.split("\\s+")
-      val token = math.max(-1, math.min(tokens.length - 1, a._2))
-      if(token == -1)
-        a.copy(_1 = "")
-      else
-        a.copy(_1 = tokens(token))
-    }
-  }
-
-  object CharAt extends Function[(String, Int)] {
-
-    override val arguments: Int = 1
-
-    override val cost: Int = 10
-
-    override def getLabel(inst: Instruction): String = "CharAt"
-
-
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      val char = math.max(-1, math.min(a._1.length - 1, a._2))
-      if(char == -1)
-        a.copy(_1 = "")
-      else
-        a.copy(_1 = a._1.charAt(char).toString)
-    }
-  }
-
-  object TakeString extends Function[(String, Int)] {
-
-    override val cost: Int = 10
-
-    override def getLabel(inst: Instruction): String = "TakeString"
-
-    override def ordered: Boolean = true
-
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      val b = arguments(1)
-      a.copy(_1 = b._1)
-    }
-  }
-
-  object TakeInt extends Function[(String, Int)] {
-
-    override val cost: Int = 10
-
-    override def getLabel(inst: Instruction): String = "TakeInt"
-
-    override def ordered: Boolean = true
-
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      val b = arguments(1)
-      a.copy(_2 = b._2)
-    }
-  }
-
-  object OrElse extends Function[(String, Int)] {
-
-    override val cost: Int = 10
-
-    override def getLabel(inst: Instruction): String = "OrElse"
-
-    override def ordered: Boolean = true
-
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      val b = arguments(1)
-      if (a._1.length() > 0) a else b
-    }
-  }
-
-  object Length extends Function[(String, Int)] {
-    override val arguments: Int = 1
-
-    override val cost: Int = 10
-
-    override def getLabel(inst: Instruction): String = "Length"
-
-
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      a.copy(_2 = a._1.length)
-    }
-  }
-
-  object Hash extends Function[(String, Int)] {
-    override val arguments: Int = 1
-
-    override val cost: Int = 10
-
-    override def getLabel(inst: Instruction): String = "Hash"
-
-
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      a.copy(_2 = a._1.hashCode)
-    }
-  }
-
-  object Distance extends Function[(String, Int)] {
-
-    override val cost: Int = 10
-
-    override def getLabel(inst: Instruction): String = "Distance"
-
-
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      val b = arguments(1)
-      (a._1, distance(a._1, b._1))
-    }
-  }
-
-  object Compare extends Function[(String, Int)] {
-
-    override val cost: Int = 10
-
-    override def getLabel(inst: Instruction): String = "Compare"
-
-
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      val b = arguments(1)
-      (a._1, a._1.compareTo(b._1))
-    }
-  }
-
-  object Contains extends Function[(String, Int)] {
-
-    override val cost: Int = 10
-
-    override def getLabel(inst: Instruction): String = "Contains"
-
-    override def ordered: Boolean = true
-
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      val b = arguments(1)
-      (a._1, if (a._1.contains(b._1)) 1 else 0)
-    }
-  }
-
-  object Start extends Function[(String, Int)] {
-    override val arguments: Int = 1
-
-    override val cost: Int = 10
-
-    override def getLabel(inst: Instruction): String = "Start"
-
-
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      a.copy(_1 = a._1.splitAt(math.max(0, math.min(a._1.length, a._2)))._1)
-    }
-  }
-
-  object End extends Function[(String, Int)] {
-    override val arguments: Int = 1
-
-    override val cost: Int = 10
-
-    override def getLabel(inst: Instruction): String = "End"
-
-
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      a.copy(_1 = a._1.splitAt(math.max(0, math.min(a._1.length, a._2)))._2)
-    }
-  }
-
-  object Concatenate extends Function[(String, Int)] {
-
-    override val cost: Int = 10
-
-    override def getLabel(inst: Instruction): String = "Concatenate"
-
-    override def ordered: Boolean = true
-
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      val b = arguments(1)
-      (a._1 + b._1, a._2)
-    }
-  }
-
-  object Head extends Function[(String, Int)] {
-    override val arguments: Int = 1
-
-    override val cost: Int = 10
-
-    override def getLabel(inst: Instruction): String = "Head"
-
-
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      a.copy(_1 = a._1.headOption.getOrElse("").toString)
-    }
-  }
-
-  object Tail extends Function[(String, Int)] {
-    override val arguments: Int = 1
-
-    override val cost: Int = 10
-
-    override def getLabel(inst: Instruction): String = "Tail"
-
-
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      try {
-        a.copy(_1 = a._1.tail)
-      } catch {
-        case _: UnsupportedOperationException => a.copy(_1 = "")
-      }
-    }
-  }
-
-  object Capitalise extends Function[(String, Int)] {
-    override val arguments: Int = 1
-
-    override val cost: Int = 10
-
-    override def getLabel(inst: Instruction): String = "Capitalise"
-
-
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      a.copy(_1 = a._1.capitalize)
-    }
-  }
-
-  object UpperCase extends Function[(String, Int)] {
-    override val arguments: Int = 1
-
-    override val cost: Int = 10
-
-    override def getLabel(inst: Instruction): String = "UpperCase"
-
-
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      a.copy( _1 = a._1.toUpperCase )
-    }
-  }
-
-  object LowerCase extends Function[(String, Int)] {
-    override val arguments: Int = 1
-
-    override val cost: Int = 10
-
-    override def getLabel(inst: Instruction): String = "LowerCase"
-
-
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      a.copy( _1 = a._1.toLowerCase )
-    }
-  }
-
-  object Reverse extends Function[(String, Int)] {
-    override val arguments: Int = 1
-
-    override val cost: Int = 10
-
-    override def getLabel(inst: Instruction): String = "Reverse"
-
-
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      a.copy( _1 = a._1.reverse )
-    }
-  }
-
-
-  object Add extends Function[(String, Int)]  {
-    override val cost: Int = 4
-    override def getLabel(inst: Instruction): String = "Add"
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      val b = arguments(1)
-      (a._1, a._2 + b._2)
-    }
-  }
-
-  object Subtract extends Function[(String, Int)]  {
-    override val cost: Int = 4
-    override def getLabel(inst: Instruction): String = "Subtract"
-    override def ordered: Boolean = true
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      val b = arguments(1)
-      (a._1, a._2 - b._2)
-    }
-  }
-
-  object Multiply extends Function[(String, Int)]  {
-    override val cost: Int = 5
-    override def getLabel(inst: Instruction): String = "Multiply"
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      val b = arguments(1)
-      (a._1, a._2 * b._2)
-    }
-  }
-
-  object Divide extends Function[(String, Int)]  {
-    override val cost: Int = 10
-    override def getLabel(inst: Instruction): String = "Divide"
-    override def ordered: Boolean = true
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      val b = arguments(1)
-      try {
-        (a._1, a._2 / b._2)
-      } catch {
-        case e: ArithmeticException => ("", 0)
-      }
-    }
-  }
-
-  object Modulus extends Function[(String, Int)]  {
-    override val cost: Int = 10
-    override def getLabel(inst: Instruction): String = "Modulus"
-    override def ordered: Boolean = true
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      val b = arguments(1)
-      try {
-        (a._1, a._2 % b._2)
-      } catch {
-        case e: ArithmeticException => ("", 0)
-      }
-    }
-  }
-
-  object Increment extends Function[(String, Int)]  {
-    override val arguments: Int = 1
-    override val cost: Int = 3
-    override def getLabel(inst: Instruction): String = "Increment"
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      a.copy( _2 = a._2 + 1)
-    }
-  }
-
-  object Decrement extends Function[(String, Int)]  {
-    override val arguments: Int = 1
-    override val cost: Int = 3
-    override def getLabel(inst: Instruction): String = "Decrement"
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      a.copy( _2 = a._2 - 1)
-    }
-  }
-
-  object Average extends Function[(String, Int)]  {
-    override val cost: Int = 10
-    override def getLabel(inst: Instruction): String = "Average"
-    override def ordered: Boolean = true
-    override def apply(inst: Instruction, arguments: List[(String, Int)]): (String, Int) = {
-      val a = arguments.head
-      val b = arguments(1)
-      a.copy( _2 = ((a._2.toLong + b._2.toLong) / 2).toInt  )
-    }
-  }
-}
 
 object HelloWorld {
   def main(args: Array[String]): Unit = {
+    import evolve.functions.NeuralFunctions._
 
-    import StringIntFunctions._
-
-    implicit val evolveStrategy = EvolverStrategy(32, 0.01, optimiseForPipeline = false)
     implicit val ec = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
+    def ins( index: Int, a: Int, b: Int ): Instruction = {
+      val instructionSize = functions(index).instructionSize
+      val argumentSize = functions(index).argumentSize
 
-    val testCases = TestCases(List(
-      TestCase(List(("abcdefghijklmnopqrstuvwxyz", 26), ("123456789", 9)), List(("Abcdefghijklmnopqrstuvwxyz 123456789!",27))),
-      TestCase(List(("a", 1), ("b", 1)), List(("A B!",4))),
-      TestCase(List(("c", 1), ("d", 1)), List(("C D!",4))),
-      TestCase(List(("e", 1), ("f", 1)), List(("E F!",4))),
-      TestCase(List(("g", 1), ("h", 1)), List(("G H!",4))),
-      TestCase(List(("i", 1), ("j", 1)), List(("I J!",4))),
-      TestCase(List(("hello", 5), ("Steve", 5)), List(("Hello Steve!",12))),
-      TestCase(List(("hello", 5), ("Bob", 3)), List(("Hello Bob!",10))),
-      TestCase(List(("hello", 5), ("Cat", 3)), List(("Hello Cat!",10))),
-      TestCase(List(("hello", 5), ("Dog", 3)), List(("Hello Dog!",10)))
-    ))
+      val ins = Instruction(0)
+        .instruction( index, instructionSize )
+        .pointer(a, instructionSize, argumentSize)
+        .pointer(b, instructionSize + argumentSize, argumentSize)
 
-    // speed tracker
-    val oneSecond = 1000000000
-    var speedMarkTime = System.nanoTime
-    var generations = 0
-    var bestScore = Long.MaxValue
-
-
-
-
-
-    /**
-     * steady state evolution till time or fitness prevail
-     */
-    @tailrec def function(program: Program, generation: Long): Program = {
-      if(generation >= 10000000)
-        return program
-
-      val now = System.nanoTime
-      // fps tracker
-
-      if (now > speedMarkTime + oneSecond) {
-        println(s"score: $bestScore generations: $generations (${generations * evolveStrategy.children} evaluated children)")
-        speedMarkTime += oneSecond
-        generations = 100
-      } else {
-        generations += 100
-      }
-
-      val evolved = EvolveUtil.counted(program, 100, optimise = false, testCases)
-      bestScore = testCases.score(evolved)
-      if (bestScore == 0) {
-        evolved
-      } else {
-        function(evolved, generation + 100)
-      }
+      assert( ins.instruction( instructionSize ) == index )
+      assert( ins.pointer( instructionSize, argumentSize ) == a )
+      assert( ins.pointer( instructionSize + argumentSize, argumentSize ) == b )
+      ins
     }
 
-    val initial = EvolveUtil.startup(Generator(Nop.instructionSize, 128, 2, 1), testCases).shrink.spread(10).grow(128)
-    println(s"Start program selected. length: ${initial.data.length}")
-    speedMarkTime = System.nanoTime
-    val solution = EvolveUtil.counted(function(initial, 0), 10000, optimise = true, testCases)
-    Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8) )
+    def sequence( p: Program, input: List[Double], default: Double ): List[Double] = {
+      input
+        .grouped( p.inputCount )
+        .foldLeft( (List.empty[Double], List.fill[Double](p.data.length)(0.0)) ) {
+          case ((res, state), i) =>
+            val (r, s) = p(i, state)
+            (r.result(p.outputCount).toList ++ res, s)
+        }
+        ._1.reverse
+    }
 
-    val optimised = EvolveUtil.counted(solution.shrink, 10000, optimise = true, testCases)
-    println( optimised(List(("hello", 0), ("world", 0))).result(optimised.outputCount) )
-    Files.write(Paths.get("optimised.dot"), DotGraph(optimised).getBytes(StandardCharsets.UTF_8) )
+    def score( input: List[Double], output: List[Double] ): Double = {
+      input.zip(output).map( a => scoreFunc(a._1, a._2).toDouble ).sum
+    }
+
+    def toInput( string: String ): List[Double] = {
+      0.0 :: string.map( _.toDouble ).toList
+    }
+
+    def toOutput( string: String ): List[Double] = {
+      string.map( _.toDouble ).toList :+ 0.0
+    }
+
+    val string = "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur? At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga. Et harum quidem rerum facilis est et expedita distinctio. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus, omnis voluptas assumenda est, omnis dolor repellendus. Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae non recusandae. Itaque earum rerum hic tenetur a sapiente delectus, ut aut reiciendis voluptatibus maiores alias consequatur aut perferendis doloribus asperiores repellat."
+
+    assert( score(toInput(string), toInput(string)) == 0L )
+    assert( score(toOutput(string), toOutput(string)) == 0L )
+
+    val testProgram = Program( 6, Seq( ins( functions.indexOf(Nop), 0, 1 ) ), 1, 1 )
+    assert( score( toInput(string), sequence(testProgram, toInput(string), 0.0)) == 0)
+    assert( score( toOutput(string), sequence(testProgram, toOutput(string), 0.0)) == 0)
+
+    val input = toInput(string)
+    val output = toOutput(string)
+
+    def run( iteration: Long, p: Program, es: EvolverStrategy ): Unit = Evolver(p, (a) => score(output, sequence(a, input, 0.0)), optimise = true)(es, functions, ec) match {
+      case Some(program) =>
+        if(iteration % 100 == 0) {
+          println( score(toOutput(string), sequence(program, toInput(string), 0.0)) )
+          println(toInput(string).foldLeft((List.fill[Double](program.data.length)(0.0), List.empty[Char])) {
+            case a: ((List[Double], List[Char]), Double) =>
+              val r = program(List(a._2), a._1._1)
+              (r._2, a._1._2 ++ r._1.result(program.outputCount).toList.map(_.toChar))
+          }._2.mkString)
+          println(program)
+          Files.write(Paths.get("solution.dot"), DotGraph(program).getBytes(StandardCharsets.UTF_8) )
+          run(iteration + 1, program, es)
+        } else {
+          run(iteration + 1, program, es)
+        }
+
+      case None          => run( iteration, p.shrink.clean.spread(5), es )
+    }
+
+    val start = Program(6,ArrayBuffer(Instruction(0), Instruction(8200), Instruction(201342978), Instruction(872431618), Instruction(268460035), Instruction(134226050), Instruction(939545683), Instruction(1275084865), Instruction(1409312643), Instruction(805363721), Instruction(536900699), Instruction(184227174), Instruction(201424904), Instruction(536886938), Instruction(1073761676), Instruction(738320396), Instruction(106223158), Instruction(1476497377), Instruction(43713), Instruction(604076979), Instruction(119621), Instruction(1342203626), Instruction(67109086), Instruction(604041275), Instruction(536891910), Instruction(671211527), Instruction(86381983), Instruction(805371913), Instruction(603996169), Instruction(738222088), Instruction(185674), Instruction(153745217), Instruction(130021749), Instruction(167772170), Instruction(201416727), Instruction(469803018), Instruction(469786647), Instruction(402939927), Instruction(201474077), Instruction(168717036), Instruction(335872037), Instruction(939704343), Instruction(1208228956), Instruction(671162381), Instruction(671105040), Instruction(1141053586), Instruction(604344176), Instruction(738320386), Instruction(117344332), Instruction(1006971013), Instruction(403013641), Instruction(604131876), Instruction(123002631), Instruction(67173265), Instruction(470040612), Instruction(182696300), Instruction(335847443), Instruction(1476460548), Instruction(1409548593), Instruction(68202523), Instruction(1342471701), Instruction(78292785), Instruction(872824855), Instruction(671129647), Instruction(308725), Instruction(1275215100), Instruction(1543708712), Instruction(403079207), Instruction(939874660), Instruction(1074143244), Instruction(1342252316), Instruction(1409769481), Instruction(536993811), Instruction(604192768), Instruction(470261795), Instruction(87384202), Instruction(134217714), Instruction(201392176), Instruction(201654342), Instruction(269033517), Instruction(1208116031), Instruction(1007181894), Instruction(268771387), Instruction(1208119322), Instruction(1073780951), Instruction(872710204), Instruction(805396540), Instruction(137695224), Instruction(1006971149), Instruction(1141471617), Instruction(335552536), Instruction(671809568), Instruction(268894274), Instruction(469901343), Instruction(604143615), Instruction(402997302), Instruction(1141050072), Instruction(71663961), Instruction(67461225), Instruction(2135), Instruction(403308634), Instruction(268476491), Instruction(604534191), Instruction(671219730), Instruction(671834183), Instruction(403021832), Instruction(551529), Instruction(738377744), Instruction(87451834), Instruction(738697238), Instruction(604269394), Instruction(1074434299), Instruction(738476045), Instruction(822530), Instruction(268542028), Instruction(202039308), Instruction(67109006), Instruction(1409654874), Instruction(198189057), Instruction(98601911), Instruction(1275457055), Instruction(335790155), Instruction(91956048), Instruction(672088177), Instruction(69206283), Instruction(872931408), Instruction(201801779), Instruction(1276108865), Instruction(671514727), Instruction(1074322544), Instruction(201932889), Instruction(604172049), Instruction(872857607), Instruction(177766320), Instruction(402923586), Instruction(872783890), Instruction(269230181), Instruction(1343103536), Instruction(201637973), Instruction(1007517452), Instruction(1342198446), Instruction(536987718), Instruction(604006432), Instruction(71303184), Instruction(1275742329), Instruction(537684960), Instruction(106575), Instruction(68051472), Instruction(1275854917), Instruction(1543651368), Instruction(470163574), Instruction(68278564), Instruction(1141899264), Instruction(269000816), Instruction(1006987619), Instruction(671465604), Instruction(789507), Instruction(201990250), Instruction(738992172), Instruction(1476480161), Instruction(1477016784), Instruction(68108322), Instruction(605184101), Instruction(739082401), Instruction(1208660481), Instruction(1275332135), Instruction(1207976531), Instruction(201449630), Instruction(1342726307), Instruction(134221584), Instruction(134250498), Instruction(1196048), Instruction(537994246), Instruction(1140993505), Instruction(202195048), Instruction(68132990), Instruction(739246228), Instruction(1276037630), Instruction(68539308), Instruction(672251955), Instruction(1276391878), Instruction(671571983), Instruction(1477648384), Instruction(1342193788), Instruction(402939990), Instruction(402653184), Instruction(1409960083), Instruction(1276445240), Instruction(805912646), Instruction(672047157), Instruction(940913188), Instruction(1208216869), Instruction(269541564), Instruction(1544265732), Instruction(138622133), Instruction(1477590982), Instruction(601734), Instruction(1410039905), Instruction(1007377517), Instruction(1209309023), Instruction(1007386676), Instruction(1208525916), Instruction(202703041), Instruction(386213), Instruction(805978261), Instruction(604232847), Instruction(874102927), Instruction(1209491522), Instruction(1410769604), Instruction(1276306657), Instruction(873291934), Instruction(537665575), Instruction(1477567484), Instruction(671162464), Instruction(1209137047), Instruction(1276256902), Instruction(873447612), Instruction(268541984), Instruction(738967638), Instruction(940567187), Instruction(103589891), Instruction(806453398), Instruction(1209180003), Instruction(1477904400), Instruction(604733420), Instruction(805945411), Instruction(1207967860), Instruction(1478146128), Instruction(1544822951), Instruction(205162), Instruction(403071030), Instruction(403996807), Instruction(1478086272), Instruction(805363839), Instruction(102520557), Instruction(202432694), Instruction(84045641), Instruction(337305828), Instruction(672604338), Instruction(201400376), Instruction(939704516), Instruction(603988348), Instruction(1275547371), Instruction(538411046), Instruction(336535586), Instruction(940911264), Instruction(604722695), Instruction(270385355), Instruction(167869439), Instruction(336052307), Instruction(1140874172), Instruction(153592932), Instruction(1008668848), Instruction(403849224), Instruction(941484169), Instruction(605856972), Instruction(1006706944), Instruction(606052870), Instruction(1342392442), Instruction(939881343), Instruction(1208975096), Instruction(202989649), Instruction(1209665537), Instruction(1075794673), Instruction(672866459), Instruction(1477631540), Instruction(470786241), Instruction(67109071), Instruction(114058428), Instruction(538219894), Instruction(1343169173), Instruction(68029731), Instruction(671293533), Instruction(1411046019), Instruction(67172320), Instruction(203210790), Instruction(403537994), Instruction(469950725), Instruction(470065239), Instruction(537455392), Instruction(202195007), Instruction(1799438), Instruction(335552650), Instruction(1477750773), Instruction(336388260), Instruction(1476520346), Instruction(68018798), Instruction(1409425920), Instruction(940777715), Instruction(941727416), Instruction(1409659628), Instruction(1545683114), Instruction(139124987), Instruction(873693212), Instruction(194756699), Instruction(538321213), Instruction(1409956707), Instruction(1074574753), Instruction(201752756), Instruction(1142139340), Instruction(337526945), Instruction(673136844), Instruction(1343678580), Instruction(402808916), Instruction(605398209), Instruction(336986278), Instruction(189459789), Instruction(1275665940), Instruction(67117074), Instruction(671490174), Instruction(1008918634), Instruction(2543397), Instruction(1324087), Instruction(1210340684), Instruction(738730062), Instruction(739598486), Instruction(874192960), Instruction(403324967), Instruction(1476641993), Instruction(163250670), Instruction(671154276), Instruction(1411300847), Instruction(1344250062), Instruction(2297543), Instruction(1208265626), Instruction(178961784), Instruction(605495295), Instruction(1210212417), Instruction(404209847), Instruction(1544618104), Instruction(1276509639), Instruction(67528207), Instruction(203637061), Instruction(1031304), Instruction(270098643), Instruction(1008623412), Instruction(337428781), Instruction(673202504), Instruction(70218965), Instruction(136634502), Instruction(672366801), Instruction(86038632), Instruction(67158032), Instruction(1343042733), Instruction(806756440), Instruction(1277330271), Instruction(471785485), Instruction(69723597), Instruction(97421185), Instruction(1410019010), Instruction(1532219), Instruction(605656478), Instruction(335642731), Instruction(1546166357), Instruction(1208910454), Instruction(1009168907), Instruction(673538141), Instruction(67108887), Instruction(1141545284), Instruction(941835921), Instruction(1546313911), Instruction(404414541), Instruction(671375492), Instruction(1478148175), Instruction(1075756831), Instruction(403366221), Instruction(874020939), Instruction(287232), Instruction(471859546), Instruction(181222347), Instruction(1344873424), Instruction(1410204142), Instruction(336888095), Instruction(605938809), Instruction(741245093), Instruction(134225920), Instruction(538082344), Instruction(269918237), Instruction(337510668), Instruction(1142628663), Instruction(69223009), Instruction(1009507990), Instruction(1412301056), Instruction(1141900551), Instruction(1277223953), Instruction(806387974), Instruction(1546666316), Instruction(1075307364), Instruction(873054380), Instruction(939753576), Instruction(1545412850), Instruction(403275814), Instruction(472252767), Instruction(472162586), Instruction(807305351), Instruction(1409816881), Instruction(605516830), Instruction(1208225663), Instruction(606345592), Instruction(403488837), Instruction(402817162), Instruction(1476682752), Instruction(1345396834), Instruction(470286691), Instruction(1545330814), Instruction(102749421), Instruction(1074222903), Instruction(1277716512), Instruction(537464090), Instruction(671350888), Instruction(673988874), Instruction(204423238), Instruction(875274639), Instruction(405586023), Instruction(134217710), Instruction(1409884735), Instruction(671383641), Instruction(403095854), Instruction(1208311624), Instruction(874094805), Instruction(402997336), Instruction(671440953), Instruction(605640176), Instruction(338976786), Instruction(1209219514), Instruction(606769258), Instruction(604046921), Instruction(1410623682), Instruction(473088016), Instruction(1278545783), Instruction(335602057), Instruction(671195342), Instruction(134217535), Instruction(673046626), Instruction(940015464), Instruction(203497586), Instruction(470417681), Instruction(203669807), Instruction(672137418), Instruction(537912480), Instruction(739704982), Instruction(1143511940), Instruction(1412055088), Instruction(84045641), Instruction(873455948), Instruction(163315753), Instruction(271695938), Instruction(1211547716), Instruction(269893819), Instruction(1344733354), Instruction(136315522), Instruction(97588735), Instruction(540541100), Instruction(136801481), Instruction(337838372), Instruction(69263850), Instruction(336429423), Instruction(114832690), Instruction(1342440368), Instruction(1545118039), Instruction(104284364), Instruction(203161820), Instruction(604772749), Instruction(99332164), Instruction(473153581), Instruction(201974139), Instruction(1209212110), Instruction(606314732), Instruction(1781994), Instruction(539636342), Instruction(270024883), Instruction(1543667918), Instruction(67108876), Instruction(739631382), Instruction(604340817), Instruction(335650838), Instruction(875094313), Instruction(203563426), Instruction(122011), Instruction(471015471), Instruction(1008395996), Instruction(182020575), Instruction(1278779655), Instruction(1009934602), Instruction(269656339), Instruction(202957159), Instruction(742105102), Instruction(872743120), Instruction(158638650), Instruction(1007813529), Instruction(1073959337), Instruction(1412375916), Instruction(536900092), Instruction(1543897344), Instruction(203874453), Instruction(271171980), Instruction(1344485970), Instruction(940288260), Instruction(202285268), Instruction(605085651), Instruction(405528743), Instruction(1033731), Instruction(1065112), Instruction(671563890), Instruction(110464837), Instruction(741351575), Instruction(403775627), Instruction(166752358), Instruction(1076453553), Instruction(1144677513), Instruction(1044), Instruction(70178733), Instruction(1345861422), Instruction(1345413121), Instruction(1010105193), Instruction(67117064), Instruction(1413267759), Instruction(3852581), Instruction(404603176), Instruction(1076478707), Instruction(1413521746), Instruction(205332493), Instruction(167375842), Instruction(99972391), Instruction(1074785221), Instruction(741351449), Instruction(1412637421), Instruction(1342203968), Instruction(404422780), Instruction(270868583), Instruction(943398061), Instruction(536871118), Instruction(336380304), Instruction(268435909), Instruction(805347854), Instruction(943422118), Instruction(1075306979), Instruction(1209745479), Instruction(1543733565), Instruction(1276392046), Instruction(272073207), Instruction(272826666), Instruction(272392665), Instruction(1210343413), Instruction(201433164), Instruction(605807472), Instruction(739991702), Instruction(164474521), Instruction(268787728), Instruction(942453045), Instruction(138242153), Instruction(339812369), Instruction(1275084804), Instruction(671195547), Instruction(470073612), Instruction(1278421263), Instruction(134064060), Instruction(1343677462), Instruction(672145818), Instruction(404963779), Instruction(942518174), Instruction(137636121), Instruction(202915894), Instruction(1077864573), Instruction(807854543), Instruction(1141870165), Instruction(473284895), Instruction(70218933), Instruction(404922514), Instruction(1410107225), Instruction(135798142), Instruction(875127301), Instruction(539894330), Instruction(470253918), Instruction(738312421), Instruction(1411334502), Instruction(187376), Instruction(1141140253), Instruction(606649606), Instruction(1145175449), Instruction(167772159), Instruction(336568399), Instruction(140044641), Instruction(270434497), Instruction(1413954315), Instruction(271139009), Instruction(875339892), Instruction(608511952), Instruction(1210914725), Instruction(1411933686), Instruction(84089832), Instruction(1481069043), Instruction(469778980), Instruction(193421868), Instruction(675389633), Instruction(340312401), Instruction(75725602), Instruction(1477634078), Instruction(137912386), Instruction(339345933), Instruction(339288122), Instruction(807231955), Instruction(201965953), Instruction(135486223), Instruction(3833880), Instruction(874291425), Instruction(166642739), Instruction(540975362), Instruction(201687451), Instruction(1145725427), Instruction(1494699), Instruction(93402527), Instruction(206266951), Instruction(67185167), Instruction(540770312), Instruction(607271809), Instruction(405586076), Instruction(4038721), Instruction(270311981), Instruction(337936619), Instruction(67133452), Instruction(1142284415), Instruction(1409310716), Instruction(1277149696), Instruction(671728002), Instruction(375024), Instruction(147582686), Instruction(1078437917), Instruction(605332496), Instruction(163577596), Instruction(872702488), Instruction(805363938), Instruction(1347201312), Instruction(470106655), Instruction(473080349), Instruction(402891336), Instruction(337862793), Instruction(3459084), Instruction(875061306), Instruction(674226578), Instruction(474366555), Instruction(82963463), Instruction(540500032), Instruction(740974659), Instruction(203177984), Instruction(202645588), Instruction(1276032054), Instruction(406692428), Instruction(201990577), Instruction(1208968925), Instruction(403169707), Instruction(1547091975), Instruction(675660299), Instruction(202744152), Instruction(404914570), Instruction(1210564910), Instruction(605916350), Instruction(474087436), Instruction(805904527), Instruction(472260822), Instruction(338788680), Instruction(1345478883), Instruction(196915992), Instruction(68050960), Instruction(606721875), Instruction(407322754), Instruction(104430753), Instruction(407798338), Instruction(738746656), Instruction(1074026104), Instruction(742342738), Instruction(873808238), Instruction(199575423), Instruction(135463540), Instruction(539196176), Instruction(1211970477), Instruction(1545486461), Instruction(268452354), Instruction(406274673), Instruction(934528), Instruction(872579142), Instruction(473596421), Instruction(4857888), Instruction(474915479), Instruction(809820762), Instruction(135463396), Instruction(1078660690), Instruction(1275085120), Instruction(167772159), Instruction(875798857), Instruction(127128126), Instruction(196305547), Instruction(875184147), Instruction(1278612090), Instruction(3090379), Instruction(941301996), Instruction(807944560), Instruction(340320809), Instruction(604258180), Instruction(1010633281), Instruction(1280701439), Instruction(403751180), Instruction(273375622), Instruction(470696561), Instruction(876552855), Instruction(538509364), Instruction(673038624), Instruction(1344495964), Instruction(1545535793), Instruction(874135566), Instruction(404488811), Instruction(1145039879), Instruction(1410951681), Instruction(195596523), Instruction(471171446), Instruction(1078255497), Instruction(1141291242), Instruction(339821202), Instruction(743825478), Instruction(1480623483), Instruction(1010982637), Instruction(84539516), Instruction(340934988), Instruction(676741463), Instruction(207233621), Instruction(609124560), Instruction(133660699), Instruction(1278686208), Instruction(139911693), Instruction(941859341), Instruction(473080009), Instruction(202023088), Instruction(1412767983), Instruction(606082962), Instruction(1409404529), Instruction(1075945781), Instruction(134273273), Instruction(1547715106), Instruction(1544257884), Instruction(203833941), Instruction(408453787), Instruction(605020521), Instruction(1214018032), Instruction(1212291324), Instruction(1480239888), Instruction(1207975845), Instruction(1279854862), Instruction(1548812921), Instruction(134652652), Instruction(744153567), Instruction(1409519685), Instruction(942956895), Instruction(541279251), Instruction(1545003520), Instruction(939612990), Instruction(5239994), Instruction(132123977), Instruction(675250404), Instruction(471777369), Instruction(1145256017), Instruction(810983471), Instruction(67108944), Instruction(5063391), Instruction(67108872), Instruction(136996694), Instruction(124937226), Instruction(1278186383), Instruction(1414599208), Instruction(67170337), Instruction(739131655), Instruction(406405685), Instruction(876306599), Instruction(207331921), Instruction(3966262), Instruction(674324619), Instruction(939597822), Instruction(201769566), Instruction(608089469), Instruction(133577541), Instruction(1277729545), Instruction(2867214), Instruction(807666061), Instruction(203374832), Instruction(134099002), Instruction(1345363283), Instruction(1009353115), Instruction(807084037), Instruction(1342271217), Instruction(202383850), Instruction(192594727), Instruction(739557994), Instruction(739262886), Instruction(337535105), Instruction(471130266), Instruction(540287663), Instruction(205807790), Instruction(338387179), Instruction(408945188), Instruction(673128470), Instruction(72049368), Instruction(1347548437), Instruction(68559458), Instruction(1347772420), Instruction(76589798), Instruction(942547479), Instruction(537563039), Instruction(1143436525), Instruction(205406876), Instruction(1477165901), Instruction(67108883), Instruction(606556313), Instruction(194700071), Instruction(3105171), Instruction(677061178), Instruction(475341351), Instruction(67185663), Instruction(271859728), Instruction(744178426), Instruction(1412011252), Instruction(1208837215), Instruction(133577525), Instruction(1347058590), Instruction(273572538), Instruction(806183716), Instruction(671432886), Instruction(671391922), Instruction(1012564028), Instruction(206881031), Instruction(68218907), Instruction(739099377), Instruction(134292123), Instruction(270410151), Instruction(272597615), Instruction(3808502), Instruction(742261258), Instruction(269861132), Instruction(1410946361), Instruction(206996009), Instruction(1343422948), Instruction(69258801), Instruction(1344077922), Instruction(409477592), Instruction(409273143), Instruction(268804372), Instruction(673177983), Instruction(67108874), Instruction(269352979), Instruction(603979856), Instruction(269607524), Instruction(1275741402), Instruction(1481130272), Instruction(1413890643), Instruction(744636906), Instruction(101564415), Instruction(202670430), Instruction(738394333), Instruction(271868382), Instruction(6332417), Instruction(183083176), Instruction(139264723), Instruction(1141874967), Instruction(406700050), Instruction(470958088), Instruction(872669200), Instruction(941503209), Instruction(408314063), Instruction(1544127086), Instruction(1550041891), Instruction(1545896748), Instruction(743588654), Instruction(945297736), Instruction(609722125), Instruction(1348427810), Instruction(275530565), Instruction(610326477), Instruction(1347838575), Instruction(72163878), Instruction(70647246), Instruction(738451522), Instruction(673661608), Instruction(738427457), Instruction(82630786), Instruction(1146773528), Instruction(539382687), Instruction(607541465), Instruction(67371036), Instruction(1146362369), Instruction(607323078), Instruction(537301023), Instruction(1008001813), Instruction(808910923), Instruction(944584945), Instruction(1476612128), Instruction(1196066), Instruction(186882357), Instruction(1080130755), Instruction(1210294583), Instruction(342328134), Instruction(340779252), Instruction(607210622), Instruction(744644804), Instruction(1343382049), Instruction(271237206), Instruction(474489659), Instruction(1147089168), Instruction(202784770), Instruction(408568204), Instruction(342328169), Instruction(186192627), Instruction(275030577), Instruction(67125264), Instruction(1281102155), Instruction(96402672), Instruction(672228063), Instruction(473891085), Instruction(134201344), Instruction(5798845), Instruction(69565586), Instruction(876462843), Instruction(340172929), Instruction(339788324), Instruction(336536416), Instruction(208446328), Instruction(203866886), Instruction(807166481), Instruction(405169024), Instruction(1012991587), Instruction(275825538), Instruction(745185369), Instruction(1211014506), Instruction(808354128), Instruction(739738530), Instruction(1348305040), Instruction(406389467), Instruction(4550929), Instruction(1347714627), Instruction(471138414), Instruction(1483165868), Instruction(876306567), Instruction(5390624), Instruction(742678953), Instruction(174629042), Instruction(408003233), Instruction(407757656), Instruction(1348312476), Instruction(342762373), Instruction(171129761), Instruction(7561604), Instruction(671252839), Instruction(745193544), Instruction(1007777080), Instruction(207258250), Instruction(744964273), Instruction(2630163), Instruction(1279164787), Instruction(1477907990), Instruction(742523141), Instruction(1077214208), Instruction(163245928), Instruction(1344003012), Instruction(340836845), Instruction(1077315643), Instruction(1416888337), Instruction(3886378), Instruction(1549967861), Instruction(1209986284), Instruction(946869502), Instruction(408822573), Instruction(874005304), Instruction(162578398), Instruction(873603519), Instruction(941408465), Instruction(208642776), Instruction(677446335), Instruction(1008403885), Instruction(1075574115), Instruction(104578199), Instruction(1415045120), Instruction(943842740), Instruction(269910847), Instruction(67655817), Instruction(671482421), Instruction(268460710), Instruction(741736854), Instruction(343294057), Instruction(1012865666), Instruction(73670666), Instruction(1007166072), Instruction(1211305361), Instruction(1349003774), Instruction(544111129), Instruction(1279819859), Instruction(1215971440), Instruction(541188337), Instruction(339296540), Instruction(1549197685), Instruction(337338537), Instruction(1551024986), Instruction(541285566), Instruction(878502589), Instruction(1546043404), Instruction(741793797), Instruction(408085023), Instruction(1148232022), Instruction(677069183), Instruction(208544171), Instruction(1011551413), Instruction(164383378), Instruction(1349689600), Instruction(473858832), Instruction(806674946), Instruction(470803115), Instruction(813196147), Instruction(1479172682), Instruction(673374958), Instruction(393216), Instruction(2495152), Instruction(276734909), Instruction(208085706), Instruction(544744933), Instruction(1010970811), Instruction(740778556), Instruction(539764041), Instruction(544742826), Instruction(1279873615), Instruction(740467625), Instruction(477577710), Instruction(880181504), Instruction(1141946565), Instruction(1411923409), Instruction(945304375), Instruction(402924063), Instruction(209502921), Instruction(539238701), Instruction(1416253002), Instruction(79954422), Instruction(142615095), Instruction(1281032209), Instruction(176925121), Instruction(1478229018), Instruction(473490232), Instruction(1078714213), Instruction(7299086), Instruction(739860523), Instruction(1073940593), Instruction(675922728), Instruction(540369315), Instruction(339731265), Instruction(746512904), Instruction(167346718), Instruction(126015042), Instruction(1146509312), Instruction(201384982), Instruction(4593846), Instruction(136202463), Instruction(674849697), Instruction(477233852), Instruction(1279363365), Instruction(1343716695), Instruction(1549099766), Instruction(610303921), Instruction(1014787970), Instruction(1015058771), Instruction(474694046), Instruction(335683692), Instruction(1013457840), Instruction(1347073467), Instruction(1482236992), Instruction(744964269), Instruction(1074643937), Instruction(273719680), Instruction(947122721), Instruction(1350640144), Instruction(341500370), Instruction(657403), Instruction(1349640746), Instruction(209158219), Instruction(100059064), Instruction(405971641), Instruction(408331037), Instruction(273408095), Instruction(1210796296), Instruction(344171504), Instruction(1008882803), Instruction(109797967), Instruction(67717837), Instruction(673653572), Instruction(807453755), Instruction(811975574), Instruction(946050368), Instruction(806502921), Instruction(1014938275), Instruction(3661564), Instruction(1143584253), Instruction(612137997), Instruction(67108880), Instruction(1277071364), Instruction(100594848), Instruction(812475202), Instruction(269426853), Instruction(742989905), Instruction(1349247752), Instruction(206881446), Instruction(207757423), Instruction(1280921982), Instruction(1009058274), Instruction(4612001), Instruction(1082777727), Instruction(808854258), Instruction(1013289376), Instruction(609215073), Instruction(814089258), Instruction(613016098), Instruction(812688183), Instruction(1552564318), Instruction(71368720), Instruction(478479255), Instruction(544432869), Instruction(478790348), Instruction(472793899), Instruction(1011083145), Instruction(612747013), Instruction(478880852), Instruction(742416637), Instruction(136958541), Instruction(1215361089), Instruction(1078564211), Instruction(8339472), Instruction(136583183), Instruction(1142901709), Instruction(945496603), Instruction(675931081), Instruction(744080483), Instruction(1481940227), Instruction(139952620), Instruction(1080701803), Instruction(134770302), Instruction(1217241616), Instruction(336143035), Instruction(1212728707), Instruction(201785830), Instruction(200319839), Instruction(948257752), Instruction(1075237657), Instruction(1007941594), Instruction(71156008), Instruction(411787723), Instruction(612032546), Instruction(1188112), Instruction(409068212), Instruction(156901072), Instruction(1209467823), Instruction(680289334), Instruction(943803593), Instruction(208494646), Instruction(1074312920), Instruction(1208984025), Instruction(209052526), Instruction(948290108), Instruction(941286294), Instruction(336700371), Instruction(680206562), Instruction(613386116), Instruction(120845833), Instruction(746750428), Instruction(1011352145), Instruction(190889843), Instruction(1207977221), Instruction(473825493), Instruction(76054558), Instruction(1551319054), Instruction(408789116), Instruction(345113679), Instruction(739058497), Instruction(672801934), Instruction(676676614), Instruction(134217728), Instruction(613507136), Instruction(341663770), Instruction(470556828), Instruction(476979804), Instruction(808550533), Instruction(478880907), Instruction(546414573), Instruction(1007195957), Instruction(268870384), Instruction(197005726), Instruction(1484367892), Instruction(605997680), Instruction(104728036), Instruction(939779071), Instruction(272999496), Instruction(412304508), Instruction(1014761463), Instruction(1342661175), Instruction(412001173), Instruction(1215849252), Instruction(809550977), Instruction(136491973), Instruction(1545707618), Instruction(1284760539), Instruction(1282246396), Instruction(813442147), Instruction(129054412), Instruction(673284535), Instruction(2139884), Instruction(874513250), Instruction(949217344), Instruction(1348655929), Instruction(71303183), Instruction(1547903047), Instruction(947219958), Instruction(1013540097), Instruction(134349312), Instruction(1076487437), Instruction(806855111), Instruction(201884525), Instruction(747275108), Instruction(4447049), Instruction(117440496), Instruction(190841408), Instruction(134623248), Instruction(9937181), Instruction(116623417), Instruction(1077453571), Instruction(75807168), Instruction(679879220), Instruction(1345847312), Instruction(67110418), Instruction(1419092453), Instruction(943796572), Instruction(470917958), Instruction(210240616), Instruction(80574783), Instruction(93220588), Instruction(74481904), Instruction(140168581), Instruction(878543376), Instruction(134219240), Instruction(943257309), Instruction(205743246), Instruction(1546641909), Instruction(1015955456), Instruction(1476624566), Instruction(1277880306), Instruction(83933200), Instruction(1343059914), Instruction(201499652), Instruction(272441392), Instruction(211076111), Instruction(1213121119), Instruction(343786709), Instruction(479249582), Instruction(338935826), Instruction(1347676517), Instruction(273449752), Instruction(1144413951), Instruction(1416724608), Instruction(1346479263), Instruction(743883257), Instruction(475537510), Instruction(67174388), Instruction(546848770), Instruction(277725705), Instruction(410862205), Instruction(609571939), Instruction(1014380796), Instruction(1217570014), Instruction(1343380685), Instruction(677806398), Instruction(604599318), Instruction(878174990), Instruction(1016942656), Instruction(151044833), Instruction(875430279), Instruction(1478352069), Instruction(404537787), Instruction(1285496844), Instruction(412893337), Instruction(874717433), Instruction(70599520), Instruction(611451698), Instruction(674940158), Instruction(1350765529), Instruction(612049793), Instruction(409870848), Instruction(681132357), Instruction(72505532), Instruction(1415153867), Instruction(1350949212), Instruction(945918564), Instruction(410526336), Instruction(805307621), Instruction(405430587), Instruction(409469392), Instruction(193586878), Instruction(135647710), Instruction(211223721), Instruction(176142780), Instruction(543536994), Instruction(1579001), Instruction(805363905), Instruction(278578155), Instruction(339443986), Instruction(1419093219), Instruction(474841622), Instruction(273719772), Instruction(211715221), Instruction(674578712), Instruction(1276917280), Instruction(744931668), Instruction(1348175359), Instruction(480478292), Instruction(410460959), Instruction(1283358683), Instruction(1074647737), Instruction(337936893), Instruction(678094113), Instruction(543269102), Instruction(1011085401), Instruction(178315809), Instruction(3627477), Instruction(1553605541), Instruction(156540605), Instruction(470155637), Instruction(1209547335), Instruction(276415697), Instruction(480314607), Instruction(545602110), Instruction(67108976), Instruction(67639807), Instruction(1208305981), Instruction(211510546), Instruction(470885167), Instruction(739876865), Instruction(409575888), Instruction(604500748), Instruction(613265600), Instruction(409690347), Instruction(1485268885), Instruction(538708669), Instruction(1076255689), Instruction(1217814528), Instruction(674669298), Instruction(108726628), Instruction(1420018306), Instruction(339984470), Instruction(1285578755), Instruction(883442865), Instruction(753663), Instruction(1276805321), Instruction(1149799371), Instruction(547794172), Instruction(738779863), Instruction(1009246367), Instruction(128564537), Instruction(1544798272), Instruction(674054374), Instruction(71607172), Instruction(1276495173), Instruction(127377422), Instruction(67195396), Instruction(881935535), Instruction(67108880), Instruction(743301321), Instruction(410804904), Instruction(615031116), Instruction(273744630), Instruction(1413170243), Instruction(873848968), Instruction(1076690827), Instruction(746856620), Instruction(1279787626), Instruction(338608811), Instruction(1343537786), Instruction(874676714), Instruction(172893208), Instruction(209167288), Instruction(275966), Instruction(1282484787), Instruction(682172685), Instruction(183380035), Instruction(212493641), Instruction(1212775589), Instruction(276128201), Instruction(10395353), Instruction(749404952), Instruction(10797216), Instruction(342753460), Instruction(159233379), Instruction(612876364), Instruction(1014874275), Instruction(481133877), Instruction(813850644), Instruction(946190161), Instruction(107528689), Instruction(738894665), Instruction(1283817670), Instruction(814260230), Instruction(604086422), Instruction(546210685), Instruction(1286207034), Instruction(211305636), Instruction(471770065), Instruction(1085073088), Instruction(812852039), Instruction(682131611), Instruction(816268592), Instruction(942953720), Instruction(1349969207), Instruction(9938460), Instruction(674546262), Instruction(212452731), Instruction(1078555264), Instruction(1216840401), Instruction(875914048), Instruction(1147185075), Instruction(135133091), Instruction(1804674), Instruction(269779150), Instruction(478692360), Instruction(1345578863), Instruction(414065767), Instruction(948961705), Instruction(273687727), Instruction(876643697), Instruction(1015142283), Instruction(749856138), Instruction(277512439), Instruction(272860458), Instruction(68016734), Instruction(212779782), Instruction(279643520), Instruction(1482738439), Instruction(412984493), Instruction(1776214), Instruction(1279022138), Instruction(744654213), Instruction(742318305), Instruction(876954149), Instruction(109387021), Instruction(406683770), Instruction(547545098), Instruction(1151410680), Instruction(816390350), Instruction(279699918), Instruction(269247078), Instruction(1285906434), Instruction(473285960), Instruction(1016521274), Instruction(272688344), Instruction(1147161132), Instruction(211920286), Instruction(546514178), Instruction(343597673), Instruction(873455638), Instruction(606489876), Instruction(413835742), Instruction(142078499), Instruction(1144845141), Instruction(639413), Instruction(745275574), Instruction(279888840), Instruction(134217713), Instruction(1277116520), Instruction(609957541), Instruction(611164137), Instruction(414598343), Instruction(212811880), Instruction(470500618), Instruction(8940369), Instruction(344220008), Instruction(747561998), Instruction(1217396764), Instruction(1080483608), Instruction(188239715), Instruction(603979808), Instruction(1286070276), Instruction(203735925), Instruction(539828711), Instruction(1081161253), Instruction(608491514), Instruction(1347444736), Instruction(809598991), Instruction(340067583), Instruction(1083105906), Instruction(212885523), Instruction(817046972), Instruction(274210946), Instruction(67309829), Instruction(129433627), Instruction(1480754204), Instruction(213230506), Instruction(345604620), Instruction(1007362211), Instruction(544709342), Instruction(402735555), Instruction(280667185), Instruction(750387330), Instruction(346464832), Instruction(412197967), Instruction(269271448), Instruction(1420985408), Instruction(538477430), Instruction(174793090), Instruction(339959929), Instruction(875848341), Instruction(347653444), Instruction(879862220), Instruction(1477170915), Instruction(3722961), Instruction(1006944474), Instruction(884278356), Instruction(1344068260), Instruction(604565363), Instruction(67532353), Instruction(605129224), Instruction(808109475), Instruction(1084412205), Instruction(1007942672), Instruction(1410906026), Instruction(1276764406), Instruction(347981274), Instruction(940284902), Instruction(202941438), Instruction(678036738), Instruction(884130714), Instruction(680306143), Instruction(1551820157), Instruction(1552507251), Instruction(676873266), Instruction(69468061), Instruction(278496560), Instruction(811778150), Instruction(67109078), Instruction(4042593), Instruction(545350190), Instruction(817825217), Instruction(672597394), Instruction(1276576414), Instruction(1210056704), Instruction(541255771), Instruction(1350885472), Instruction(4632354), Instruction(943793612), Instruction(212665150), Instruction(136801481), Instruction(683484674), Instruction(948933194), Instruction(3973145), Instruction(67630864), Instruction(1551737726), Instruction(348022284), Instruction(1017553170), Instruction(877134612), Instruction(1214790745), Instruction(1079706738), Instruction(750921163), Instruction(84410449), Instruction(275325788), Instruction(201597894), Instruction(942962089), Instruction(213968356), Instruction(402890859), Instruction(477307968), Instruction(348275124), Instruction(808559394), Instruction(1018617873), Instruction(675316255), Instruction(475579072), Instruction(1210458014), Instruction(133695360), Instruction(213886486), Instruction(1142412741), Instruction(1552801966), Instruction(1279922289), Instruction(9493797), Instruction(749527583), Instruction(341074481), Instruction(682992327), Instruction(137322541), Instruction(1412855120), Instruction(214255056), Instruction(673801329), Instruction(7614992), Instruction(273195941), Instruction(680247755), Instruction(1287873472), Instruction(948297607), Instruction(471893327), Instruction(1083792093), Instruction(1409419429), Instruction(616948098), Instruction(473448574), Instruction(1543544839), Instruction(677503093), Instruction(1344865251), Instruction(281445920), Instruction(674137469), Instruction(1282534334), Instruction(875078785), Instruction(881590410), Instruction(1019682817), Instruction(148552308), Instruction(274079746), Instruction(738903036), Instruction(1414947536), Instruction(214459966), Instruction(1419805151), Instruction(273425584), Instruction(607913082), Instruction(1489554294), Instruction(214500901), Instruction(13148679), Instruction(13221760)),1,1)
+
+    run( 0,
+      ConstAnalysis.fillConstants(start).nopOutputs.nopInputs
+      , EvolverStrategy(36, 0.0001625, optimiseForPipeline = false))
+
+    System.exit(0)
   }
 
 
