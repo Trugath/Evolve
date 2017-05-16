@@ -67,13 +67,17 @@ object Evolver {
     import scala.language.postfixOps
 
     // score the parent
-    val programScore: Double = score(program)
+    val programScoreF: Future[Double] = Future {
+      score(program)
+    }
 
     // create mutant children
     val popF: Future[Seq[(Program, Double)]] = Future.sequence( Seq.fill(strategy.children)( Future {
       val child = Generator.repair( Mutator( program, strategy.factor ) )
       (child, score(child))
     } ) )
+
+    val programScore = Await.result( programScoreF, Inf )
 
     // get children not worse than the parent
     val childResults: Seq[(Program, Double)] = blocking {

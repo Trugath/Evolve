@@ -30,6 +30,8 @@
 
 package evolve
 
+import java.nio.charset.StandardCharsets
+import java.nio.file.{Files, Paths}
 import java.util.concurrent.Executors
 
 import evolve.core.Evolver.EvolverStrategy
@@ -40,6 +42,7 @@ import org.scalatest.FlatSpec
 import org.scalatest.prop.{GeneratorDrivenPropertyChecks, PropertyChecks}
 
 import scala.concurrent.ExecutionContext
+import scala.util.Random
 
 class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenPropertyChecks {
 
@@ -219,6 +222,15 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
         }
         {
           import functions.IntegerFunctions._
+          val program = Generator(Nop.instructionSize, size, inputCount, outputCount, seed).shrink
+          val spread = program.spread(multiplier)
+          val shrunk = spread.shrink
+          assert( program.used === shrunk.used )
+          assert( program.cost === shrunk.cost )
+          assert( program === shrunk )
+        }
+        {
+          import functions.NeuralFunctions._
           val program = Generator(Nop.instructionSize, size, inputCount, outputCount, seed).shrink
           val spread = program.spread(multiplier)
           val shrunk = spread.shrink
@@ -522,5 +534,28 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
     val c = a.nopInputs.nopOutputs.denop.shrink
     assert( testCases.score( c ) === 0L )
     assert( a === c )
+  }
+
+  "A program that doesn't use state" should "not modify state" in {
+    forAll(Gen.choose[Int](1, 64), Gen.choose[Int](Int.MinValue, Int.MaxValue)) {
+      (startSize: Int, seed: Int) => whenever(seed != 0) {
+        {
+          import functions.BooleanFunctions._
+          val program = Generator(Nop.instructionSize, startSize, 1, 1, seed)
+          val state = List.fill( program.data.length )( Random.nextBoolean )
+          forAll { (a: Boolean) =>
+            assert( program( List(a), state )._2 === state )
+          }
+        }
+        {
+          import functions.IntegerFunctions._
+          val program = Generator(Nop.instructionSize, startSize, 1, 1, seed)
+          val state = List.fill( program.data.length )( Random.nextInt )
+          forAll { (a: Int) =>
+            assert( program( List(a), state )._2 === state )
+          }
+        }
+      }
+    }
   }
 }

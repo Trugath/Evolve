@@ -69,5 +69,7 @@ trait Function[A] {
   }
 
   // the function itself
-  def apply(inst: Instruction, arguments: List[A]): A
+  def apply(inst: Instruction, arguments: List[A]): A = {
+    throw new RuntimeException("Function with state called as stateless")
+  }
 }

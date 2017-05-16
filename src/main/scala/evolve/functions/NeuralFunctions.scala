@@ -44,7 +44,8 @@ object NeuralFunctions {
     Sigmoid, NaturalExp, NaturalLog, TanH,
     Signum,
     Delay, Increasing, Decreasing, Steady,
-    Cell
+    CellAccumulator, Weight, CellMemory,
+    GreaterThan, LessThan
   )
 
   implicit val scoreFunc: (Double, Double) => Long = (a, b) => {
@@ -92,7 +93,7 @@ object NeuralFunctions {
 
   object ConstLarge extends Function[Double]  {
     override val arguments: Int = 0
-    override val constantRegionSize: Int = 32 - constantRegionStart
+    override val constantRegionSize: Int = 31 - constantRegionStart
     override val cost: Int = 2
 
     private [this] val scale = math.pow(2.0, math.min(constantRegionSize, 4))
@@ -108,7 +109,7 @@ object NeuralFunctions {
 
   object ConstSmall extends Function[Double]  {
     override val arguments: Int = 0
-    override val constantRegionSize: Int = 32 - constantRegionStart
+    override val constantRegionSize: Int = 31 - constantRegionStart
     override val cost: Int = 2
 
     private [this] val scale = math.pow(2.0, constantRegionSize)
@@ -310,9 +311,6 @@ object NeuralFunctions {
     override def apply(inst: Instruction, state: Double, arguments: List[Double]): (Double, Double) = {
       (arguments.head, state)
     }
-    override def apply(inst: Instruction, arguments: List[Double]): Double = {
-      throw new RuntimeException("Function with state called as stateless")
-    }
   }
 
   object Increasing extends Function[Double] {
@@ -322,9 +320,6 @@ object NeuralFunctions {
     override def getLabel(inst: Instruction): String = "Increasing"
     override def apply(inst: Instruction, state: Double, arguments: List[Double]): (Double, Double) = {
       (arguments.head, if( state < arguments.head ) 1.0 else 0.0 )
-    }
-    override def apply(inst: Instruction, arguments: List[Double]): Double = {
-      throw new RuntimeException("Function with state called as stateless")
     }
   }
 
@@ -336,9 +331,6 @@ object NeuralFunctions {
     override def apply(inst: Instruction, state: Double, arguments: List[Double]): (Double, Double) = {
       (arguments.head, if( state > arguments.head ) 1.0 else 0.0 )
     }
-    override def apply(inst: Instruction, arguments: List[Double]): Double = {
-      throw new RuntimeException("Function with state called as stateless")
-    }
   }
 
 
@@ -346,20 +338,17 @@ object NeuralFunctions {
     override val arguments: Int = 1
     override val cost: Int = 2
     override val usesState = true
-    override def getLabel(inst: Instruction): String = "Decreasing"
+    override def getLabel(inst: Instruction): String = "Steady"
     override def apply(inst: Instruction, state: Double, arguments: List[Double]): (Double, Double) = {
       (arguments.head, if( state == arguments.head ) 1.0 else 0.0 )
     }
-    override def apply(inst: Instruction, arguments: List[Double]): Double = {
-      throw new RuntimeException("Function with state called as stateless")
-    }
   }
 
-  object Cell extends Function[Double] {
+  object CellAccumulator extends Function[Double] {
     override val arguments: Int = 2
     override val cost: Int = 2
     override val usesState = true
-    override def getLabel(inst: Instruction): String = "Cell"
+    override def getLabel(inst: Instruction): String = "CellAccumulator"
     override def ordered: Boolean = true
     override def apply(inst: Instruction, state: Double, arguments: List[Double]): (Double, Double) = {
       val i = arguments.head
@@ -368,8 +357,62 @@ object NeuralFunctions {
       val c = i + state * f
       (c, c)
     }
+  }
+
+  object Weight extends Function[Double] {
+    override val arguments: Int = 1
+    override val constantRegionStart: Int = instructionSize + argumentSize
+    override val constantRegionSize: Int = 31 - constantRegionStart
+    override val cost: Int = 2
+
+    val scale: Double = math.pow(2.0, constantRegionSize - 1) - 1
+
+    override def getLabel(inst: Instruction): String = {
+      val value = inst.const(constantRegionStart, constantRegionSize) / scale
+      s"Weight ($value)"
+    }
     override def apply(inst: Instruction, arguments: List[Double]): Double = {
-      throw new RuntimeException("Function with state called as stateless")
+      arguments.head * (inst.const(constantRegionStart, constantRegionSize).toDouble / scale)
+    }
+  }
+
+  object CellMemory extends Function[Double] {
+    override val arguments: Int = 2
+    override val cost: Int = 2
+    override val usesState = true
+    override def getLabel(inst: Instruction): String = "CellMemory"
+    override def ordered: Boolean = true
+    override def apply(inst: Instruction, state: Double, arguments: List[Double]): (Double, Double) = {
+      val i = arguments.head
+      val f = arguments(1)
+
+      if( f > 0.5 ) {
+        (i, i)
+      } else {
+        (state, state)
+      }
+    }
+  }
+
+  object GreaterThan extends Function[Double]  {
+    override val cost: Int = 2
+    override def getLabel(inst: Instruction): String = ">"
+    override def ordered: Boolean = true
+    override def apply(inst: Instruction, arguments: List[Double]): Double = {
+      val a = arguments.head
+      val b = arguments(1)
+      if(a > b) 1.0 else 0.0
+    }
+  }
+
+  object LessThan extends Function[Double]  {
+    override val cost: Int = 2
+    override def getLabel(inst: Instruction): String = "<"
+    override def ordered: Boolean = true
+    override def apply(inst: Instruction, arguments: List[Double]): Double = {
+      val a = arguments.head
+      val b = arguments(1)
+      if(a < b) 1.0 else 0.0
     }
   }
 }
