@@ -88,7 +88,7 @@ object Program {
                   })
                 })
 
-            assert( inserted.length == program.data.length + 1 )
+            assert( inserted.lengthCompare(program.data.length + 1) == 0 )
             program.copy( data = inserted )
           }
         } else throw new RuntimeException()
@@ -137,7 +137,7 @@ object Program {
     * @param functions the function list to use for the instruction
     * @return The new instruction
     */
-  private def adjustArguments( instruction: Instruction, f: (Int) => (Int) )( implicit functions: Seq[Function[_]] ): Instruction = {
+  def adjustArguments( instruction: Instruction, f: (Int) => (Int) )( implicit functions: Seq[Function[_]] ): Instruction = {
     val operator = instruction.instruction( functions.head.instructionSize )
     val func = functions(operator)
     @tailrec def remap(arguments: Int, i: Instruction): Instruction = if (arguments > 0) {
@@ -183,7 +183,7 @@ object Program {
  */
 final case class Program( instructionSize: Int, data: Seq[Instruction], inputCount: Int, outputCount: Int ) {
   require( outputCount > 0, "A program must have an output" )
-  require( data.size >= outputCount, "A program must be able to produce a result" )
+  require( data.lengthCompare(outputCount) >= 0, "A program must be able to produce a result" )
 
   /**
     * Execute this program
@@ -204,8 +204,8 @@ final case class Program( instructionSize: Int, data: Seq[Instruction], inputCou
    * @return the final memory state of the program
    */
   def apply[A:Manifest]( inputs: List[A], state: List[A] )( implicit functions: Seq[Function[A]] ): (Memory[A], List[A]) = {
-    require( inputs.length == inputCount )
-    require( state.length == data.length )
+    require( inputs.lengthCompare(inputCount) == 0 )
+    require( state.lengthCompare(data.length) == 0 )
 
     // extracts arguments from memory
     def arguments( func: Function[A], inst: Instruction, memory: Memory[A] ): List[A] = {
@@ -502,7 +502,7 @@ final case class Program( instructionSize: Int, data: Seq[Instruction], inputCou
       .map { case (inst, _) =>
         Program.adjustArguments( inst, indexMap(_) )
       }
-    assert( shrunkData.length == u.drop(inputCount).count( a => a ) )
+    assert( shrunkData.lengthCompare(u.drop(inputCount).count(a => a)) == 0 )
 
     copy( data = shrunkData )
   }
@@ -530,7 +530,22 @@ final case class Program( instructionSize: Int, data: Seq[Instruction], inputCou
       data(index).clean == Program.getNop( index )
     }
 
-    if(nopped) {
+    val can_unnop = data.drop(inputCount).forall( inst => {
+      val operator = inst.instruction( functions.head.instructionSize )
+      val func = functions(operator)
+
+      @tailrec def can_unnop(arguments: Int): Boolean = if (arguments > 0) {
+        val argStart = func.instructionSize + (func.argumentSize * (arguments - 1))
+        val index = inst.pointer(argStart, func.argumentSize)
+        if(index >= inputCount)
+          can_unnop(arguments - 1)
+        else
+          false
+      } else true
+      can_unnop(operator.arguments)
+    })
+
+    if(nopped && can_unnop) {
       copy( data = data.drop(inputCount).map( Program.adjustArguments(_, a => a - inputCount ) ) ).unNopInputs
     } else {
       this
@@ -560,7 +575,7 @@ final case class Program( instructionSize: Int, data: Seq[Instruction], inputCou
   @tailrec
   def unNopOutputs( implicit functions: Seq[Function[_]] ): Program = {
     val nopF = Program.getNopF
-    if( data.takeRight( outputCount ).forall( _.function == nopF ) ) {
+    if( data.takeRight( outputCount ).forall( inst => inst.function == nopF && inst.pointer( nopF.instructionSize, nopF.argumentSize ) >= inputCount) ) {
       val result = data.dropRight( outputCount ) ++ data.takeRight( outputCount ).map { inst =>
         data( inst.pointer( nopF.instructionSize, nopF.argumentSize ) - inputCount )
       }
@@ -605,7 +620,7 @@ final case class Program( instructionSize: Int, data: Seq[Instruction], inputCou
    * @return The new program
    */
   def grow( size: Int )( implicit functions: Seq[Function[_]] ): Program = {
-    if( data.length >= size ) {
+    if( data.lengthCompare(size) >= 0 ) {
       this
     } else {
       val growth = size - data.length
@@ -616,7 +631,7 @@ final case class Program( instructionSize: Int, data: Seq[Instruction], inputCou
         Program.adjustArguments( inst, indexSeq(_) )
       }}
 
-      assert(grown.length == size)
+      assert(grown.lengthCompare(size) == 0)
       copy(data = grown)
     }
   }
@@ -636,7 +651,7 @@ final case class Program( instructionSize: Int, data: Seq[Instruction], inputCou
         (inputCount until b by multiplier) ++
         (b until c)
     }
-    assert(indexes.length == inputCount + data.length)
+    assert(indexes.lengthCompare(inputCount + data.length) == 0)
 
     @tailrec def generate(read: Int, write: Int, acc: List[Instruction]): List[Instruction] = if(read < data.length) {
       if(inputCount + write == indexes(inputCount + read)) {
