@@ -38,7 +38,7 @@ import evolve.core.Evolver.EvolverStrategy
 import evolve.core._
 import evolve.util.EvolveUtil
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 object SquareRoot {
 
@@ -46,11 +46,11 @@ object SquareRoot {
 
     import evolve.functions.DoubleFunctions._
 
-    implicit val evolveStrategy = EvolverStrategy(32, 0.0001, optimiseForPipeline = false)
+    implicit val evolveStrategy: EvolverStrategy = EvolverStrategy(32, 0.0001, optimiseForPipeline = false)
 
-    implicit val ec = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
+    implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
 
-    implicit val functions = Seq[Function[Double]](
+    implicit val functions: Seq[Function[Double]] = Seq[Function[Double]](
       Nop,
       ConstLarge, ConstSmall,
       Add, Subtract, Multiply, Divide, Modulus, Increment, Decrement,

@@ -6,7 +6,7 @@ import evolve.core.Evolver.EvolverStrategy
 import evolve.core._
 import org.scalameter.api.{Gen, _}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 /**
   * Created by Elliot on 13/02/2017.
@@ -15,7 +15,7 @@ object EvolutionBenchmark extends Bench.LocalTime {
 
   import evolve.functions.BooleanFunctions._
 
-  private [this] implicit val ec = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() * 2 ) )
+  private [this] implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() * 2 ) )
 
   private [this] val testCases = TestCases(List(
     TestCase(List(false, false, false), List(false, false)),
@@ -33,7 +33,7 @@ object EvolutionBenchmark extends Bench.LocalTime {
     exec.maxWarmupRuns -> 8
   ) in {
 
-    implicit val evolveStrategy = EvolverStrategy(24, 0.00025, optimiseForPipeline = true)
+    implicit val evolveStrategy: EvolverStrategy = EvolverStrategy(24, 0.00025, optimiseForPipeline = true)
 
     using(Gen.range("length")(32, 4096, 32)) in { size =>
       val program = Generator(6, size, 3, 2)(evolve.functions.BooleanFunctions.functions)

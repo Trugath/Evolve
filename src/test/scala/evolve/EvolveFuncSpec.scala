@@ -8,7 +8,7 @@ import evolve.util.EvolveUtil
 import org.scalatest.FlatSpec
 import org.scalatest.prop.{GeneratorDrivenPropertyChecks, PropertyChecks}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 /**
   * Created by Elliot on 09/08/2016.
@@ -17,8 +17,8 @@ class EvolveFuncSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPr
 
   import evolve.functions.BooleanFunctions._
 
-  private implicit val evolveStrategy = EvolverStrategy( children = Math.max(4, Runtime.getRuntime.availableProcessors()), factor = 0.005, optimiseForPipeline = false )
-  private implicit val ec = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
+  private implicit val evolveStrategy: EvolverStrategy = EvolverStrategy( children = Math.max(4, Runtime.getRuntime.availableProcessors()), factor = 0.005, optimiseForPipeline = false )
+  private implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
 
   "The Evolve system" should "evolve a basic program (Output True)" in {
     val testCases = TestCases(List(
@@ -31,7 +31,7 @@ class EvolveFuncSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPr
     assert( testCases.score( solution ) === 0L )
     assert( solution(List.empty[Boolean], false)._1.result(1) === List( true ) )
 
-    val optimised = EvolveUtil.counted(solution.shrink.spread(2), 100, optimise = true, testCases)
+    val optimised = EvolveUtil.counted(solution.shrink.spread(), 100, optimise = true, testCases)
     assert( testCases.score( optimised ) === 0L )
     assert( optimised(List.empty[Boolean], false)._1.result(1) === List( true ) )
 
@@ -49,7 +49,7 @@ class EvolveFuncSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPr
     assert( testCases.score( solution ) === 0L )
     assert( solution(List.empty[Boolean], false)._1.result(1) === List( false ) )
 
-    val optimised = EvolveUtil.counted(solution.shrink.spread(2), 100, optimise = true, testCases)
+    val optimised = EvolveUtil.counted(solution.shrink.spread(), 100, optimise = true, testCases)
     assert( testCases.score( optimised ) === 0L )
     assert( optimised(List.empty[Boolean], false)._1.result(1) === List( false ) )
 
@@ -69,7 +69,7 @@ class EvolveFuncSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPr
     assert( solution( List( true ), false )._1.result(1) === List( true ) )
     assert( solution( List( false ), false )._1.result(1) === List( false ) )
 
-    val optimised = EvolveUtil.counted(solution.shrink.spread(2), 100, optimise = true, testCases)
+    val optimised = EvolveUtil.counted(solution.shrink.spread(), 100, optimise = true, testCases)
     assert( testCases.score( optimised ) === 0L )
     assert( optimised( List( true ), false )._1.result(1) === List( true ) )
     assert( optimised( List( false ), false )._1.result(1) === List( false ) )
@@ -90,7 +90,7 @@ class EvolveFuncSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPr
     assert( solution( List( true ), false )._1.result(1) === List( false ) )
     assert( solution( List( false ), false )._1.result(1) === List( true ) )
 
-    val optimised = EvolveUtil.counted(solution.shrink.spread(2), 100, optimise = true, testCases)
+    val optimised = EvolveUtil.counted(solution.shrink.spread(), 100, optimise = true, testCases)
     assert( testCases.score( optimised ) === 0L )
     assert( optimised( List( true ), false )._1.result(1) === List( false ) )
     assert( optimised( List( false ), false )._1.result(1) === List( true ) )
@@ -115,7 +115,7 @@ class EvolveFuncSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPr
     assert( solution( List( true, false ), false )._1.result(1) === List( false ) )
     assert( solution( List( true, true ), false )._1.result(1) === List( true ) )
 
-    val optimised = EvolveUtil.counted(solution.shrink.spread(2), 100, optimise = true, testCases)
+    val optimised = EvolveUtil.counted(solution.shrink.spread(), 100, optimise = true, testCases)
     assert( testCases.score( optimised ) === 0L )
     assert( optimised( List( false, false ), false )._1.result(1) === List( false ) )
     assert( optimised( List( false, true ), false )._1.result(1) === List( false ) )
@@ -141,7 +141,7 @@ class EvolveFuncSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPr
     val solution = EvolveUtil.fitness( startup, fitness = 0, limit = Long.MaxValue, testCases )
     assert( testCases.score( solution ) === 0L )
 
-    val optimised = EvolveUtil.counted(solution.shrink.spread(2), 1000, optimise = true, testCases)
+    val optimised = EvolveUtil.counted(solution.shrink.spread(), 1000, optimise = true, testCases)
     assert( testCases.score( optimised ) === 0L )
 
     assert( solution.cost >= optimised.cost )

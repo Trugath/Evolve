@@ -9,7 +9,7 @@ object ConstAnalysis {
 
   def apply( program: Program )(implicit functions: Seq[Function[_]]): Seq[Boolean] = {
     import program._
-    val const: Array[Boolean] = Array.fill(inputCount + data.length)(false)
+    val const: Array[Boolean] = Array.fill(inputCount + length)(false)
 
     // mark known constants using the lack of inputs
     data
@@ -38,13 +38,13 @@ object ConstAnalysis {
     const.toSeq
   }
 
-  def fillConstants[T]( program: Program )(implicit functions: Seq[Function[T]], const: (T) => Instruction ): Program = {
+  def fillConstants[T]( program: Program )(implicit functions: Seq[Function[T]], const: T => Instruction ): Program = {
 
     import program._
 
     val constInstructions: Seq[Boolean] = ConstAnalysis( program )
 
-    val working: Array[Instruction] = Array.ofDim(data.length)
+    val working: Array[Instruction] = Array.ofDim(length)
     data.copyToArray(working)
 
     // extracts arguments from memory
@@ -94,6 +94,6 @@ object ConstAnalysis {
         }
     } )
 
-    Program( instructionSize, working.to[Seq], inputCount, outputCount)
+    Program( instructionSize, working.to[Seq], inputCount, outputCount, program.length)
   }
 }

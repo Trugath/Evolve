@@ -14,7 +14,6 @@ object UsedBenchmark extends Bench.LocalTime {
     measure method "used" in {
       using(Gen.range("length")(32, 4096, 32)) in { size =>
         val program = Generator(6, size, 3, 2)
-        val result = program.used
       }
     }
   }

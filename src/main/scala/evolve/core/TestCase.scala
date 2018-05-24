@@ -59,7 +59,7 @@ case class TestCases[A:Manifest](cases: List[TestCase[A]]) {
   def score[S]( program: Program )( implicit scoreFunc: (A, A) => Long, functions: Seq[Function[A]] ): Long = {
 
       val total =
-        cases.foldLeft((new Array[A](program.data.length).toList, 0L)){ case ((state, score), testCase) =>
+        cases.foldLeft((new Array[A](program.length).toList, 0L)){ case ((state, score), testCase) =>
           val exec = program(testCase.inputs, state)
           (exec._2, score + testCase.score(exec._1.result(program.outputCount)))
         }

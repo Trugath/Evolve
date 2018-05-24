@@ -39,7 +39,7 @@ import evolve.core._
 import evolve.util.EvolveUtil
 
 import scala.annotation.tailrec
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 object ThreeBitAdderNAND {
 
@@ -97,12 +97,12 @@ object ThreeBitAdderNAND {
       }
     }
 
-    implicit val functions = Seq[Function[Boolean]](
+    implicit val functions: Seq[Function[Boolean]] = Seq[Function[Boolean]](
       Nop, NAnd1, NAnd2, NAnd3
     )
 
-    implicit val evolveStrategy = EvolverStrategy(12, 0.005, optimiseForPipeline = true)
-    implicit val ec = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
+    implicit val evolveStrategy: EvolverStrategy = EvolverStrategy(12, 0.005, optimiseForPipeline = true)
+    implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
 
     val testCases = TestCases(List(
       TestCase(List(false, false, false), List(false, false)),

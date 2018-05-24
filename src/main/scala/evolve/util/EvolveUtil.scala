@@ -78,7 +78,7 @@ object EvolveUtil {
       } else {
         Evolver(program, score, optimise)(strat, functions, ec) match {
           case Some(evolved) => evolve(evolved, generation - 1, strat, optimise)
-          case None          => evolve(program.grow( program.data.length + 1 ), generation - 1, strat.copy( factor = strat.factor * 0.9 ), optimise)
+          case None          => evolve(program.grow( program.length + 1 ), generation - 1, strat.copy( factor = strat.factor * 0.9 ), optimise)
         }
       }
     }

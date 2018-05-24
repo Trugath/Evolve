@@ -82,7 +82,7 @@ object Generator {
       wire(func.arguments, Instruction(inst, func.instructionSize))
     }
 
-    Program(instructionSize, data, inputCount, outputCount)
+    Program(instructionSize, data, inputCount, outputCount, size)
   }
 
   /**
@@ -130,6 +130,6 @@ object Generator {
     }
 
     assert( instructions.forall( _.instruction(instructionSize) < functions.length ) )
-    Program( program.instructionSize, instructions, inputCount, outputCount)
+    Program( program.instructionSize, instructions, inputCount, outputCount, program.length)
   }
 }

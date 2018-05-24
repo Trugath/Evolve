@@ -38,7 +38,7 @@ import evolve.core.Evolver.EvolverStrategy
 import evolve.core._
 import evolve.util.EvolveUtil
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 object Pythagorean {
 
@@ -56,11 +56,11 @@ object Pythagorean {
       }
     }
 
-    implicit val functions = evolve.functions.DoubleFunctions.functions.take(7) :+ SquareRoot
+    implicit val functions: Seq[Function[Double]] = evolve.functions.DoubleFunctions.functions.take(7) :+ SquareRoot
 
-    implicit val evolveStrategy = EvolverStrategy(24, 0.0005, optimiseForPipeline = true)
+    implicit val evolveStrategy: EvolverStrategy = EvolverStrategy(24, 0.0005, optimiseForPipeline = true)
 
-    implicit val ec = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
+    implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
 
     val testCases = TestCases(
       List(

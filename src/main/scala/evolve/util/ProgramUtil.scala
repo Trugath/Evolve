@@ -44,7 +44,7 @@ object ProgramUtil {
     */
   def nopProgramLong(length: Int, inputs: Int, outputs: Int )(implicit functions: Seq[Function[_]] ): Program = {
     val f = functions.head
-    Program( f.instructionSize, nopChain( length ), inputs, outputs )
+    Program( f.instructionSize, nopChain( length ), inputs, outputs, length )
   }
 
   /**
@@ -73,6 +73,6 @@ object ProgramUtil {
       }
     }
 
-    Program( f.instructionSize, gen( length - 1, Nil ), inputs, outputs )
+    Program( f.instructionSize, gen( length - 1, Nil ), inputs, outputs, length )
   }
 }

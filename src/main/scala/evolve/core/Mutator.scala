@@ -85,9 +85,9 @@ object Mutator {
       instr(index) = Instruction( ThreadLocalRandom.current().nextInt() )
     }
 
-    val totalBits = program.data.length * 32
+    val totalBits = program.length * 32
     val mutatedBits = (totalBits * factor * 0.75).ceil.toInt
-    val totalInstructions = program.data.length
+    val totalInstructions = program.length
     val mutatedInstructions = (totalInstructions * factor * 0.25).ceil.toInt
     val array = program.data.toArray
 

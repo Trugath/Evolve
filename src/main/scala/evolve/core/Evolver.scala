@@ -74,7 +74,7 @@ object Evolver {
     val optimiseForPipeline = strategy.optimiseForPipeline
 
     // create mutant children
-    val popF: Future[Seq[(Program, Double)]] = Future.sequence( Seq.fill(strategy.children)( Future {
+    val popF: Future[Seq[(Program, Double)]] = Future.sequence( programScoreF.map( s => (program, s) ) +: Seq.fill(strategy.children)( Future {
       val child = Generator.repair( Mutator( program, strategy.factor ) )
       if( optimiseForPipeline )
         (child, score(child) + score(child.pipeline))
@@ -82,12 +82,13 @@ object Evolver {
         (child, score(child))
     } ) )
 
-    val programScore = Await.result( programScoreF, Inf )
-
     // get children not worse than the parent
-    val childResults: Seq[(Program, Double)] = blocking {
-      Await.result(popF.map( _.filter(_._2 <= programScore) ), Inf)
+    val results: Seq[(Program, Double)] = blocking {
+      Await.result(popF, Inf)
     }
+
+    val programScore = results.head._2
+    val childResults: Seq[(Program, Double)] = results.tail.filter(_._2 <= programScore)
 
     // returns the best child not worse than the parent
     if(optimise) {

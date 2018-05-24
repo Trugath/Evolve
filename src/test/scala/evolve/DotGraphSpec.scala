@@ -11,7 +11,7 @@ import org.scalatest.prop.{GeneratorDrivenPropertyChecks, PropertyChecks}
 class DotGraphSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPropertyChecks {
   "A known program" should "convert into a DOT representation" in {
     import evolve.functions.BooleanFunctions._
-    val p1 = Program( Nop.instructionSize, Seq( Instruction(0) ), 1, 1 )
+    val p1 = Program( Nop.instructionSize, Seq( Instruction(0) ), 1, 1, 1 )
     assert( p1( List( true ), List(false) )._1.result(1) === List( true ) )
     assert( p1( List( false ), List(false) )._1.result(1) === List( false ) )
 

@@ -39,7 +39,7 @@ import evolve.core._
 import evolve.util.EvolveUtil
 
 import scala.annotation.tailrec
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 object ThreeBitAdder {
 
@@ -47,8 +47,8 @@ object ThreeBitAdder {
 
     import evolve.functions.BooleanFunctions._
 
-    implicit val evolveStrategy = EvolverStrategy(24, 0.005, optimiseForPipeline = true)
-    implicit val ec = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
+    implicit val evolveStrategy: EvolverStrategy = EvolverStrategy(24, 0.005, optimiseForPipeline = false)
+    implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
 
     val testCases = TestCases(List(
       TestCase(List(false, false, false), List(false, false)),

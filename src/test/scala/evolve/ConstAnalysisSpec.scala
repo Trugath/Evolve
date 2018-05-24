@@ -11,7 +11,7 @@ class ConstAnalysisSpec extends FlatSpec with PropertyChecks with GeneratorDrive
 
   "A single constant instruction program" should "correctly identify as fully constant and not shrink on constant filling" in {
     import evolve.functions.NeuralFunctions._
-    val program = Program(Nop.instructionSize, createConstant(functions)(1.0) :: Nil, 0, 1)
+    val program = Program(Nop.instructionSize, createConstant(functions)(1.0) :: Nil, 0, 1, 1)
 
     val analysis = ConstAnalysis(program)
     assert(analysis.forall( a => a ))
@@ -20,14 +20,14 @@ class ConstAnalysisSpec extends FlatSpec with PropertyChecks with GeneratorDrive
 
   "A nopped Constant output program" should "collapse into a single instruction" in {
     import evolve.functions.NeuralFunctions._
-    val program = Program(Nop.instructionSize, createConstant(functions)(1.0) :: Nil, 0, 1)
+    val program = Program(Nop.instructionSize, createConstant(functions)(1.0) :: Nil, 0, 1, 1)
     val nopped = program.nopOutputs.nopOutputs.nopOutputs
 
     val analysis = ConstAnalysis(nopped)
     assert(analysis.forall( a => a ))
 
     val shrunk = ConstAnalysis.fillConstants(nopped).shrink
-    assert(shrunk.data.length === 1)
+    assert(shrunk.length === 1)
     assert(shrunk === program)
   }
 }

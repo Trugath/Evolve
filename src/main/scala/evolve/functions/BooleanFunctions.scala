@@ -33,7 +33,7 @@ package evolve.functions
 import evolve.core.{Function, Instruction}
 object BooleanFunctions {
 
-  implicit val functions = Seq[Function[Boolean]](
+  implicit val functions: Seq[Function[Boolean]] = Seq[Function[Boolean]](
     Nop, Const,
     And, Or, Not,
     Implication, XOr, Equal
@@ -45,7 +45,7 @@ object BooleanFunctions {
     result * 100
   }
 
-  implicit val createConstant: (Boolean) => Instruction = { value: Boolean =>
+  implicit val createConstant: Boolean => Instruction = { value: Boolean =>
     Instruction(0).const( if(value) -1 else 0, Const.constantRegionStart, Const.constantRegionSize)
   }
 

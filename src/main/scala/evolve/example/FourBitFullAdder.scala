@@ -39,7 +39,7 @@ import evolve.core._
 import evolve.util.EvolveUtil
 
 import scala.annotation.tailrec
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 object FourBitFullAdder {
 
@@ -48,8 +48,8 @@ object FourBitFullAdder {
     import evolve.functions.BooleanFunctions._
     import TestCases.testCasesToScore
 
-    implicit val evolverStrategy = EvolverStrategy(32, 0.003, optimiseForPipeline = false)
-    implicit val ec = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
+    implicit val evolverStrategy: EvolverStrategy = EvolverStrategy(32, 0.003, optimiseForPipeline = false)
+    implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
 
     def bitsToBools(value: Int, bits: Int): List[Boolean] = {
       require(value >= 0 && value <= math.pow(2, bits))

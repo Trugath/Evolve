@@ -34,7 +34,7 @@ import evolve.core.{Function, Instruction}
 
 object IntegerFunctions {
 
-  implicit val functions = Seq[Function[Int]](
+  implicit val functions: Seq[Function[Int]] = Seq[Function[Int]](
     Nop,
     Const,
     Add, Subtract, Multiply, Divide, Modulus, Increment, Decrement,
@@ -52,7 +52,7 @@ object IntegerFunctions {
     result * 10
   }
 
-  implicit val createConstant: (Int) => Instruction = { value: Int =>
+  implicit val createConstant: Int => Instruction = { value: Int =>
     Instruction(0).const(value & ( Int.MinValue >> (32 - Const.constantRegionSize) ), Const.constantRegionStart, Const.constantRegionSize)
   }
 
@@ -119,7 +119,7 @@ object IntegerFunctions {
       try {
         a / b
       } catch {
-        case e: ArithmeticException => 0
+        case _: ArithmeticException => 0
       }
     }
   }
@@ -134,7 +134,7 @@ object IntegerFunctions {
       try {
         a % b
       } catch {
-        case e: ArithmeticException => 0
+        case _: ArithmeticException => 0
       }
     }
   }

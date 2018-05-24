@@ -34,7 +34,7 @@ import evolve.core.{Function, Instruction}
 
 object DoubleFunctions {
 
-  implicit val functions = Seq[Function[Double]](
+  implicit val functions: Seq[Function[Double]] = Seq[Function[Double]](
     Nop,
     ConstLarge, ConstSmall,
     Add, Subtract, Multiply, Divide, Modulus, Increment, Decrement,
@@ -56,7 +56,7 @@ object DoubleFunctions {
     math.min(result * Int.MaxValue, Long.MaxValue / 256L).toLong
   }
 
-  implicit val createConstant: (Double) => Instruction = { value: Double =>
+  implicit val createConstant: Double => Instruction = { value: Double =>
     val constLargeValue: Int = math.min(math.max(value.toInt, Int.MinValue >> (32 - ConstLarge.constantRegionSize)), Int.MaxValue >>> (32 - ConstLarge.constantRegionSize))
     val constLarge = Instruction(0).const(constLargeValue, ConstLarge.constantRegionStart, ConstLarge.constantRegionSize)
     val constLargeError: Double = (ConstLarge(constLarge, Nil) - value).abs
@@ -152,7 +152,7 @@ object DoubleFunctions {
       try {
         a / b
       } catch {
-        case e: ArithmeticException => 0.0
+        case _: ArithmeticException => 0.0
       }
     }
   }
@@ -167,7 +167,7 @@ object DoubleFunctions {
       try {
         a % b
       } catch {
-        case e: ArithmeticException => 0.0
+        case _: ArithmeticException => 0.0
       }
     }
   }

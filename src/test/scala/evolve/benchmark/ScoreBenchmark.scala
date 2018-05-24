@@ -5,7 +5,7 @@ import java.util.concurrent.Executors
 import evolve.core._
 import org.scalameter.api.{Gen, _}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 /**
   * Created by Elliot on 13/02/2017.
@@ -14,7 +14,7 @@ object ScoreBenchmark extends Bench.LocalTime {
 
   import evolve.functions.BooleanFunctions._
 
-  private [this] implicit val ec = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() * 2 ) )
+  private [this] implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() * 2 ) )
 
   private [this] def bitsToBools(value: Int, bits: Int): List[Boolean] = {
     require(value >= 0 && value <= math.pow(2, bits))

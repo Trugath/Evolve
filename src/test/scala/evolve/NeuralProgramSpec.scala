@@ -57,28 +57,28 @@ class NeuralProgramSpec extends FlatSpec with PropertyChecks with GeneratorDrive
     try {
       f
     } catch {
-      case e: ArithmeticException => 0
+      case _: ArithmeticException => 0
     }
   }
 
   "the basic functions" should "execute" in {
     val instructionSize = Nop.instructionSize
-    val nopL = Program( instructionSize, Seq( ins( functions.indexOf(Nop), 0, 1 ) ), 1, 1 )
-    val add = Program( instructionSize, Seq( ins( functions.indexOf(Add), 0, 1 ) ), 2, 1 )
-    val sub = Program( instructionSize, Seq( ins( functions.indexOf(Subtract), 0, 1 ) ), 2, 1 )
-    val mul = Program( instructionSize, Seq( ins( functions.indexOf(Multiply), 0, 1 ) ), 2, 1 )
-    val div = Program( instructionSize, Seq( ins( functions.indexOf(Divide), 0, 1 ) ), 2, 1 )
-    val mod = Program( instructionSize, Seq( ins( functions.indexOf(Modulus), 0, 1 ) ), 2, 1 )
-    val inc = Program( instructionSize, Seq( ins( functions.indexOf(Increment), 0, 0 ) ), 2, 1 )
-    val dec = Program( instructionSize, Seq( ins( functions.indexOf(Decrement), 0, 0 ) ), 2, 1 )
-    val max = Program( instructionSize, Seq( ins( functions.indexOf(Max), 0, 1 ) ), 2, 1 )
-    val min = Program( instructionSize, Seq( ins( functions.indexOf(Min), 0, 1 ) ), 2, 1 )
-    val gtz = Program( instructionSize, Seq( ins( functions.indexOf(GreaterThanZero), 0, 1 ) ), 2, 1 )
-    val ltz = Program( instructionSize, Seq( ins( functions.indexOf(LessThanZero), 0, 1 ) ), 2, 1 )
-    val sig = Program( instructionSize, Seq( ins( functions.indexOf(Sigmoid), 0, 1 ) ), 1, 1 )
-    val natexp = Program( instructionSize, Seq( ins( functions.indexOf(NaturalExp), 0, 1 ) ), 1, 1 )
-    val natlog = Program( instructionSize, Seq( ins( functions.indexOf(NaturalLog), 0, 1 ) ), 1, 1 )
-    val signum = Program( instructionSize, Seq( ins( functions.indexOf(Signum), 0, 1 ) ), 1, 1 )
+    val nopL = Program( instructionSize, Seq( ins( functions.indexOf(Nop), 0, 1 ) ), 1, 1, 1 )
+    val add = Program( instructionSize, Seq( ins( functions.indexOf(Add), 0, 1 ) ), 2, 1, 1 )
+    val sub = Program( instructionSize, Seq( ins( functions.indexOf(Subtract), 0, 1 ) ), 2, 1, 1 )
+    val mul = Program( instructionSize, Seq( ins( functions.indexOf(Multiply), 0, 1 ) ), 2, 1, 1 )
+    val div = Program( instructionSize, Seq( ins( functions.indexOf(Divide), 0, 1 ) ), 2, 1, 1 )
+    val mod = Program( instructionSize, Seq( ins( functions.indexOf(Modulus), 0, 1 ) ), 2, 1, 1 )
+    val inc = Program( instructionSize, Seq( ins( functions.indexOf(Increment), 0, 0 ) ), 2, 1, 1 )
+    val dec = Program( instructionSize, Seq( ins( functions.indexOf(Decrement), 0, 0 ) ), 2, 1, 1 )
+    val max = Program( instructionSize, Seq( ins( functions.indexOf(Max), 0, 1 ) ), 2, 1, 1 )
+    val min = Program( instructionSize, Seq( ins( functions.indexOf(Min), 0, 1 ) ), 2, 1, 1 )
+    val gtz = Program( instructionSize, Seq( ins( functions.indexOf(GreaterThanZero), 0, 1 ) ), 2, 1, 1 )
+    val ltz = Program( instructionSize, Seq( ins( functions.indexOf(LessThanZero), 0, 1 ) ), 2, 1, 1 )
+    val sig = Program( instructionSize, Seq( ins( functions.indexOf(Sigmoid), 0, 1 ) ), 1, 1, 1 )
+    val natexp = Program( instructionSize, Seq( ins( functions.indexOf(NaturalExp), 0, 1 ) ), 1, 1, 1 )
+    val natlog = Program( instructionSize, Seq( ins( functions.indexOf(NaturalLog), 0, 1 ) ), 1, 1, 1)
+    val signum = Program( instructionSize, Seq( ins( functions.indexOf(Signum), 0, 1 ) ), 1, 1, 1 )
 
     forAll { (a: Double, b: Double ) =>
       assert( nopL(List(a), List(0.0))._1.result(1).head === a )
@@ -106,7 +106,7 @@ class NeuralProgramSpec extends FlatSpec with PropertyChecks with GeneratorDrive
 
   "The Delay function" should "function as expected" in {
     val instructionSize = Nop.instructionSize
-    val delay = Program( instructionSize, Seq( ins( functions.indexOf(Delay), 0, 1 ) ), 1, 1 )
+    val delay = Program( instructionSize, Seq( ins( functions.indexOf(Delay), 0, 1 ) ), 1, 1, 1 )
     forAll { (a: Double, b: Double) =>
       val result = delay(List(a), List(b))
       assert( result._1.result(1).head === b )
@@ -116,9 +116,9 @@ class NeuralProgramSpec extends FlatSpec with PropertyChecks with GeneratorDrive
 
   it should "work as part of a larger program" in {
     val instructionSize = Nop.instructionSize
-    val delay = Program( instructionSize, Seq( ins( functions.indexOf(Delay), 0, 0), ins( functions.indexOf(Delay), 1, 0 ), ins( functions.indexOf(Delay), 2, 0 ) ), 1, 1 ).spread(2)
+    val delay = Program( instructionSize, Seq( ins( functions.indexOf(Delay), 0, 0), ins( functions.indexOf(Delay), 1, 0 ), ins( functions.indexOf(Delay), 2, 0 ) ), 1, 1, 3 ).spread()
 
-    forAll { (a: Double) =>
+    forAll { a: Double =>
       val step1 = delay(List(a), List(0.0, 0.0, 0.0, 0.0, 0.0))
       assert( step1._1.result(1).head === 0.0 )
       assert( step1._2 === List(a, 0.0, 0.0, 0.0, 0.0) )
@@ -139,7 +139,7 @@ class NeuralProgramSpec extends FlatSpec with PropertyChecks with GeneratorDrive
 
   "The Increasing function" should "function as expected" in {
     val instructionSize = Nop.instructionSize
-    val inc = Program( instructionSize, Seq( ins( functions.indexOf(Increasing), 0, 1 ) ), 1, 1 )
+    val inc = Program( instructionSize, Seq( ins( functions.indexOf(Increasing), 0, 1 ) ), 1, 1, 1 )
     forAll { (a: Double, b: Double) =>
       val result = inc(List(a), List(b))
       assert( result._2.head === a )
@@ -154,15 +154,15 @@ class NeuralProgramSpec extends FlatSpec with PropertyChecks with GeneratorDrive
 
   "The Weight function" should "function as expected" in {
     val instructionSize = Nop.instructionSize
-    val zeroWeight = Program( instructionSize, Seq( ins( functions.indexOf(Weight), 0, 1 ) ), 1, 1 )
+    val zeroWeight = Program( instructionSize, Seq( ins( functions.indexOf(Weight), 0, 1 ) ), 1, 1, 1 )
     assert( zeroWeight(List(0.0), 0.0)._1.result(1).head === 0.0 )
     assert( zeroWeight(List(1.0), 0.0)._1.result(1).head === 0.0 )
 
-    val oneWeight = Program( instructionSize, Seq( ins( functions.indexOf(Weight), 0, 1 ).const(Weight.scale.toInt, Weight.constantRegionStart, Weight.constantRegionSize) ), 1, 1 )
+    val oneWeight = Program( instructionSize, Seq( ins( functions.indexOf(Weight), 0, 1 ).const(Weight.scale.toInt, Weight.constantRegionStart, Weight.constantRegionSize) ), 1, 1, 1 )
     assert( oneWeight(List(0.0), 0.0)._1.result(1).head === 0.0 )
     assert( oneWeight(List(1.0), 0.0)._1.result(1).head === 1.0 )
 
-    forAll { (a: Double) =>
+    forAll { a: Double =>
       val result = zeroWeight(List(a), 0.0)
       assert( result._1.result(1).head === 0.0 )
     }
@@ -170,7 +170,7 @@ class NeuralProgramSpec extends FlatSpec with PropertyChecks with GeneratorDrive
 
   "The Decreasing function" should "function as expected" in {
     val instructionSize = Nop.instructionSize
-    val dec = Program( instructionSize, Seq( ins( functions.indexOf(Decreasing), 0, 1 ) ), 1, 1 )
+    val dec = Program( instructionSize, Seq( ins( functions.indexOf(Decreasing), 0, 1 ) ), 1, 1, 1 )
     forAll { (a: Double, b: Double) =>
       val result = dec(List(a), List(b))
       assert( result._2.head === a )
@@ -185,7 +185,7 @@ class NeuralProgramSpec extends FlatSpec with PropertyChecks with GeneratorDrive
 
   "The Steady function" should "function as expected" in {
     val instructionSize = Nop.instructionSize
-    val steady = Program( instructionSize, Seq( ins( functions.indexOf(Steady), 0, 1 ) ), 1, 1 )
+    val steady = Program( instructionSize, Seq( ins( functions.indexOf(Steady), 0, 1 ) ), 1, 1, 1 )
     forAll { (a: Double, b: Double) =>
       val result = steady(List(a), List(b))
       assert( result._2.head === a )
@@ -200,7 +200,7 @@ class NeuralProgramSpec extends FlatSpec with PropertyChecks with GeneratorDrive
 
   "The CellAccumulator function" should "function as expected" in {
     val instructionSize = Nop.instructionSize
-    val acc = Program( instructionSize, Seq( ins( functions.indexOf(CellAccumulator), 0, 1 ) ), 2, 1 )
+    val acc = Program( instructionSize, Seq( ins( functions.indexOf(CellAccumulator), 0, 1 ) ), 2, 1, 1 )
     forAll { (a: Double, b: Double, c: Double) =>
       val expected = a + b * c
       val result = acc(List(a, c), List(b))
@@ -211,7 +211,7 @@ class NeuralProgramSpec extends FlatSpec with PropertyChecks with GeneratorDrive
 
   "The CellMemory function" should "function as expected" in {
     val instructionSize = Nop.instructionSize
-    val acc = Program( instructionSize, Seq( ins( functions.indexOf(CellMemory), 0, 1 ) ), 2, 1 )
+    val acc = Program( instructionSize, Seq( ins( functions.indexOf(CellMemory), 0, 1 ) ), 2, 1, 1 )
     forAll { (a: Double, b: Double, c: Double) =>
       val result = acc(List(a, c), List(b))
       if( c > 0.5 ) {
@@ -225,10 +225,11 @@ class NeuralProgramSpec extends FlatSpec with PropertyChecks with GeneratorDrive
   }
 
   "A problematic Neural Function program" should "shrink and function identically" in {
-    val program = Program(6, Seq(Instruction(1275068988), Instruction(142158444), Instruction(738213889), Instruction(1140852986), Instruction(1409320763), Instruction(90163105), Instruction(1610665120), Instruction(1409312678), Instruction(1208007467), Instruction(68100365), Instruction(100744703), Instruction(117921639), Instruction(469843975)),1,1)
+    val instr = Seq(Instruction(1275068988), Instruction(142158444), Instruction(738213889), Instruction(1140852986), Instruction(1409320763), Instruction(90163105), Instruction(1610665120), Instruction(1409312678), Instruction(1208007467), Instruction(68100365), Instruction(100744703), Instruction(117921639), Instruction(469843975))
+    val program = Program(6, instr,1,1, instr.length)
     val minified = program.shrink.clean
 
-    forAll { (a: Double) =>
+    forAll { a: Double =>
       assert( program(List(a), 0.0)._1.result(1) === minified(List(a), 0.0)._1.result(1))
     }
   }

@@ -58,29 +58,29 @@ class IntegerProgramSpec extends FlatSpec with PropertyChecks with GeneratorDriv
     try {
       f
     } catch {
-      case e: ArithmeticException => 0
+      case _: ArithmeticException => 0
     }
   }
 
   "the basic functions" should "execute" in {
     val instructionSize = Nop.instructionSize
-    val nopL = Program( instructionSize, Seq( ins( functions.indexOf(Nop), 0, 1 ) ), 1, 1 )
-    val add = Program( instructionSize, Seq( ins( functions.indexOf(Add), 0, 1 ) ), 2, 1 )
-    val sub = Program( instructionSize, Seq( ins( functions.indexOf(Subtract), 0, 1 ) ), 2, 1 )
-    val mul = Program( instructionSize, Seq( ins( functions.indexOf(Multiply), 0, 1 ) ), 2, 1 )
-    val div = Program( instructionSize, Seq( ins( functions.indexOf(Divide), 0, 1 ) ), 2, 1 )
-    val mod = Program( instructionSize, Seq( ins( functions.indexOf(Modulus), 0, 1 ) ), 2, 1 )
-    val inc = Program( instructionSize, Seq( ins( functions.indexOf(Increment), 0, 0 ) ), 2, 1 )
-    val dec = Program( instructionSize, Seq( ins( functions.indexOf(Decrement), 0, 0 ) ), 2, 1 )
-    val and = Program( instructionSize, Seq( ins( functions.indexOf(And), 0, 1 ) ), 2, 1 )
-    val or = Program( instructionSize, Seq( ins( functions.indexOf(Or), 0, 1 ) ), 2, 1 )
-    val xor = Program( instructionSize, Seq( ins( functions.indexOf(XOr), 0, 1 ) ), 2, 1 )
-    val not = Program( instructionSize, Seq( ins( functions.indexOf(Not), 0, 0 ) ), 1, 1 )
-    val shl = Program( instructionSize, Seq( ins( functions.indexOf(ShiftLeft), 0, 1 ) ), 2, 1 )
-    val shsr = Program( instructionSize, Seq( ins( functions.indexOf(ShiftSignedRight), 0, 1 ) ), 2, 1 )
-    val shur = Program( instructionSize, Seq( ins( functions.indexOf(ShiftUnsignedRight), 0, 1 ) ), 2, 1 )
-    val max = Program( instructionSize, Seq( ins( functions.indexOf(Max), 0, 1 ) ), 2, 1 )
-    val min = Program( instructionSize, Seq( ins( functions.indexOf(Min), 0, 1 ) ), 2, 1 )
+    val nopL = Program( instructionSize, Seq( ins( functions.indexOf(Nop), 0, 1 ) ), 1, 1, 1 )
+    val add = Program( instructionSize, Seq( ins( functions.indexOf(Add), 0, 1 ) ), 2, 1, 1 )
+    val sub = Program( instructionSize, Seq( ins( functions.indexOf(Subtract), 0, 1 ) ), 2, 1, 1 )
+    val mul = Program( instructionSize, Seq( ins( functions.indexOf(Multiply), 0, 1 ) ), 2, 1, 1 )
+    val div = Program( instructionSize, Seq( ins( functions.indexOf(Divide), 0, 1 ) ), 2, 1, 1 )
+    val mod = Program( instructionSize, Seq( ins( functions.indexOf(Modulus), 0, 1 ) ), 2, 1, 1 )
+    val inc = Program( instructionSize, Seq( ins( functions.indexOf(Increment), 0, 0 ) ), 2, 1, 1 )
+    val dec = Program( instructionSize, Seq( ins( functions.indexOf(Decrement), 0, 0 ) ), 2, 1, 1 )
+    val and = Program( instructionSize, Seq( ins( functions.indexOf(And), 0, 1 ) ), 2, 1, 1 )
+    val or = Program( instructionSize, Seq( ins( functions.indexOf(Or), 0, 1 ) ), 2, 1, 1 )
+    val xor = Program( instructionSize, Seq( ins( functions.indexOf(XOr), 0, 1 ) ), 2, 1, 1 )
+    val not = Program( instructionSize, Seq( ins( functions.indexOf(Not), 0, 0 ) ), 1, 1, 1 )
+    val shl = Program( instructionSize, Seq( ins( functions.indexOf(ShiftLeft), 0, 1 ) ), 2, 1, 1 )
+    val shsr = Program( instructionSize, Seq( ins( functions.indexOf(ShiftSignedRight), 0, 1 ) ), 2, 1, 1 )
+    val shur = Program( instructionSize, Seq( ins( functions.indexOf(ShiftUnsignedRight), 0, 1 ) ), 2, 1, 1 )
+    val max = Program( instructionSize, Seq( ins( functions.indexOf(Max), 0, 1 ) ), 2, 1, 1 )
+    val min = Program( instructionSize, Seq( ins( functions.indexOf(Min), 0, 1 ) ), 2, 1, 1 )
 
     forAll { (a: Int, b: Int) =>
       assert( nopL(List(a), List(0))._1.result(1).head === a )

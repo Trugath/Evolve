@@ -27,10 +27,11 @@ object ExecutionBenchmark extends Bench.LocalTime {
     exec.minWarmupRuns -> 1000,
     exec.maxWarmupRuns -> 4500
   ) in {
-    val a = Program(6,Seq(Instruction(201326593), Instruction(134217729), Instruction(402653186), Instruction(16384), Instruction(201359366), Instruction(24576), Instruction(134275080), Instruction(8192), Instruction(402694154), Instruction(90112), Instruction(134275080), Instruction(90112)),3,2)
+    val instr = Seq(Instruction(201326593), Instruction(134217729), Instruction(402653186), Instruction(16384), Instruction(201359366), Instruction(24576), Instruction(134275080), Instruction(8192), Instruction(402694154), Instruction(90112), Instruction(134275080), Instruction(90112))
+    val a = Program(6,instr,3,2,instr.length)
     measure method "apply" in {
       using(Gen.unit("testCases")) in { _ =>
-        inputs.foreach( i => a.apply(i, List.fill(a.data.length)(false)) )
+        inputs.foreach( i => a.apply(i, List.fill(a.length)(false)) )
       }
     }
   }
@@ -39,7 +40,7 @@ object ExecutionBenchmark extends Bench.LocalTime {
     using(Gen.range("length")(32, 4096, 32)) in { size =>
       val program = Generator(6, size, 3, 2)(evolve.functions.BooleanFunctions.functions)
       measure method "apply" in {
-        inputs.foreach(i => program.apply(i, List.fill(program.data.length)(false)))
+        inputs.foreach(i => program.apply(i, List.fill(program.length)(false)))
       }
     }
   }

@@ -89,7 +89,7 @@ object HelloWorld {
     assert( score(toInput(string), toInput(string)) == 0L )
     assert( score(toOutput(string), toOutput(string)) == 0L )
 
-    val testProgram = Program( 6, Seq( ins( functions.indexOf(Nop), 0, 1 ) ), 1, 1 )
+    val testProgram = Program( 6, Seq( ins( functions.indexOf(Nop), 0, 1 ) ), 1, 1, 1 )
     assert( score( toInput(string), sequence(testProgram, toInput(string), 0.0)) == 0)
     assert( score( toOutput(string), sequence(testProgram, toOutput(string), 0.0)) == 0)
 

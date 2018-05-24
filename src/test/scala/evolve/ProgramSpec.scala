@@ -41,12 +41,12 @@ import org.scalacheck.Gen
 import org.scalatest.FlatSpec
 import org.scalatest.prop.{GeneratorDrivenPropertyChecks, PropertyChecks}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.util.Random
 
 class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenPropertyChecks {
 
-  private [this] implicit val ec = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
+  private [this] implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
 
   "Any grown program" should "function the same" in {
     forAll(Gen.choose[Int](1, 64), Gen.choose[Int](1, 64), Gen.choose[Int](Int.MinValue, Int.MaxValue)) {
@@ -56,7 +56,7 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
           val program = Generator(Nop.instructionSize, startSize, 1, 1, seed)
           val grown = program.grow(grownSize)
           forAll { a: Boolean =>
-            assert( program( List(a), List.fill(program.data.length)(false) )._1.result(1) === grown( List(a), List.fill(grown.data.length)(false) )._1.result(1) )
+            assert( program( List(a), List.fill(program.length)(false) )._1.result(1) === grown( List(a), List.fill(grown.length)(false) )._1.result(1) )
           }
         }
         {
@@ -64,7 +64,7 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
           val program = Generator(Nop.instructionSize, startSize, 1, 1, seed)
           val grown = program.grow(grownSize)
           forAll { a: Int =>
-            assert( program( List(a), List.fill(program.data.length)(0) )._1.result(1) === grown( List(a), List.fill(grown.data.length)(0) )._1.result(1) )
+            assert( program( List(a), List.fill(program.length)(0) )._1.result(1) === grown( List(a), List.fill(grown.length)(0) )._1.result(1) )
           }
         }
       }
@@ -101,12 +101,13 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
         Instruction(0)
           .instruction(functions.indexOf(Nop), Nop.instructionSize)
           .pointer(0, Nop.instructionSize, Nop.argumentSize)
-      ), 1, 1)
+      ), 1, 1,1)
       assert( a.used.forall( a => a ) )
       assert( a === a.shrink )
 
       // generate a known program
       val b = Generator(Nop.instructionSize, 3, 1, 1, -1)
+      assert( b.length === 3 )
       assert( b.data.length === 3 )
       assert( b.data(2).instruction(Nop.instructionSize) === functions.indexOf(Not) )
       assert( b.data(2).pointer(And.instructionSize, And.argumentSize) === 1 )
@@ -118,6 +119,7 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
 
       // shrink
       val bShrunk = b.shrink
+      assert( bShrunk.length === 2 )
       assert( bShrunk.data.length === 2 )
       assert( bShrunk.data(1).instruction(Nop.instructionSize) === functions.indexOf(Not) )
       assert( bShrunk.data(1).pointer(And.instructionSize, And.argumentSize) === 1 )
@@ -156,7 +158,7 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
 
   "Any shrunk program grown then re-shrunk" should "match itself" in {
     forAll(Gen.choose[Int](1, 16), Gen.choose[Int](0, 16), Gen.choose[Int](1, 16), Gen.choose[Int](2, 16), Gen.choose[Int](Int.MinValue, Int.MaxValue)) {
-      (size: Int, inputCount: Int, _outputCount: Int, multiplier: Int, seed: Int) => whenever( seed != 0 ) {
+      (size: Int, inputCount: Int, _outputCount: Int, _: Int, seed: Int) => whenever( seed != 0 ) {
         val outputCount = math.min(size, _outputCount)
 
         {
@@ -189,7 +191,8 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
 
   "A Problematic program" should "spread and shrink correctly" in {
     import functions.DoubleFunctions._
-    val program = Program(6,Vector(Instruction(134217728), Instruction(0), Instruction(67108864), Instruction(402669569), Instruction(335568898)),0,1)
+    val instr = Vector(Instruction(134217728), Instruction(0), Instruction(67108864), Instruction(402669569), Instruction(335568898))
+    val program = Program(6,instr,0,1, instr.length)
     val spread = program.spread(10)
     val shrunk = spread.shrink
     assert( program.used === shrunk.used )
@@ -306,15 +309,15 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
 
   "Nop inserted into a single nop program" should "produce the correct program" in {
     import functions.BooleanFunctions._
-    val a = Program(6,List(Instruction(0)),1,1)
-    val b = Program(6,List(Instruction(0), Instruction(8192)),1,1)
+    val a = Program(6,List(Instruction(0)),1,1,1)
+    val b = Program(6,List(Instruction(0), Instruction(8192)),1,1,2)
     assert( a.insertNop(0) === b )
   }
 
   "Two Nop inserted into a single nop program" should "produce the correct program" in {
     import functions.BooleanFunctions._
-    val a = Program(6,List(Instruction(0)),1,1)
-    val b = Program(6,List(Instruction(0), Instruction(8192), Instruction(16384)),1,1)
+    val a = Program(6,List(Instruction(0)),1,1,1)
+    val b = Program(6,List(Instruction(0), Instruction(8192), Instruction(16384)),1,1,3)
     assert( a.insertNop(0).insertNop(1) === b )
     assert( a.insertNop(0).insertNop(0) === b )
   }
@@ -327,7 +330,7 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
       assert( a( List(false), false )._1.result(1) === b( List(false), false )._1.result(1) )
       assert( a( List(true), false  )._1.result(1) === b( List(true), false )._1.result(1) )
 
-      forAll( Gen.choose(0, a.data.length - 1 ) ) { index =>
+      forAll( Gen.choose(0, a.length - 1 ) ) { index =>
         assert( a.insertNop(index) === b )
       }
     }
@@ -346,7 +349,8 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
       TestCase(List(true, true, true), List(true, true))
     ))
 
-    val program = Program(6,List(Instruction(134225922), Instruction(402677760), Instruction(201351172), Instruction(201334786), Instruction(134266885), Instruction(402702340)),3,2)
+    val instr = List(Instruction(134225922), Instruction(402677760), Instruction(201351172), Instruction(201334786), Instruction(134266885), Instruction(402702340))
+    val program = Program(6,instr,3,2,instr.length)
     assert( testCases.score(program) === 0 )
     assert( program.cost === 14 )
     assert( program.maxPipelineLength === 4 )
@@ -365,7 +369,8 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
       TestCase(List(true, true, true), List(true, true))
     ))
 
-    val program = Program(6,Seq(Instruction(201326593), Instruction(134217729), Instruction(402653186), Instruction(201359362), Instruction(134266883), Instruction(402694145)),3,2)
+    val instr = Seq(Instruction(201326593), Instruction(134217729), Instruction(402653186), Instruction(201359362), Instruction(134266883), Instruction(402694145))
+    val program = Program(6,instr,3,2,instr.length)
     assert( testCases.score(program) === 0 )
     assert( program.cost === 14 )
     assert( program.maxPipelineLength === 3 )
@@ -384,10 +389,11 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
       TestCase(List(true, true, true), List(true, true))
     ))
 
-    val program = Program(6,Seq(Instruction(201326593), Instruction(134217729), Instruction(402653186), Instruction(201359362), Instruction(134266883), Instruction(402694145)),3,2)
-    forAll(Gen.choose(0, program.data.length-2)) { index => {
+    val instr = Seq(Instruction(201326593), Instruction(134217729), Instruction(402653186), Instruction(201359362), Instruction(134266883), Instruction(402694145))
+    val program = Program(6,instr,3,2,instr.length)
+    forAll(Gen.choose(0, program.length-2)) { index => {
       val inserted = program.insertNop(index)
-      assert( inserted.data.length === program.data.length + 1)
+      assert( inserted.length === program.length + 1)
       assert( inserted.cost === 15 )
       assert( testCases.score(inserted) === 0 )
     }}
@@ -406,10 +412,11 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
       TestCase(List(true, true, true), List(true, true))
     ))
 
-    val program = Program(6,Seq(Instruction(201326593), Instruction(134217729), Instruction(402653186), Instruction(201359362), Instruction(134266883), Instruction(402694145)),3,2)
-    forAll(Gen.choose(0, program.data.length-2)) { index => {
+    val instr = Seq(Instruction(201326593), Instruction(134217729), Instruction(402653186), Instruction(201359362), Instruction(134266883), Instruction(402694145))
+    val program = Program(6,instr,3,2,instr.length)
+    forAll(Gen.choose(0, program.length-2)) { index => {
       val after = program.insertNop(index).denop.shrink
-      assert( after.data.length === program.data.length)
+      assert( after.length === program.length)
       assert( after.cost === 14 )
       assert( testCases.score(after) === 0 )
     }}
@@ -429,9 +436,11 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
       TestCase(List(true, true, true), List(true, true))
     ))
 
-    val a = Program(6,Seq(Instruction(201326593), Instruction(134217729), Instruction(402653186), Instruction(201359362), Instruction(134266883), Instruction(402694145)),3,2)
+    val instr = Seq(Instruction(201326593), Instruction(134217729), Instruction(402653186), Instruction(201359362), Instruction(134266883), Instruction(402694145))
+    val a = Program(6,instr,3,2,instr.length)
     val b = a.pipeline
-    assert( b === Program(6,Seq(Instruction(201326593), Instruction(134217729), Instruction(402653186), Instruction(16384), Instruction(201359366), Instruction(24576), Instruction(134275080), Instruction(8192), Instruction(402694154), Instruction(90112), Instruction(134275080), Instruction(90112)),3,2) )
+    val instr2 = Seq(Instruction(201326593), Instruction(134217729), Instruction(402653186), Instruction(16384), Instruction(201359366), Instruction(24576), Instruction(134275080), Instruction(8192), Instruction(402694154), Instruction(90112), Instruction(134275080), Instruction(90112))
+    assert( b === Program(6,instr2,3,2,instr2.length) )
     assert( testCases.score( a ) === 0L )
     assert( testCases.score( b ) === 0L )
   }
@@ -450,7 +459,8 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
       TestCase(List(true, true, true), List(true, true))
     ))
 
-    val a = Program(6,Seq(Instruction(201326593), Instruction(134217729), Instruction(402653186), Instruction(201359362), Instruction(134266883), Instruction(402694145)),3,2)
+    val instr = Seq(Instruction(201326593), Instruction(134217729), Instruction(402653186), Instruction(201359362), Instruction(134266883), Instruction(402694145))
+    val a = Program(6,instr,3,2,instr.length)
     val b = a.pipeline.denop.shrink
 
     assert( a === b )
@@ -462,8 +472,8 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
 
     import functions.BooleanFunctions._
 
-    implicit val evolverStrategy = EvolverStrategy(24, 0.0015, optimiseForPipeline = false)
-    implicit val ec = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
+    implicit val evolverStrategy: EvolverStrategy = EvolverStrategy(24, 0.0015, optimiseForPipeline = false)
+    implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
 
     def bitsToBools(value: Int, bits: Int): List[Boolean] = {
       require(value >= 0 && value <= math.pow(2, bits))
@@ -478,7 +488,8 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
       r <- 0 until 16
     } yield TestCase[Boolean](bitsToBools(l, 4) ::: bitsToBools(r, 4), bitsToBools(l + r, 5))).toList)
 
-    val a = Program(6,Seq(Instruction(469811202), Instruction(68778787), Instruction(134159985), Instruction(469762048), Instruction(133937857), Instruction(201342978), Instruction(335601672), Instruction(134332422), Instruction(402694153), Instruction(402694145), Instruction(134316036), Instruction(335609861), Instruction(335618055), Instruction(132243848), Instruction(469794818), Instruction(134340616), Instruction(268596694), Instruction(102689986), Instruction(268582921), Instruction(335593490), Instruction(201383939), Instruction(84197863), Instruction(469950481), Instruction(402677781), Instruction(54561), Instruction(469843977), Instruction(134216720), Instruction(163918), Instruction(402792470), Instruction(335568910), Instruction(174743), Instruction(268686661), Instruction(470065153), Instruction(201564186), Instruction(201654302), Instruction(470073359), Instruction(101455), Instruction(268653532), Instruction(134496289), Instruction(469934122), Instruction(335593502), Instruction(402898983), Instruction(402759710), Instruction(469762074), Instruction(335642647), Instruction(402710559), Instruction(335700000), Instruction(402776116), Instruction(201637917), Instruction(470196227), Instruction(201457716), Instruction(402653225), Instruction(470032421), Instruction(335970321), Instruction(32798), Instruction(335912990), Instruction(469819413), Instruction(335896630), Instruction(134643732), Instruction(134438915), Instruction(469852174), Instruction(172074), Instruction(268688997), Instruction(335618065), Instruction(470204480), Instruction(201703483), Instruction(268812476), Instruction(146756), Instruction(70620657), Instruction(335904819), Instruction(201695251), Instruction(201482282), Instruction(470106170), Instruction(134193197), Instruction(484552), Instruction(201998416), Instruction(134307865), Instruction(201924616), Instruction(335749122), Instruction(201326669), Instruction(470376494), Instruction(201777208), Instruction(268873432), Instruction(469844049), Instruction(268959781), Instruction(335913043), Instruction(268756594), Instruction(269008399), Instruction(101171233), Instruction(269096352), Instruction(133292034), Instruction(469835861), Instruction(131108941), Instruction(269036356), Instruction(402792480), Instruction(470556723), Instruction(470286342), Instruction(336248856), Instruction(335634466), Instruction(403324940), Instruction(269086813), Instruction(403431475), Instruction(269090853), Instruction(73697812), Instruction(202129427), Instruction(91962624), Instruction(402800743), Instruction(202244103), Instruction(201826336), Instruction(403464192), Instruction(201949214), Instruction(402972768), Instruction(336388124), Instruction(201859131), Instruction(202047508), Instruction(268773705), Instruction(268612379), Instruction(135151719), Instruction(134422605), Instruction(336543755), Instruction(134742119), Instruction(121732455), Instruction(261563), Instruction(201752576), Instruction(336232462), Instruction(470417486), Instruction(134512721), Instruction(134570061), Instruction(67773450), Instruction(201498684), Instruction(269301552), Instruction(470302854), Instruction(202195020), Instruction(336183376), Instruction(1066935), Instruction(201637980), Instruction(403415137), Instruction(403152952), Instruction(85544713), Instruction(269534619), Instruction(1044489), Instruction(469999670), Instruction(202268748), Instruction(268873114), Instruction(134938746), Instruction(336068759), Instruction(269426735), Instruction(134946949), Instruction(469860500), Instruction(403906568), Instruction(434312), Instruction(680887), Instruction(269541501), Instruction(134930515), Instruction(470098034), Instruction(470253598), Instruction(134381725), Instruction(741016)),8,5)
+    val instr = Seq(Instruction(469811202), Instruction(68778787), Instruction(134159985), Instruction(469762048), Instruction(133937857), Instruction(201342978), Instruction(335601672), Instruction(134332422), Instruction(402694153), Instruction(402694145), Instruction(134316036), Instruction(335609861), Instruction(335618055), Instruction(132243848), Instruction(469794818), Instruction(134340616), Instruction(268596694), Instruction(102689986), Instruction(268582921), Instruction(335593490), Instruction(201383939), Instruction(84197863), Instruction(469950481), Instruction(402677781), Instruction(54561), Instruction(469843977), Instruction(134216720), Instruction(163918), Instruction(402792470), Instruction(335568910), Instruction(174743), Instruction(268686661), Instruction(470065153), Instruction(201564186), Instruction(201654302), Instruction(470073359), Instruction(101455), Instruction(268653532), Instruction(134496289), Instruction(469934122), Instruction(335593502), Instruction(402898983), Instruction(402759710), Instruction(469762074), Instruction(335642647), Instruction(402710559), Instruction(335700000), Instruction(402776116), Instruction(201637917), Instruction(470196227), Instruction(201457716), Instruction(402653225), Instruction(470032421), Instruction(335970321), Instruction(32798), Instruction(335912990), Instruction(469819413), Instruction(335896630), Instruction(134643732), Instruction(134438915), Instruction(469852174), Instruction(172074), Instruction(268688997), Instruction(335618065), Instruction(470204480), Instruction(201703483), Instruction(268812476), Instruction(146756), Instruction(70620657), Instruction(335904819), Instruction(201695251), Instruction(201482282), Instruction(470106170), Instruction(134193197), Instruction(484552), Instruction(201998416), Instruction(134307865), Instruction(201924616), Instruction(335749122), Instruction(201326669), Instruction(470376494), Instruction(201777208), Instruction(268873432), Instruction(469844049), Instruction(268959781), Instruction(335913043), Instruction(268756594), Instruction(269008399), Instruction(101171233), Instruction(269096352), Instruction(133292034), Instruction(469835861), Instruction(131108941), Instruction(269036356), Instruction(402792480), Instruction(470556723), Instruction(470286342), Instruction(336248856), Instruction(335634466), Instruction(403324940), Instruction(269086813), Instruction(403431475), Instruction(269090853), Instruction(73697812), Instruction(202129427), Instruction(91962624), Instruction(402800743), Instruction(202244103), Instruction(201826336), Instruction(403464192), Instruction(201949214), Instruction(402972768), Instruction(336388124), Instruction(201859131), Instruction(202047508), Instruction(268773705), Instruction(268612379), Instruction(135151719), Instruction(134422605), Instruction(336543755), Instruction(134742119), Instruction(121732455), Instruction(261563), Instruction(201752576), Instruction(336232462), Instruction(470417486), Instruction(134512721), Instruction(134570061), Instruction(67773450), Instruction(201498684), Instruction(269301552), Instruction(470302854), Instruction(202195020), Instruction(336183376), Instruction(1066935), Instruction(201637980), Instruction(403415137), Instruction(403152952), Instruction(85544713), Instruction(269534619), Instruction(1044489), Instruction(469999670), Instruction(202268748), Instruction(268873114), Instruction(134938746), Instruction(336068759), Instruction(269426735), Instruction(134946949), Instruction(469860500), Instruction(403906568), Instruction(434312), Instruction(680887), Instruction(269541501), Instruction(134930515), Instruction(470098034), Instruction(470253598), Instruction(134381725), Instruction(741016))
+    val a = Program(6,instr,8,5,instr.length)
     val b = a.deduplicate
     val c = a.clean
     val d = b.clean
@@ -505,7 +516,7 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
       }
     }
 
-    implicit val functions = evolve.functions.DoubleFunctions.functions.take(7) :+ SquareRoot
+    implicit val functions: Seq[Function[Double]] = evolve.functions.DoubleFunctions.functions.take(7) :+ SquareRoot
 
     val testCases = TestCases(
       List(
@@ -524,7 +535,8 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
       )
     )
 
-    val a = Program(6,List(Instruction(335552513), Instruction(335544320), Instruction(201342979), Instruction(469794816)),2,1)
+    val instr = List(Instruction(335552513), Instruction(335544320), Instruction(201342979), Instruction(469794816))
+    val a = Program(6,instr,2,1,instr.length)
     assert( testCases.score( a ) === 0L )
 
     val b = a.nopInputs.nopOutputs.unNopOutputs.unNopInputs.shrink
@@ -542,16 +554,16 @@ class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenProp
         {
           import functions.BooleanFunctions._
           val program = Generator(Nop.instructionSize, startSize, 1, 1, seed)
-          val state = List.fill( program.data.length )( Random.nextBoolean )
-          forAll { (a: Boolean) =>
+          val state = List.fill( program.length )( Random.nextBoolean )
+          forAll { a: Boolean =>
             assert( program( List(a), state )._2 === state )
           }
         }
         {
           import functions.IntegerFunctions._
           val program = Generator(Nop.instructionSize, startSize, 1, 1, seed)
-          val state = List.fill( program.data.length )( Random.nextInt )
-          forAll { (a: Int) =>
+          val state = List.fill( program.length )( Random.nextInt )
+          forAll { a: Int =>
             assert( program( List(a), state )._2 === state )
           }
         }

@@ -35,7 +35,7 @@ import org.scalatest.FlatSpec
 
 class MutatorSpec extends FlatSpec {
   "The mutator" should "mutate a program" in {
-    val p = Program(13, Seq(Instruction(0), Instruction(0), Instruction(0)), 2, 1)
+    val p = Program(13, Seq(Instruction(0), Instruction(0), Instruction(0)), 2, 1, 3)
     val m = Mutator( p, 0.01 )
     assert( p.difference( m ) > 0 )
   }

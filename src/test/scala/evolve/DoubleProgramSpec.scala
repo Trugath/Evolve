@@ -57,28 +57,28 @@ class DoubleProgramSpec extends FlatSpec with PropertyChecks with GeneratorDrive
     try {
       f
     } catch {
-      case e: ArithmeticException => 0
+      case _: ArithmeticException => 0
     }
   }
 
   "the basic functions" should "execute" in {
     val instructionSize = Nop.instructionSize
-    val nopL = Program( instructionSize, Seq( ins( functions.indexOf(Nop), 0, 1 ) ), 1, 1 )
-    val add = Program( instructionSize, Seq( ins( functions.indexOf(Add), 0, 1 ) ), 2, 1 )
-    val sub = Program( instructionSize, Seq( ins( functions.indexOf(Subtract), 0, 1 ) ), 2, 1 )
-    val mul = Program( instructionSize, Seq( ins( functions.indexOf(Multiply), 0, 1 ) ), 2, 1 )
-    val div = Program( instructionSize, Seq( ins( functions.indexOf(Divide), 0, 1 ) ), 2, 1 )
-    val mod = Program( instructionSize, Seq( ins( functions.indexOf(Modulus), 0, 1 ) ), 2, 1 )
-    val inc = Program( instructionSize, Seq( ins( functions.indexOf(Increment), 0, 0 ) ), 2, 1 )
-    val dec = Program( instructionSize, Seq( ins( functions.indexOf(Decrement), 0, 0 ) ), 2, 1 )
-    val max = Program( instructionSize, Seq( ins( functions.indexOf(Max), 0, 1 ) ), 2, 1 )
-    val min = Program( instructionSize, Seq( ins( functions.indexOf(Min), 0, 1 ) ), 2, 1 )
-    val gtz = Program( instructionSize, Seq( ins( functions.indexOf(GreaterThanZero), 0, 1 ) ), 2, 1 )
-    val ltz = Program( instructionSize, Seq( ins( functions.indexOf(LessThanZero), 0, 1 ) ), 2, 1 )
-    val sig = Program( instructionSize, Seq( ins( functions.indexOf(Sigmoid), 0, 1 ) ), 1, 1 )
-    val natexp = Program( instructionSize, Seq( ins( functions.indexOf(NaturalExp), 0, 1 ) ), 1, 1 )
-    val natlog = Program( instructionSize, Seq( ins( functions.indexOf(NaturalLog), 0, 1 ) ), 1, 1 )
-    val signum = Program( instructionSize, Seq( ins( functions.indexOf(Signum), 0, 1 ) ), 1, 1 )
+    val nopL = Program( instructionSize, Seq( ins( functions.indexOf(Nop), 0, 1 ) ), 1, 1, 1 )
+    val add = Program( instructionSize, Seq( ins( functions.indexOf(Add), 0, 1 ) ), 2, 1, 1 )
+    val sub = Program( instructionSize, Seq( ins( functions.indexOf(Subtract), 0, 1 ) ), 2, 1, 1 )
+    val mul = Program( instructionSize, Seq( ins( functions.indexOf(Multiply), 0, 1 ) ), 2, 1, 1 )
+    val div = Program( instructionSize, Seq( ins( functions.indexOf(Divide), 0, 1 ) ), 2, 1, 1 )
+    val mod = Program( instructionSize, Seq( ins( functions.indexOf(Modulus), 0, 1 ) ), 2, 1, 1 )
+    val inc = Program( instructionSize, Seq( ins( functions.indexOf(Increment), 0, 0 ) ), 2, 1, 1 )
+    val dec = Program( instructionSize, Seq( ins( functions.indexOf(Decrement), 0, 0 ) ), 2, 1, 1 )
+    val max = Program( instructionSize, Seq( ins( functions.indexOf(Max), 0, 1 ) ), 2, 1, 1 )
+    val min = Program( instructionSize, Seq( ins( functions.indexOf(Min), 0, 1 ) ), 2, 1, 1 )
+    val gtz = Program( instructionSize, Seq( ins( functions.indexOf(GreaterThanZero), 0, 1 ) ), 2, 1, 1 )
+    val ltz = Program( instructionSize, Seq( ins( functions.indexOf(LessThanZero), 0, 1 ) ), 2, 1, 1 )
+    val sig = Program( instructionSize, Seq( ins( functions.indexOf(Sigmoid), 0, 1 ) ), 1, 1, 1 )
+    val natexp = Program( instructionSize, Seq( ins( functions.indexOf(NaturalExp), 0, 1 ) ), 1, 1, 1 )
+    val natlog = Program( instructionSize, Seq( ins( functions.indexOf(NaturalLog), 0, 1 ) ), 1, 1, 1 )
+    val signum = Program( instructionSize, Seq( ins( functions.indexOf(Signum), 0, 1 ) ), 1, 1, 1 )
 
     forAll { (a: Double, b: Double ) =>
       assert( nopL(List(a), List(0.0))._1.result(1).head === a )

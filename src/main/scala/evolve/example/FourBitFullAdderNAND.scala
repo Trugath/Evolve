@@ -41,7 +41,7 @@ import evolve.util.EvolveUtil
 
 import scala.annotation.tailrec
 import scala.concurrent.duration.Duration.Inf
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor, Future}
 
 object FourBitFullAdderNAND {
 
@@ -99,12 +99,12 @@ object FourBitFullAdderNAND {
       }
     }
 
-    implicit val functions = Seq[Function[Boolean]](
+    implicit val functions: Seq[Function[Boolean]] = Seq[Function[Boolean]](
       Nop, NAnd1, NAnd2, NAnd3
     )
 
-    implicit val evolveStrategy = EvolverStrategy(48, 0.00025, optimiseForPipeline = true)
-    implicit val ec = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
+    implicit val evolveStrategy: EvolverStrategy = EvolverStrategy(48, 0.00025, optimiseForPipeline = true)
+    implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
 
     def bitsToBools(value: Int, bits: Int): List[Boolean] = {
       require(value >= 0 && value <= math.pow(2, bits))
@@ -138,7 +138,7 @@ object FourBitFullAdderNAND {
         println( s"Solution found after $generation-${generation+1000} generations." )
         result
       } else {
-        val usage = program.used.count( _ == true ).toDouble / (program.data.length + program.inputCount).toDouble
+        val usage = program.used.count( _ == true ).toDouble / (program.length + program.inputCount).toDouble
 
         // create mutant children and score them
         val popF: Future[Seq[Long]] = Future.sequence( Seq.fill(evolveStrategy.children)( Future {
@@ -152,7 +152,7 @@ object FourBitFullAdderNAND {
             .result(popF, Inf)
             .sum / evolveStrategy.children
 
-        println( s"Processed ${generation+1000} generations. Current generation score: $populationScore. Current parent score: $score. Current size: ${program.data.length}. Used genes ${NumberFormat.getPercentInstance.format(usage)}" )
+        println( s"Processed ${generation+1000} generations. Current generation score: $populationScore. Current parent score: $score. Current size: ${program.length}. Used genes ${NumberFormat.getPercentInstance.format(usage)}" )
         if( generation % 10000 == 0 ) {
           function(result, generation + 1000, !optimise)
         } else {

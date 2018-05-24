@@ -54,9 +54,9 @@ object DotGraph {
       letters
         .grouped(5)
         .map( "n" + _.mkString.toLowerCase )
-        .take((program.inputCount + program.data.length + program.outputCount) * 2)
+        .take((program.inputCount + program.length + program.outputCount) * 2)
         .toSet
-        .take(program.inputCount + program.data.length + program.outputCount)
+        .take(program.inputCount + program.length + program.outputCount)
         .toSeq
 
     try {
@@ -82,8 +82,8 @@ object DotGraph {
         .data
         .zipWithIndex
         .map { case (inst, index) => (inst, index + program.inputCount) }
-        .filter { case (inst, index) => used(index) }
-        .foreach { case (inst, index) => {
+        .filter { case (_, index) => used(index) }
+        .foreach { case (inst, index) =>
           val node = names(index)
           val func = functions(inst.instruction(program.instructionSize))
           val label = func.getLabel(inst)
@@ -91,14 +91,12 @@ object DotGraph {
             s""" $node [label="$label"];
                |""".stripMargin)
         }
-      }
 
       buffer.append("\r\n // Outputs\r\n")
       buffer.append(" subgraph cluster_1 {\r\n")
       (0 until program.outputCount).foreach( i => {
         val index = i
-        val node = names(program.inputCount + program.data.length + index)
-        val source = names(program.inputCount + program.data.length - program.outputCount + index)
+        val node = names(program.inputCount + program.length + index)
         buffer.append(
           s"""  $node [label="Output $index"];
              |""".stripMargin)
@@ -108,8 +106,8 @@ object DotGraph {
       buffer.append(" // Links\r\n")
       (0 until program.outputCount).foreach( i => {
         val index = i
-        val node = names(program.inputCount + program.data.length + index)
-        val source = names(program.inputCount + program.data.length - program.outputCount + index)
+        val node = names(program.inputCount + program.length + index)
+        val source = names(program.inputCount + program.length - program.outputCount + index)
         buffer.append(
           s""" $source -> $node;
              |""".stripMargin)
@@ -118,10 +116,10 @@ object DotGraph {
         .data
         .zipWithIndex
         .map { case (inst, index) => (inst, index + program.inputCount) }
-        .filter { case (inst, index) => used(index) }
+        .filter { case (_, index) => used(index) }
         .reverse
         .foreach {
-        case (inst, index) => {
+        case (inst, index) =>
           val instructionSize = program.instructionSize
           val func = inst.instruction( instructionSize )
           val argumentSize = func.argumentSize
@@ -140,9 +138,9 @@ object DotGraph {
             }
             output(arguments - 1, acc, label)
           } else acc
+
           output(func.arguments, inst, func.arguments > 1)
         }
-      }
 
       buffer.append("}")
       buffer.toString
