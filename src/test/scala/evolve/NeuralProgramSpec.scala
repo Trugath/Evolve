@@ -30,9 +30,18 @@
 
 package evolve
 
-import evolve.core.{Instruction, Program}
+import java.nio.charset.StandardCharsets
+import java.nio.file.{Files, Paths}
+import java.util.Random
+import java.util.concurrent.{Executors, ThreadLocalRandom}
+
+import evolve.core.Evolver.EvolverStrategy
+import evolve.core._
+import evolve.util.EvolveUtil
 import org.scalatest.FlatSpec
 import org.scalatest.prop.{GeneratorDrivenPropertyChecks, PropertyChecks}
+
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 class NeuralProgramSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPropertyChecks {
 
@@ -232,5 +241,43 @@ class NeuralProgramSpec extends FlatSpec with PropertyChecks with GeneratorDrive
     forAll { a: Double =>
       assert( program(List(a), 0.0)._1.result(1) === minified(List(a), 0.0)._1.result(1))
     }
+  }
+
+  "A neural function program" should "be able to be evolved to output the last positive input" in {
+    implicit val evolveStrategy: EvolverStrategy = EvolverStrategy(32, 0.0001, optimiseForPipeline = false)
+
+    implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
+
+    def sequence( p: Program, input: List[Double] ): List[Double] = {
+      input
+        .grouped( p.inputCount )
+        .foldLeft( (List.empty[Double], List.fill[Double](p.data.length)(0.0)) ) {
+          case ((res, state), i) =>
+            val (r, s) = p(i, state)
+            (r.result(p.outputCount).toList ++ res, s)
+        }
+        ._1.reverse
+    }
+
+    def score( p: Program ): Double = {
+      val input = ThreadLocalRandom.current().doubles(101).toArray.toList.map( _ - 0.5 )
+      val filtered = input.foldLeft( List.empty[Double] ) { case (a, b) =>
+          if(b > 0) {
+            b :: a
+          } else {
+            a.headOption.getOrElse(0.0) :: a
+          }
+      }.reverse
+
+      val result = sequence(p, input)
+      val sum = (filtered zip result).map( a => (a._1 - a._2).abs ).sum
+      if(sum.isNaN)
+        Double.PositiveInfinity
+      else
+        sum
+    }
+
+    val result = EvolveUtil.fitness( Generator(Nop.instructionSize, 16, 1, 1), 0.0,1000000, score )
+    assert( score( result ) === 0.0 )
   }
 }
