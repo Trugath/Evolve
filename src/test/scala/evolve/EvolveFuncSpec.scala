@@ -6,14 +6,14 @@ import evolve.core.Evolver.EvolverStrategy
 import evolve.core._
 import evolve.util.EvolveUtil
 import org.scalatest.FlatSpec
-import org.scalatest.prop.{GeneratorDrivenPropertyChecks, PropertyChecks}
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 /**
   * Created by Elliot on 09/08/2016.
   */
-class EvolveFuncSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPropertyChecks {
+class EvolveFuncSpec extends FlatSpec with ScalaCheckPropertyChecks {
 
   import evolve.functions.BooleanFunctions._
 

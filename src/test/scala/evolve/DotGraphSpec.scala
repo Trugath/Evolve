@@ -3,12 +3,12 @@ package evolve
 import evolve.core.{DotGraph, Generator, Instruction, Program}
 import org.scalacheck.Gen
 import org.scalatest.FlatSpec
-import org.scalatest.prop.{GeneratorDrivenPropertyChecks, PropertyChecks}
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 /**
   * Created by ellio on 09/08/2016.
   */
-class DotGraphSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPropertyChecks {
+class DotGraphSpec extends FlatSpec with ScalaCheckPropertyChecks {
   "A known program" should "convert into a DOT representation" in {
     import evolve.functions.BooleanFunctions._
     val p1 = Program( Nop.instructionSize, Seq( Instruction(0) ), 1, 1, 1 )

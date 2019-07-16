@@ -39,11 +39,11 @@ import evolve.core.Evolver.EvolverStrategy
 import evolve.core._
 import evolve.util.EvolveUtil
 import org.scalatest.FlatSpec
-import org.scalatest.prop.{GeneratorDrivenPropertyChecks, PropertyChecks}
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
-class NeuralProgramSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPropertyChecks {
+class NeuralProgramSpec extends FlatSpec with ScalaCheckPropertyChecks {
 
   import evolve.functions.NeuralFunctions._
 

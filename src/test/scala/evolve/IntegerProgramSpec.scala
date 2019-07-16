@@ -33,9 +33,9 @@ package evolve
 
 import evolve.core.{Instruction, Program}
 import org.scalatest.FlatSpec
-import org.scalatest.prop.{GeneratorDrivenPropertyChecks, PropertyChecks}
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-class IntegerProgramSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPropertyChecks {
+class IntegerProgramSpec extends FlatSpec with ScalaCheckPropertyChecks {
 
   import evolve.functions.IntegerFunctions._
 

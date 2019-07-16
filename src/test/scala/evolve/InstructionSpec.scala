@@ -33,9 +33,9 @@ package evolve
 import evolve.core.{Function, Instruction}
 import org.scalacheck.Gen
 import org.scalatest.FlatSpec
-import org.scalatest.prop.{GeneratorDrivenPropertyChecks, PropertyChecks}
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-class InstructionSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPropertyChecks {
+class InstructionSpec extends FlatSpec with ScalaCheckPropertyChecks {
 
   implicit val instructionRange: Gen[Instruction] = for {
     x <- Gen.choose[Int](Int.MinValue, Int.MaxValue)

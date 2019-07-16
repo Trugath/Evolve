@@ -33,6 +33,7 @@ package evolve.core
 import java.util.concurrent.ThreadLocalRandom
 
 import scala.annotation.{switch, tailrec}
+import scala.collection.immutable.ArraySeq
 
 object Mutator {
 
@@ -89,7 +90,8 @@ object Mutator {
     val mutatedBits = (totalBits * factor * 0.75).ceil.toInt
     val totalInstructions = program.length
     val mutatedInstructions = (totalInstructions * factor * 0.25).ceil.toInt
-    val array = program.data.toArray
+    val array: Array[Instruction] = Array.ofDim(program.data.length)
+    program.data.copyToArray(array)
 
     @tailrec def go1(count: Int): Unit =  if(count > 0) {
       mutateBit( ThreadLocalRandom.current().nextInt( totalBits ), array )
@@ -104,7 +106,7 @@ object Mutator {
     go2(mutatedInstructions)
 
     program.copy(
-      data = array
+      data = ArraySeq.unsafeWrapArray(array)
     )
   }
 }

@@ -141,7 +141,7 @@ object FourBitFullAdderNAND {
         val usage = program.used.count( _ == true ).toDouble / (program.length + program.inputCount).toDouble
 
         // create mutant children and score them
-        val popF: Future[Seq[Long]] = Future.sequence( Seq.fill(evolveStrategy.children)( Future {
+        val popF: Future[Seq[Double]] = Future.sequence( Seq.fill(evolveStrategy.children)( Future {
           val child = Generator.repair( Mutator( program, evolveStrategy.factor ) )
           testCases.score( child )( scoreFunc, functions )
         } ) )

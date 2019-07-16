@@ -36,8 +36,8 @@ object TestCases {
 
   import scala.language.implicitConversions
 
-  implicit def testCasesToScore[A]( testCases: TestCases[A] )(implicit scoreFunc: (A, A) => Long, functions: Seq[Function[A]]): Program => Double = {
-    (p: Program) => testCases.score(p)
+  implicit def testCasesToScore[A]( testCases: TestCases[A] )(implicit scoreFunc: (A, A) => Double, functions: Seq[Function[A]]): Program => Double = {
+    p: Program => testCases.score(p)
   }
 }
 
@@ -56,15 +56,15 @@ case class TestCases[A:Manifest](cases: List[TestCase[A]]) {
    * @param functions The functions to map to the programs operators
    * @return the summed score
    */
-  def score[S]( program: Program )( implicit scoreFunc: (A, A) => Long, functions: Seq[Function[A]] ): Long = {
+  def score[S]( program: Program )( implicit scoreFunc: (A, A) => Double, functions: Seq[Function[A]] ): Double = {
 
       val total =
-        cases.foldLeft((new Array[A](program.length).toList, 0L)){ case ((state, score), testCase) =>
+        cases.foldLeft((new Array[A](program.length).toList, 0.0: Double)){ case ((state, score), testCase) =>
           val exec = program(testCase.inputs, state)
           (exec._2, score + testCase.score(exec._1.result(program.outputCount)))
         }
 
-      assert( total._2 >= 0 )
+      assert( total._2 >= 0.0 )
       total._2
   }
 }
@@ -85,16 +85,16 @@ case class TestCase[A](inputs: List[A], outputs: List[A]) {
    * @param scoreFunc the scoring function to use
    * @return the final score
    */
-  def score( results: Seq[A] )( implicit scoreFunc: (A, A) => Long ): Long = {
+  def score( results: Seq[A] )( implicit scoreFunc: (A, A) => Double ): Double = {
 
     @tailrec
-    def score( index: Int, acc: Long ): Long = if( index < outputsLength ) {
+    def score( index: Int, acc: Double ): Double = if( index < outputsLength ) {
       score( index + 1, acc + scoreFunc( results(index), outputs(index) ) )
     } else acc
 
     val total = score( 0, 0 )
     if(total < 0) {
-      Long.MaxValue
+      Double.MaxValue
     } else total
   }
 }

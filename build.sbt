@@ -2,7 +2,7 @@ name := "evolve"
 
 version := "0.1.2"
 
-scalaVersion := "2.12.5"
+scalaVersion := "2.13.0"
 
 scalacOptions ++= Seq(
   "-unchecked",
@@ -11,14 +11,13 @@ scalacOptions ++= Seq(
   "-Xfatal-warnings")
 
 resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+resolvers += "Sonatype OSS Releases" at "https://oss.sonatype.org/content/repositories/releases"
 
-// https://mvnrepository.com/artifact/org.scalacheck/scalacheck_2.12
-libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.13.4" % "test"
+// https://mvnrepository.com/artifact/org.scalacheck/scalacheck_2.13
+libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.14.0" % Test
 
-// https://mvnrepository.com/artifact/org.scalatest/scalatest_2.12
-libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test"
-
-libraryDependencies += "com.storm-enroute" %% "scalameter" % "0.8.2" % "test"
+// https://mvnrepository.com/artifact/org.scalatest/scalatest_2.13
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.8" % Test
 
 coverageExcludedPackages := "<empty>;evolve.example.*;evolve.benchmark.*"
 

@@ -94,6 +94,6 @@ object ConstAnalysis {
         }
     } )
 
-    Program( instructionSize, working.to[Seq], inputCount, outputCount, program.length)
+    Program( instructionSize, working.toSeq, inputCount, outputCount, program.length)
   }
 }

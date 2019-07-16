@@ -50,12 +50,12 @@ object EvolveUtil {
   def startup[A](program: Program, score: Program => Double)( implicit functions: Seq[Function[A]], ec: ExecutionContext ): Program = {
 
     @tailrec def evolve(program: Program, iteration: Int, strat: EvolverStrategy): Program = {
-      if (iteration <= 0) {
+      if (iteration <= 0 || score( program ) <= 1.0) {
         program
       } else {
         Evolver(program, score, optimise = false)(strat, functions, ec) match {
           case Some(evolved) => evolve(evolved, iteration - 1, strat)
-          case None          => evolve(program, iteration, strat.copy( factor = strat.factor * 0.9 ))
+          case None          => evolve(program, iteration, strat.copy( factor = strat.factor * 0.75 ))
         }
       }
     }
@@ -107,7 +107,7 @@ object EvolveUtil {
     * Split the test cases into groups of 'groupSize' and evolve the program against the worse subgroup
     * @param generations The number of generations
     */
-  def worstSubGroup[A:Manifest](program: Program, groupSize: Int, generations: Int, testCases: TestCases[A], optimise: Boolean = false)( implicit strategy: EvolverStrategy, score: (A, A) => Long, functions: Seq[Function[A]], ec: ExecutionContext ): Program = {
+  def worstSubGroup[A:Manifest](program: Program, groupSize: Int, generations: Int, testCases: TestCases[A], optimise: Boolean = false)( implicit strategy: EvolverStrategy, score: (A, A) => Double, functions: Seq[Function[A]], ec: ExecutionContext ): Program = {
     require( groupSize > 0, "Minimum group size is 1" )
 
     val worstSubGroup =
@@ -116,7 +116,7 @@ object EvolveUtil {
         .grouped( groupSize )
         .map( TestCases(_) )
         .map( tc => (tc, tc.score( program ) ) )
-        .reduce[(TestCases[A], Long)]( { case (a, b) => if( a._2 > b._2 ) a else b } )
+        .reduce[(TestCases[A], Double)]( { case (a, b) => if( a._2 > b._2 ) a else b } )
         ._1
 
     /**

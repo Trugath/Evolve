@@ -30,6 +30,8 @@
 
 package evolve.core
 
+import scala.collection.immutable.ArraySeq
+
 /**
  * Memory is a write only data structure for propegating information through the program
  * Currently implemented with an array
@@ -50,10 +52,10 @@ final class Memory[A:Manifest] private (private [this] val memory: Array[A], pri
     this
   }
 
-  def result(count: Int): Array[A] = {
+  def result(count: Int): Seq[A] = {
     val array = new Array[A]( count )
     System.arraycopy(memory, length - count, array, 0, count)
-    array
+    ArraySeq.unsafeWrapArray(array)
   }
 
   override def toString: String = memory.toString

@@ -33,6 +33,7 @@ package evolve.core
 import java.util.concurrent.ThreadLocalRandom
 
 import scala.annotation.tailrec
+import scala.collection.immutable.ArraySeq
 
 object Program {
 
@@ -373,7 +374,7 @@ final case class Program( instructionSize: Int, data: Seq[Instruction], inputCou
         pipeline(index + inputCount) = pipelineLength( func.arguments - 1, inst, func, 0L )
       }
 
-    pipeline
+    ArraySeq.unsafeWrapArray(pipeline)
   }
 
   /**

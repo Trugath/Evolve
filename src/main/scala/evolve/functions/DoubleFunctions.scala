@@ -44,7 +44,7 @@ object DoubleFunctions {
     Signum
   )
 
-  implicit val scoreFunc: (Double, Double) => Long = (a, b) => {
+  implicit val scoreFunc: (Double, Double) => Double = (a, b) => {
 
     def nabs(i: Double): Double = if( i < 0 ) -i else i
 
@@ -53,7 +53,7 @@ object DoubleFunctions {
       case (left, right)                              => nabs(left - right).abs
     }
     assert(result >= -0.00001)
-    math.min(result * Int.MaxValue, Long.MaxValue / 256L).toLong
+    result
   }
 
   implicit val createConstant: Double => Instruction = { value: Double =>

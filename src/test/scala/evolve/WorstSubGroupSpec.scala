@@ -7,14 +7,14 @@ import evolve.core.{Generator, TestCase, TestCases}
 import evolve.util.EvolveUtil
 import org.scalacheck.Gen
 import org.scalatest.FlatSpec
-import org.scalatest.prop.{GeneratorDrivenPropertyChecks, PropertyChecks}
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 /**
   * Created by Elliot on 17/08/2016.
   */
-class WorstSubGroupSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPropertyChecks {
+class WorstSubGroupSpec extends FlatSpec with ScalaCheckPropertyChecks {
 
   private implicit val evolveStrategy: EvolverStrategy = EvolverStrategy( children = Math.max(4, Runtime.getRuntime.availableProcessors()), factor = 0.005, optimiseForPipeline = false )
   private implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
@@ -75,7 +75,7 @@ class WorstSubGroupSpec extends FlatSpec with PropertyChecks with GeneratorDrive
     val startup = EvolveUtil.startup( Generator(Nop.instructionSize, size = 32, inputCount = 3, outputCount = 2), incorrectTestCases )
     val worstCaseProgram = EvolveUtil.fitness( startup, fitness = 0, limit = Long.MaxValue, incorrectTestCases )
     val worstCaseScore = testCases.score( worstCaseProgram )
-    assert( worstCaseScore === 16000 )
+    assert( worstCaseScore === 1600.0 )
 
     forAll( Gen.choose[Int](1, testCases.cases.length * 2) ) { groupSize =>
       val evolved = EvolveUtil.worstSubGroup(worstCaseProgram, groupSize, 100, testCases )

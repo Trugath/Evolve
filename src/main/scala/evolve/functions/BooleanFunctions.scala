@@ -39,10 +39,10 @@ object BooleanFunctions {
     Implication, XOr, Equal
   )
 
-  implicit val scoreFunc: (Boolean, Boolean) => Long = (a, b) => {
-    val result = if (a == b) 0 else 10
+  implicit val scoreFunc: (Boolean, Boolean) => Double = (a, b) => {
+    val result = if (a == b) 0.0 else 10.0
     assert(result >= 0)
-    result * 100
+    result * result
   }
 
   implicit val createConstant: Boolean => Instruction = { value: Boolean =>

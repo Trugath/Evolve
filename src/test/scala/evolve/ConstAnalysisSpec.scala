@@ -2,12 +2,12 @@ package evolve
 
 import evolve.core.{ConstAnalysis, Instruction, Program}
 import org.scalatest.FlatSpec
-import org.scalatest.prop.{GeneratorDrivenPropertyChecks, PropertyChecks}
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 /**
   * Created by Elliot on 11/04/2017.
   */
-class ConstAnalysisSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPropertyChecks {
+class ConstAnalysisSpec extends FlatSpec with ScalaCheckPropertyChecks {
 
   "A single constant instruction program" should "correctly identify as fully constant and not shrink on constant filling" in {
     import evolve.functions.NeuralFunctions._

@@ -39,12 +39,12 @@ import evolve.core._
 import evolve.util.ProgramUtil
 import org.scalacheck.Gen
 import org.scalatest.FlatSpec
-import org.scalatest.prop.{GeneratorDrivenPropertyChecks, PropertyChecks}
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.util.Random
 
-class ProgramSpec  extends FlatSpec with PropertyChecks with GeneratorDrivenPropertyChecks {
+class ProgramSpec  extends FlatSpec with ScalaCheckPropertyChecks {
 
   private [this] implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
 

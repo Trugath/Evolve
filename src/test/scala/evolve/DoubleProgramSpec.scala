@@ -32,9 +32,9 @@ package evolve
 
 import evolve.core.{Instruction, Program}
 import org.scalatest.FlatSpec
-import org.scalatest.prop.{GeneratorDrivenPropertyChecks, PropertyChecks}
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-class DoubleProgramSpec extends FlatSpec with PropertyChecks with GeneratorDrivenPropertyChecks {
+class DoubleProgramSpec extends FlatSpec with ScalaCheckPropertyChecks {
 
   import evolve.functions.DoubleFunctions._
 

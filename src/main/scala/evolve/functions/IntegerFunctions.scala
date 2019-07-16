@@ -43,13 +43,13 @@ object IntegerFunctions {
     Min, Max
   )
 
-  implicit val scoreFunc: (Int, Int) => Long = (a, b) => {
+  implicit val scoreFunc: (Int, Int) => Double = (a, b) => {
 
-    def nabs(i: Long): Long = if( i < 0 ) -i else i
+    def nabs(i: Double): Double = if( i < 0.0 ) -i else i
 
     val result = nabs(a - b)
-    assert(result >= 0)
-    result * 10
+    assert(result >= 0.0)
+    result
   }
 
   implicit val createConstant: Int => Instruction = { value: Int =>
