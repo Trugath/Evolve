@@ -49,7 +49,7 @@ object IntegerFunctions {
 
     val result = nabs(a - b)
     assert(result >= 0.0)
-    result
+    math.max(0.0, ((result + 1.0) * (result + 1.0)) - 1.0)
   }
 
   implicit val createConstant: Int => Instruction = { value: Int =>
