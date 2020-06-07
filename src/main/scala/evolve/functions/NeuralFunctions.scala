@@ -57,7 +57,7 @@ object NeuralFunctions {
       case (left, right)                              => nabs(left - right).abs
     }
     assert(result >= -0.00001)
-    math.min(result * Int.MaxValue, Long.MaxValue / 256L).toLong
+    math.min(result * Int.MaxValue, Long.MaxValue.toDouble / 256.0).toLong
   }
 
   implicit def createConstant(implicit functions: Seq[Function[Double]]): Double => Instruction = { value: Double =>
