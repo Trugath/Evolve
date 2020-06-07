@@ -2,7 +2,7 @@ name := "evolve"
 
 version := "0.1.2"
 
-scalaVersion := "2.13.0"
+scalaVersion := "2.13.2"
 
 scalacOptions ++= Seq(
   "-unchecked",
