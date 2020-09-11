@@ -66,12 +66,15 @@ object Evolver {
     import scala.concurrent.duration.Duration._
     import scala.language.postfixOps
 
+    val optimiseForPipeline = strategy.optimiseForPipeline
+
     // score the parent
     val programScoreF: Future[Double] = Future {
-      score(program)
+      if( optimiseForPipeline )
+        score(program) + score(program.pipeline)
+      else
+        score(program)
     }
-
-    val optimiseForPipeline = strategy.optimiseForPipeline
 
     // create mutant children
     val popF: Future[Seq[(Program, Double)]] = Future.sequence( programScoreF.map( s => (program, s) ) +: Seq.fill(strategy.children)( Future {
