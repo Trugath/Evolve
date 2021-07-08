@@ -30,10 +30,6 @@
 
 package evolve
 
-import java.nio.charset.StandardCharsets
-import java.nio.file.{Files, Paths}
-import java.util.concurrent.Executors
-
 import evolve.core.Evolver.EvolverStrategy
 import evolve.core._
 import evolve.util.ProgramUtil
@@ -41,6 +37,7 @@ import org.scalacheck.Gen
 import org.scalatest.FlatSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
+import java.util.concurrent.Executors
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.util.Random
 
@@ -554,7 +551,7 @@ class ProgramSpec  extends FlatSpec with ScalaCheckPropertyChecks {
         {
           import functions.BooleanFunctions._
           val program = Generator(Nop.instructionSize, startSize, 1, 1, seed)
-          val state = List.fill( program.length )( Random.nextBoolean )
+          val state = List.fill( program.length )( Random.nextBoolean() )
           forAll { a: Boolean =>
             assert( program( List(a), state )._2 === state )
           }
@@ -562,7 +559,7 @@ class ProgramSpec  extends FlatSpec with ScalaCheckPropertyChecks {
         {
           import functions.IntegerFunctions._
           val program = Generator(Nop.instructionSize, startSize, 1, 1, seed)
-          val state = List.fill( program.length )( Random.nextInt )
+          val state = List.fill( program.length )( Random.nextInt() )
           forAll { a: Int =>
             assert( program( List(a), state )._2 === state )
           }
