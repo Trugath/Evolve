@@ -52,8 +52,8 @@ object IntegerFunctions {
     math.max(0.0, ((result + 1.0) * (result + 1.0)) - 1.0)
   }
 
-  implicit val createConstant: Int => Instruction = { value: Int =>
-    Instruction(0).const(value & ( Int.MinValue >> (32 - Const.constantRegionSize) ), Const.constantRegionStart, Const.constantRegionSize)
+  implicit val createConstant: Int => Instruction = { (value: Int) =>
+    Instruction(0).const(value & (Int.MinValue >> (32 - Const.constantRegionSize)), Const.constantRegionStart, Const.constantRegionSize)
   }
 
   object Nop extends Function[Int]  {

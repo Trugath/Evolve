@@ -534,19 +534,20 @@ final case class Program( instructionSize: Int, data: Seq[Instruction], inputCou
       data(index).clean == Program.getNop( index )
     }
 
-    val can_unnop = data.drop(inputCount).forall( inst => {
-      val operator = inst.instruction( functions.head.instructionSize )
+    val can_unnop = data.drop(inputCount).forall((inst: Instruction) => {
+      val operator = inst.instruction(functions.head.instructionSize)
       val func = functions(operator)
 
       @tailrec def can_unnop(arguments: Int): Boolean = if (arguments > 0) {
         val argStart = func.instructionSize + (func.argumentSize * (arguments - 1))
         val index = inst.pointer(argStart, func.argumentSize)
-        if(index >= inputCount)
+        if (index >= inputCount)
           can_unnop(arguments - 1)
         else
           false
       } else true
-      can_unnop(operator.arguments)
+
+      can_unnop(func.arguments)
     })
 
     if(nopped && can_unnop) {

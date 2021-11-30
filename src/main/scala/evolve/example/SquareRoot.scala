@@ -61,10 +61,10 @@ object SquareRoot {
 
     val testCases = TestCases(
       (0 until 2147483647 by 65535000)
-        .map( i => i.toDouble / 2147483647.0 )
-        .map( a => TestCase(List(a), List(math.sqrt(a))) )
+        .map(i => i.toDouble / 2147483647.0)
+        .map(a => TestCase(List(a), List(math.sqrt(a))))
         .toList
-    )
+    )(Manifest.Double)
 
     val solution = EvolveUtil.fitness(Generator(Nop.instructionSize, 32, 1, 1), 100000L, 1000000, testCases)
     Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8) )

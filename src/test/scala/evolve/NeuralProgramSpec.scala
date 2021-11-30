@@ -34,25 +34,28 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Paths}
 import java.util.Random
 import java.util.concurrent.{Executors, ThreadLocalRandom}
-
 import evolve.core.Evolver.EvolverStrategy
-import evolve.core._
+import evolve.core.*
 import evolve.util.EvolveUtil
-import org.scalatest.FlatSpec
+import org.scalatest.*
+import org.scalatest.flatspec.*
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
-class NeuralProgramSpec extends FlatSpec with ScalaCheckPropertyChecks {
+class NeuralProgramSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
 
   import evolve.functions.NeuralFunctions._
 
-  def ins( index: Int, a: Int, b: Int ): Instruction = {
+  implicit val manifestDouble: Manifest[Double] = Manifest.Double
+  implicit val manifestBoolean: Manifest[Boolean] = Manifest.Boolean
+
+  def ins(index: Int, a: Int, b: Int): Instruction = {
     val instructionSize = functions(index).instructionSize
     val argumentSize = functions(index).argumentSize
 
     val ins = Instruction(0)
-      .instruction( index, instructionSize )
+      .instruction(index, instructionSize)
       .pointer(a, instructionSize, argumentSize)
       .pointer(b, instructionSize + argumentSize, argumentSize)
 
@@ -127,17 +130,17 @@ class NeuralProgramSpec extends FlatSpec with ScalaCheckPropertyChecks {
     val instructionSize = Nop.instructionSize
     val delay = Program( instructionSize, Seq( ins( functions.indexOf(Delay), 0, 0), ins( functions.indexOf(Delay), 1, 0 ), ins( functions.indexOf(Delay), 2, 0 ) ), 1, 1, 3 ).spread()
 
-    forAll { a: Double =>
+    forAll { (a: Double) =>
       val step1 = delay(List(a), List(0.0, 0.0, 0.0, 0.0, 0.0))
-      assert( step1._1.result(1).head === 0.0 )
-      assert( step1._2 === List(a, 0.0, 0.0, 0.0, 0.0) )
+      assert(step1._1.result(1).head === 0.0)
+      assert(step1._2 === List(a, 0.0, 0.0, 0.0, 0.0))
 
       val step2 = delay(List(0.0), List(a, 0.0, 0.0, 0.0, 0.0))
-      assert( step2._1.result(1).head === 0.0 )
-      assert( step2._2 === List(0.0, 0.0, a, 0.0, 0.0) )
+      assert(step2._1.result(1).head === 0.0)
+      assert(step2._2 === List(0.0, 0.0, a, 0.0, 0.0))
 
       val step3 = delay(List(0.0), List(0.0, 0.0, a, 0.0, 0.0))
-      assert( step3._1.result(1).head === 0.0 )
+      assert(step3._1.result(1).head === 0.0)
       assert( step3._2 === List(0.0, 0.0, 0.0, 0.0, a) )
 
       val step4 = delay(List(0.0), List(0.0, 0.0, 0.0, 0.0, a))
@@ -171,9 +174,9 @@ class NeuralProgramSpec extends FlatSpec with ScalaCheckPropertyChecks {
     assert( oneWeight(List(0.0), 0.0)._1.result(1).head === 0.0 )
     assert( oneWeight(List(1.0), 0.0)._1.result(1).head === 1.0 )
 
-    forAll { a: Double =>
+    forAll { (a: Double) =>
       val result = zeroWeight(List(a), 0.0)
-      assert( result._1.result(1).head === 0.0 )
+      assert(result._1.result(1).head === 0.0)
     }
   }
 
@@ -238,8 +241,8 @@ class NeuralProgramSpec extends FlatSpec with ScalaCheckPropertyChecks {
     val program = Program(6, instr,1,1, instr.length)
     val minified = program.shrink.clean
 
-    forAll { a: Double =>
-      assert( program(List(a), 0.0)._1.result(1) === minified(List(a), 0.0)._1.result(1))
+    forAll { (a: Double) =>
+      assert(program(List(a), 0.0)._1.result(1) === minified(List(a), 0.0)._1.result(1))
     }
   }
 

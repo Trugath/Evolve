@@ -2,22 +2,14 @@ name := "evolve"
 
 version := "0.1.2"
 
-scalaVersion := "2.13.6"
-
-scalacOptions ++= Seq(
-  "-unchecked",
-  "-deprecation",
-  "-feature",
-  "-Xfatal-warnings")
+scalaVersion := "3.0.2"
 
 resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
 resolvers += "Sonatype OSS Releases" at "https://oss.sonatype.org/content/repositories/releases"
 
-// https://mvnrepository.com/artifact/org.scalacheck/scalacheck_2.13
-libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.14.0" % Test
-
-// https://mvnrepository.com/artifact/org.scalatest/scalatest_2.13
-libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.8" % Test
+libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.15.4" % Test
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.10" % Test
+libraryDependencies += "org.scalatestplus" %% "scalacheck-1-15" % "3.2.9.0" % Test
 
 coverageExcludedPackages := "<empty>;evolve.example.*;evolve.benchmark.*"
 

@@ -32,17 +32,17 @@ package evolve
 
 import evolve.core.{Function, Instruction}
 import org.scalacheck.Gen
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec._
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-class InstructionSpec extends FlatSpec with ScalaCheckPropertyChecks {
+class InstructionSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
 
   implicit val instructionRange: Gen[Instruction] = for {
     x <- Gen.choose[Int](Int.MinValue, Int.MaxValue)
   } yield Instruction(x)
 
   "The instruction methods of Instruction" should "get and set correctly" in {
-    forAll (instructionRange, Gen.choose[Int](Int.MinValue, Int.MaxValue), Gen.choose[Int](0, 32)) { (inst: Instruction, value: Int, length: Int) =>
+    forAll(instructionRange, Gen.choose[Int](Int.MinValue, Int.MaxValue), Gen.choose[Int](0, 32)) { (inst: Instruction, value: Int, length: Int) =>
 
       val tvalue = if (length == 32)
         value

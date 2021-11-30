@@ -121,7 +121,7 @@ object DotGraph {
         .foreach {
         case (inst, index) =>
           val instructionSize = program.instructionSize
-          val func = inst.instruction( instructionSize )
+          val func = functions(inst.instruction(instructionSize))
           val argumentSize = func.argumentSize
 
           // ensure that argument inputs are wired into preceding instruction outputs

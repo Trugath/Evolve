@@ -34,34 +34,39 @@ import evolve.core.Evolver.EvolverStrategy
 import evolve.core._
 import evolve.util.ProgramUtil
 import org.scalacheck.Gen
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec._
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import java.util.concurrent.Executors
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.util.Random
 
-class ProgramSpec  extends FlatSpec with ScalaCheckPropertyChecks {
+class ProgramSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
 
-  private [this] implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
+  private[this] implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors()))
+
+  implicit val manifestDouble: Manifest[Double] = Manifest.Double
+  implicit val manifestBoolean: Manifest[Boolean] = Manifest.Boolean
+  implicit val manifestInt: Manifest[Int] = Manifest.Int
 
   "Any grown program" should "function the same" in {
     forAll(Gen.choose[Int](1, 64), Gen.choose[Int](1, 64), Gen.choose[Int](Int.MinValue, Int.MaxValue)) {
-      (startSize: Int, grownSize: Int, seed: Int) => whenever(seed != 0) {
-        {
-          import functions.BooleanFunctions._
-          val program = Generator(Nop.instructionSize, startSize, 1, 1, seed)
-          val grown = program.grow(grownSize)
-          forAll { a: Boolean =>
-            assert( program( List(a), List.fill(program.length)(false) )._1.result(1) === grown( List(a), List.fill(grown.length)(false) )._1.result(1) )
-          }
+      (startSize: Int, grownSize: Int, seed: Int) =>
+        whenever(seed != 0) {
+          {
+            import functions.BooleanFunctions._
+            val program = Generator(Nop.instructionSize, startSize, 1, 1, seed)
+            val grown = program.grow(grownSize)
+            forAll { (a: Boolean) =>
+              assert(program(List(a), List.fill(program.length)(false))._1.result(1) === grown(List(a), List.fill(grown.length)(false))._1.result(1))
+            }
         }
         {
           import functions.IntegerFunctions._
           val program = Generator(Nop.instructionSize, startSize, 1, 1, seed)
           val grown = program.grow(grownSize)
-          forAll { a: Int =>
-            assert( program( List(a), List.fill(program.length)(0) )._1.result(1) === grown( List(a), List.fill(grown.length)(0) )._1.result(1) )
+          forAll { (a: Int) =>
+            assert(program(List(a), List.fill(program.length)(0))._1.result(1) === grown(List(a), List.fill(grown.length)(0))._1.result(1))
           }
         }
       }
@@ -126,8 +131,8 @@ class ProgramSpec  extends FlatSpec with ScalaCheckPropertyChecks {
       assert( bShrunk.data(0).pointer(XOr.instructionSize + XOr.argumentSize, XOr.argumentSize) === 0 )
       assert( bShrunk.used === List(true, true, true) )
 
-      forAll { a: Boolean =>
-        assert( b( List(a), false )._1.result(0) === bShrunk( List(a), false )._1.result(0) )
+      forAll { (a: Boolean) =>
+        assert(b(List(a), false)._1.result(0) === bShrunk(List(a), false)._1.result(0))
       }
     }
 
@@ -137,16 +142,16 @@ class ProgramSpec  extends FlatSpec with ScalaCheckPropertyChecks {
           import functions.BooleanFunctions._
           val program = Generator(Nop.instructionSize, size, 1, 1, seed)
           val shrunk = program.shrink
-          forAll { a: Boolean =>
-            assert( program( List(a), false )._1.result(1) === shrunk( List(a), false )._1.result(1) )
+          forAll { (a: Boolean) =>
+            assert(program(List(a), false)._1.result(1) === shrunk(List(a), false)._1.result(1))
           }
         }
         {
           import functions.IntegerFunctions._
           val program = Generator(Nop.instructionSize, size, 1, 1, seed)
           val shrunk = program.shrink
-          forAll { a: Int =>
-            assert( program( List(a), 0 )._1.result(1) === shrunk( List(a), 0 )._1.result(1) )
+          forAll { (a: Int) =>
+            assert(program(List(a), 0)._1.result(1) === shrunk(List(a), 0)._1.result(1))
           }
         }
       }
@@ -552,16 +557,16 @@ class ProgramSpec  extends FlatSpec with ScalaCheckPropertyChecks {
           import functions.BooleanFunctions._
           val program = Generator(Nop.instructionSize, startSize, 1, 1, seed)
           val state = List.fill( program.length )( Random.nextBoolean() )
-          forAll { a: Boolean =>
-            assert( program( List(a), state )._2 === state )
+          forAll { (a: Boolean) =>
+            assert(program(List(a), state)._2 === state)
           }
         }
         {
           import functions.IntegerFunctions._
           val program = Generator(Nop.instructionSize, startSize, 1, 1, seed)
           val state = List.fill( program.length )( Random.nextInt() )
-          forAll { a: Int =>
-            assert( program( List(a), state )._2 === state )
+          forAll { (a: Int) =>
+            assert(program(List(a), state)._2 === state)
           }
         }
       }

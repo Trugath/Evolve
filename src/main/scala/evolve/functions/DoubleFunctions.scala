@@ -56,7 +56,7 @@ object DoubleFunctions {
     result
   }
 
-  implicit val createConstant: Double => Instruction = { value: Double =>
+  implicit val createConstant: Double => Instruction = { (value: Double) =>
     val constLargeValue: Int = math.min(math.max(value.toInt, Int.MinValue >> (32 - ConstLarge.constantRegionSize)), Int.MaxValue >>> (32 - ConstLarge.constantRegionSize))
     val constLarge = Instruction(0).const(constLargeValue, ConstLarge.constantRegionStart, ConstLarge.constantRegionSize)
     val constLargeError: Double = (ConstLarge(constLarge, Nil) - value).abs
@@ -66,7 +66,7 @@ object DoubleFunctions {
     val constSmall = Instruction(0).const(constSmallValue, ConstSmall.constantRegionStart, ConstSmall.constantRegionSize)
     val constSmallError: Double = (ConstSmall(constSmall, Nil) - value).abs
 
-    if( constLargeError < constSmallError) {
+    if (constLargeError < constSmallError) {
       constLarge
     } else {
       constSmall

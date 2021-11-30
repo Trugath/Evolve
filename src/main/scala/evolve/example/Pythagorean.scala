@@ -77,7 +77,7 @@ object Pythagorean {
         TestCase(List(48.0, 55.0), List(73.0)),
         TestCase(List(13.0, 84.0), List(85.0))
       )
-    )
+    )(Manifest.Double)
     val solution = EvolveUtil.fitness(Generator(Nop.instructionSize, 16, 2, 1), 0, 1000000, testCases)
     Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8) )
     val optimised = EvolveUtil.counted(solution.nopInputs.nopOutputs.spread(4), 50000, optimise = true, testCases).denop.shrink.deduplicate

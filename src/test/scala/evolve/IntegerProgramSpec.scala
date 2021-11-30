@@ -32,19 +32,23 @@ package evolve
 
 
 import evolve.core.{Instruction, Program}
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec._
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
-class IntegerProgramSpec extends FlatSpec with ScalaCheckPropertyChecks {
+class IntegerProgramSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
 
   import evolve.functions.IntegerFunctions._
 
-  def ins( index: Int, a: Int, b: Int ): Instruction = {
+  implicit val manifestDouble: Manifest[Double] = Manifest.Double
+  implicit val manifestBoolean: Manifest[Boolean] = Manifest.Boolean
+  implicit val manifestInt: Manifest[Int] = Manifest.Int
+
+  def ins(index: Int, a: Int, b: Int): Instruction = {
     val instructionSize = functions(index).instructionSize
     val argumentSize = functions(index).argumentSize
-    
+
     val ins = Instruction(0)
-      .instruction( index, instructionSize )
+      .instruction(index, instructionSize)
       .pointer(a, instructionSize, argumentSize)
       .pointer(b, instructionSize + argumentSize, argumentSize)
 

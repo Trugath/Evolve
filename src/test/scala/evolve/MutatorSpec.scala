@@ -31,12 +31,12 @@
 package evolve
 
 import evolve.core.{Instruction, Mutator, Program}
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec._
 
-class MutatorSpec extends FlatSpec {
+class MutatorSpec extends AnyFlatSpec {
   "The mutator" should "mutate a program" in {
     val p = Program(13, Seq(Instruction(0), Instruction(0), Instruction(0)), 2, 1, 3)
-    val m = Mutator( p, 0.01 )
-    assert( p.difference( m ) > 0 )
+    val m = Mutator(p, 0.01)
+    assert(p.difference(m) > 0)
   }
 }

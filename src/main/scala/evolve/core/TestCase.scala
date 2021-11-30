@@ -31,38 +31,40 @@
 package evolve.core
 
 import scala.annotation.tailrec
+import scala.reflect.ClassTag
 
 object TestCases {
 
   import scala.language.implicitConversions
 
   implicit def testCasesToScore[A]( testCases: TestCases[A] )(implicit scoreFunc: (A, A) => Double, functions: Seq[Function[A]]): Program => Double = {
-    p: Program => testCases.score(p)
+    (p: Program) => testCases.score(p)
   }
 }
 
 /**
  * a set of testcases used in evolving/testing a program
-  *
-  * @param cases the test cases to use
+ *
+ * @param cases the test cases to use
  * @tparam A the datatype used
  */
-case class TestCases[A:Manifest](cases: List[TestCase[A]]) {
+case class TestCases[A: Manifest](cases: List[TestCase[A]]) {
 
   /**
    * Given a program score it against the test cases
-   * @param program The program to score
+   *
+   * @param program   The program to score
    * @param scoreFunc scoring function
    * @param functions The functions to map to the programs operators
    * @return the summed score
    */
-  def score[S]( program: Program )( implicit scoreFunc: (A, A) => Double, functions: Seq[Function[A]] ): Double = {
+  def score[S](program: Program)(implicit scoreFunc: (A, A) => Double, functions: Seq[Function[A]]): Double = {
 
-      val total =
-        cases.foldLeft((new Array[A](program.length).toList, 0.0: Double)){ case ((state, score), testCase) =>
-          val exec = program(testCase.inputs, state)
-          (exec._2, score + testCase.score(exec._1.result(program.outputCount)))
-        }
+    val total: (List[A], Double) =
+      cases.foldLeft((new Array[A](program.length).toList, 0.0: Double)) { case ((state, score), testCase) =>
+        val exec = program(testCase.inputs, state)
+        (exec._2, score + testCase.score(exec._1.result(program.outputCount)))
+      }
 
       assert( total._2 >= 0.0 )
       total._2

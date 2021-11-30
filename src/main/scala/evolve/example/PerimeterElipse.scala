@@ -100,9 +100,10 @@ object PerimeterElipse {
         List(
           TestCase(List(index, 1.0, math.Pi), List(exactValue)),
           TestCase(List(1.0, index, math.Pi), List(exactValue)),
-        )}
+        )
+      }
       )
-    )
+    )(Manifest.Double)
 
     val solution = EvolveUtil.fitness(Generator(Nop.instructionSize, 128, 3, 1), 0, 1000000, testCases)
     Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8))

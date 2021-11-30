@@ -60,7 +60,7 @@ object NeuralFunctions {
     math.min(result * Int.MaxValue, Long.MaxValue.toDouble / 256.0).toLong
   }
 
-  implicit def createConstant(implicit functions: Seq[Function[Double]]): Double => Instruction = { value: Double =>
+  implicit def createConstant(implicit functions: Seq[Function[Double]]): Double => Instruction = { (value: Double) =>
     val constLargeScale = math.pow(2.0, math.min(constantRegionSize, 4))
     val constLargeValue: Int = math.min(math.max((value * constLargeScale).toInt, Int.MinValue >> (32 - ConstLarge.constantRegionSize)), Int.MaxValue >>> (32 - ConstLarge.constantRegionSize))
     val constLarge = Instruction(0)

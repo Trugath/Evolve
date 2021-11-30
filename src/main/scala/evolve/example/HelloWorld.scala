@@ -83,6 +83,7 @@ object HelloWorld {
 
     def trial( program: Program ): LazyList[Double] = {
       def go( input: Double, arg0: Double, arg1: Double, memory: List[Double] ): LazyList[Double] = {
+        implicit val manifest = Manifest.Double
         val res = program(List(input, arg0, arg1), memory)
         val out = res._1.result(program.outputCount).toList
         out.head #:: go(out.head, out(1), out(2), res._2)

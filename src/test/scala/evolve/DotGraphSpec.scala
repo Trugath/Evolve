@@ -1,24 +1,31 @@
 package evolve
 
 import evolve.core.{DotGraph, Generator, Instruction, Program}
-import org.scalacheck.Gen
-import org.scalatest.FlatSpec
+import org.scalacheck.{Gen, Prop}
+import org.scalatest.flatspec.*
+import org.scalatest.prop.*
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 /**
-  * Created by ellio on 09/08/2016.
-  */
-class DotGraphSpec extends FlatSpec with ScalaCheckPropertyChecks {
+ * Created by ellio on 09/08/2016.
+ */
+class DotGraphSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
+
+
+  implicit val manifestDouble: Manifest[Double] = Manifest.Double
+  implicit val manifestBoolean: Manifest[Boolean] = Manifest.Boolean
+  implicit val manifestInt: Manifest[Int] = Manifest.Int
+
   "A known program" should "convert into a DOT representation" in {
     import evolve.functions.BooleanFunctions._
-    val p1 = Program( Nop.instructionSize, Seq( Instruction(0) ), 1, 1, 1 )
-    assert( p1( List( true ), List(false) )._1.result(1) === List( true ) )
-    assert( p1( List( false ), List(false) )._1.result(1) === List( false ) )
+    val p1 = Program(Nop.instructionSize, Seq(Instruction(0)), 1, 1, 1)
+    assert(p1(List(true), List(false))._1.result(1) === List(true))
+    assert(p1(List(false), List(false))._1.result(1) === List(false))
 
-    val graph = DotGraph( p1 )
-    assert( graph.startsWith("digraph graphname {\r\n rankdir=\"LR\";\r\n\r\n // Inputs\r\n subgraph cluster_0 {\r\n" ))
-    assert( graph.contains( "Nop" ))
-    assert( graph.contains( "\"Input 0\"") )
+    val graph = DotGraph(p1)
+    assert(graph.startsWith("digraph graphname {\r\n rankdir=\"LR\";\r\n\r\n // Inputs\r\n subgraph cluster_0 {\r\n"))
+    assert(graph.contains("Nop"))
+    assert(graph.contains("\"Input 0\""))
     assert( graph.contains( "\"Output 0\"") )
   }
 

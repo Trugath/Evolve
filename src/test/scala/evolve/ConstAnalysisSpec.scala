@@ -1,20 +1,21 @@
 package evolve
 
 import evolve.core.{ConstAnalysis, Instruction, Program}
-import org.scalatest.FlatSpec
-import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import org.scalatest._
+import flatspec._
+import matchers._
 
 /**
-  * Created by Elliot on 11/04/2017.
-  */
-class ConstAnalysisSpec extends FlatSpec with ScalaCheckPropertyChecks {
+ * Created by Elliot on 11/04/2017.
+ */
+class ConstAnalysisSpec extends AnyFlatSpec {
 
   "A single constant instruction program" should "correctly identify as fully constant and not shrink on constant filling" in {
     import evolve.functions.NeuralFunctions._
     val program = Program(Nop.instructionSize, createConstant(functions)(1.0) :: Nil, 0, 1, 1)
 
     val analysis = ConstAnalysis(program)
-    assert(analysis.forall( a => a ))
+    assert(analysis.forall(a => a))
     assert(ConstAnalysis.fillConstants(program).shrink === program)
   }
 

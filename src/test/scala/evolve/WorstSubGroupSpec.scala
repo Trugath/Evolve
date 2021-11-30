@@ -6,18 +6,22 @@ import evolve.core.Evolver.EvolverStrategy
 import evolve.core.{Generator, TestCase, TestCases}
 import evolve.util.EvolveUtil
 import org.scalacheck.Gen
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec._
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 /**
-  * Created by Elliot on 17/08/2016.
-  */
-class WorstSubGroupSpec extends FlatSpec with ScalaCheckPropertyChecks {
+ * Created by Elliot on 17/08/2016.
+ */
+class WorstSubGroupSpec extends AnyFlatSpec with ScalaCheckPropertyChecks {
 
-  private implicit val evolveStrategy: EvolverStrategy = EvolverStrategy( children = Math.max(4, Runtime.getRuntime.availableProcessors()), factor = 0.005, optimiseForPipeline = false )
-  private implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
+  private implicit val evolveStrategy: EvolverStrategy = EvolverStrategy(children = Math.max(4, Runtime.getRuntime.availableProcessors()), factor = 0.005, optimiseForPipeline = false)
+  private implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors()))
+
+  implicit val manifestDouble: Manifest[Double] = Manifest.Double
+  implicit val manifestBoolean: Manifest[Boolean] = Manifest.Boolean
+  implicit val manifestInt: Manifest[Int] = Manifest.Int
 
   "The worstSubGroup utility function" should "evolve normally when subgroup is equal or larger the test case list size" in {
 
@@ -34,14 +38,14 @@ class WorstSubGroupSpec extends FlatSpec with ScalaCheckPropertyChecks {
       TestCase(List(true, true, true), List(true, true))
     ))
 
-    forAll { seed: Int =>
-      val initial = Generator( Nop.instructionSize, size = 16, inputCount = 3, outputCount = 2, seed )
-      val initialScore = testCases.score( initial )
+    forAll { (seed: Int) =>
+      val initial = Generator(Nop.instructionSize, size = 16, inputCount = 3, outputCount = 2, seed)
+      val initialScore = testCases.score(initial)
 
       val evolved = EvolveUtil.worstSubGroup(initial, groupSize = 8, 100, testCases)
-      val evolvedScore = testCases.score( evolved )
+      val evolvedScore = testCases.score(evolved)
 
-      assert( evolvedScore <= initialScore )
+      assert(evolvedScore <= initialScore)
     }
   }
 

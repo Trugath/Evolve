@@ -59,10 +59,10 @@ object FourBitFullAdder {
         .toList
     }
 
-    val testCases = TestCases((for{
+    val testCases = TestCases((for {
       l <- 0 until 16
       r <- 0 until 16
-    } yield TestCase[Boolean](bitsToBools(l, 4) ::: bitsToBools(r, 4), bitsToBools(l + r, 5))).toList )
+    } yield TestCase[Boolean](bitsToBools(l, 4) ::: bitsToBools(r, 4), bitsToBools(l + r, 5))).toList)(Manifest.Boolean)
 
     @tailrec def function(program: Program, generation: Long, improvements: Long): Program = {
       Evolver(program, testCases, optimise = false) match {

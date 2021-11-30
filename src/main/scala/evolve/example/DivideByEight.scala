@@ -40,6 +40,8 @@ import evolve.util.EvolveUtil
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
+import Manifest._
+
 object DivideByEight {
 
   def main(args: Array[String]): Unit = {
@@ -47,13 +49,13 @@ object DivideByEight {
     import evolve.functions.IntegerFunctions._
 
     implicit val evolveStrategy: EvolverStrategy = EvolverStrategy(32, 0.01, optimiseForPipeline = false)
-    implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor( Executors.newFixedThreadPool( Runtime.getRuntime.availableProcessors() ) )
+    implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors()))
 
     val testCases = TestCases(
       (0 until 2147483647 by 65535000)
-        .map( i => TestCase(List(i), List(i / 8)) )
+        .map(i => TestCase(List(i), List(i / 8)))
         .toList
-    )
+    )(Manifest.Int)
 
     val solution = EvolveUtil.counted(Generator(Nop.instructionSize, 8, 1, 1), 5000, optimise = false, testCases)
     Files.write(Paths.get("solution.dot"), DotGraph(solution).getBytes(StandardCharsets.UTF_8) )

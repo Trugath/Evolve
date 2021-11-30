@@ -113,7 +113,7 @@ object ThreeBitAdderNAND {
       TestCase(List(true, false, true), List(true, false)),
       TestCase(List(true, true, false), List(true, false)),
       TestCase(List(true, true, true), List(true, true))
-    ))
+    ))(Manifest.Boolean)
 
     @tailrec def function(program: Program, generation: Long, improvements: Long): Program = {
       Evolver(program, testCases, optimise = false) match {
